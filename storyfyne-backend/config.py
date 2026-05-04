@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Keys
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 XAI_API_KEY = os.getenv("XAI_API_KEY", "")
 
 # Reddit
@@ -41,9 +41,9 @@ VOICE_ASSIGNMENTS: Dict[str, str] = {
 
 VOICE_CYCLE: List[str] = ["eve", "ara", "rex", "leo", "sal"]
 
-# Gemini
-GEMINI_MODEL = "gemini-1.5-flash"
-GEMINI_MAX_OUTPUT_TOKENS = 8192
+# Claude
+CLAUDE_MODEL = "claude-3-haiku-20240307"
+CLAUDE_MAX_TOKENS = 4096
 
 # R2 Paths
 R2_AUDIO_PREFIX = "audio/"
