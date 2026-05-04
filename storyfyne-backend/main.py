@@ -16,7 +16,7 @@ from config import (
     STORIES_CACHE_TTL_SECONDS,
 )
 from scraper import scrape_reddit_post
-from tagger import tag_text_with_claude
+from tagger import tag_text_with_gemini
 from generator import (
     parse_speaker_segments,
     build_voice_assignments,
@@ -140,7 +140,7 @@ async def process_story(request: ProcessRequest):
 
     # Step 2: Tag with Claude
     try:
-        tagged_text = await tag_text_with_claude(raw_text)
+        tagged_text = await tag_text_with_gemini(raw_text)
     except Exception as e:
         # Save raw text, mark as tag_failed
         metadata = {

@@ -1,6 +1,5 @@
-import httpx
-from typing import Dict
-from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, CLAUDE_MAX_TOKENS
+import google.generativeai as genai
+from config import GEMINI_API_KEY, GEMINI_MODEL, GEMINI_MAX_OUTPUT_TOKENS
 
 SYSTEM_PROMPT = """You are an audio director. Analyze Reddit stories and prepare them for text-to-speech with expressive voice tags.
 
@@ -21,42 +20,11 @@ Output format:
 Return ONLY the tagged text. No explanations, no markdown code blocks, no preamble."""
 
 
-async def tag_text_with_claude(text: str) -> str:
-    """Send text to Claude Haiku for expressive tagging."""
-    if not ANTHROPIC_API_KEY:
-        raise ValueError("ANTHROPIC_API_KEY not configured")
-
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "x-api-key": ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": CLAUDE_MODEL,
-                "max_tokens": CLAUDE_MAX_TOKENS,
-                "system": SYSTEM_PROMPT,
-                "messages": [
-                    {"role": "user", "content": text}
-                ],
-            },
-        )
-
-    if response.status_code != 200:
-        raise RuntimeError(f"Claude API error: {response.status_code} - {response.text}")
-
-    data = response.json()
-    content_blocks = data.get("content", [])
-    if not content_blocks:
-        raise RuntimeError("Claude returned empty content")
-
-    tagged_text = content_blocks[0].get("text", "").strip()
-    # Remove markdown code blocks if Claude added them despite instructions
-    if tagged_text.startswith("```"):
-        lines = tagged_text.split("\n")
-        # Find first and last ```
+def _strip_code_blocks(text: str) -> str:
+    """Remove markdown code blocks if the model added them."""
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.split("\n")
         start = 0
         end = len(lines)
         for i, line in enumerate(lines):
@@ -67,6 +35,32 @@ async def tag_text_with_claude(text: str) -> str:
             if lines[i].strip().startswith("```"):
                 end = i
                 break
-        tagged_text = "\n".join(lines[start:end]).strip()
+        text = "\n".join(lines[start:end]).strip()
+    return text
 
+
+async def tag_text_with_gemini(text: str) -> str:
+    """Send text to Gemini Flash for expressive tagging."""
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY not configured")
+
+    genai.configure(api_key=GEMINI_API_KEY)
+
+    model = genai.GenerativeModel(
+        model_name=GEMINI_MODEL,
+        system_instruction=SYSTEM_PROMPT,
+    )
+
+    response = await model.generate_content_async(
+        text,
+        generation_config=genai.types.GenerationConfig(
+            max_output_tokens=GEMINI_MAX_OUTPUT_TOKENS,
+            temperature=0.3,
+        ),
+    )
+
+    if not response or not response.text:
+        raise RuntimeError("Gemini returned empty response")
+
+    tagged_text = _strip_code_blocks(response.text)
     return tagged_text
