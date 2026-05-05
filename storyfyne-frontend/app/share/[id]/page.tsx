@@ -141,6 +141,15 @@ export default function SharePage() {
       });
   }, [storyId]);
 
+  // Programmatically set crossOrigin BEFORE src to ensure CORS headers are sent
+  useEffect(() => {
+    if (audioRef.current && story?.audio_url) {
+      audioRef.current.crossOrigin = 'anonymous';
+      audioRef.current.src = story.audio_url;
+      audioRef.current.load();
+    }
+  }, [story?.audio_url]);
+
   const togglePlay = useCallback(() => {
     if (!audioRef.current) return;
     if (isPlaying) {
@@ -470,11 +479,9 @@ export default function SharePage() {
             </div>
           </div>
 
-          {/* Hidden audio element with CORS fix */}
+          {/* Audio element — src/crossOrigin set programmatically above */}
           <audio
             ref={audioRef}
-            src={story.audio_url}
-            crossOrigin="anonymous"
             onPlay={() => {
               setIsPlaying(true);
               setAudioError('');
