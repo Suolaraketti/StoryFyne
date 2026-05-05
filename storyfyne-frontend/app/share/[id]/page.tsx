@@ -130,7 +130,8 @@ export default function SharePage() {
 
   // Fetch audio via fetch() + Blob URL to bypass <audio> CORS issues entirely
   useEffect(() => {
-    if (!story?.audio_url) return;
+    const audioUrl = story?.audio_url;
+    if (!audioUrl) return;
     let cancelled = false;
     let objectUrl = '';
 
@@ -138,7 +139,7 @@ export default function SharePage() {
       setAudioLoading(true);
       setAudioError('');
       try {
-        const res = await fetch(story.audio_url, { mode: 'cors' });
+        const res = await fetch(audioUrl, { mode: 'cors' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const blob = await res.blob();
         if (cancelled) return;
