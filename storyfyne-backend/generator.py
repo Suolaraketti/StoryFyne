@@ -114,7 +114,11 @@ async def generate_tts_audio(text: str, voice_id: str, output_format: str = "mp3
         "text": text,
         "voice_id": voice_id,
         "language": "en",
-        "output_format": output_format,
+        "output_format": {
+            "format": output_format,
+            "sample_rate": 24000,
+            "bitrate": 128000,
+        },
     }
 
     async with httpx.AsyncClient(timeout=120.0) as client:
