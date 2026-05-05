@@ -302,10 +302,9 @@ export default function SharePage() {
             </div>
           </div>
 
-          {/* Audio element — direct R2 URL with CORS */}
+          {/* Audio element — direct R2 URL */}
           <audio
             ref={audioRef}
-            crossOrigin="anonymous"
             src={story?.audio_url || ''}
             onPlay={() => { setIsPlaying(true); setAudioError(''); }}
             onPause={() => setIsPlaying(false)}
@@ -315,7 +314,7 @@ export default function SharePage() {
             onError={(e) => {
               const el = e.currentTarget as HTMLAudioElement;
               console.error('Audio element error. code:', el.error?.code, 'message:', el.error?.message);
-              setAudioError(`Audio load error (code ${el.error?.code || '?'}). Check R2 CORS.`);
+              setAudioError(`Audio load error (code ${el.error?.code || '?'}). File may be missing or R2 CORS is not configured.`);
             }}
             preload="auto"
             playsInline
@@ -325,6 +324,42 @@ export default function SharePage() {
           {audioError && (
             <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: '#ef444415', border: '1px solid #ef444430', color: '#f87171', fontSize: '13px', textAlign: 'center' }}>
               {audioError}
+            </div>
+          )}
+
+          {/* Debug URL tester */}
+          {audioDebug && (
+            <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: '#1e293b', border: `1px solid ${BORDER}`, fontSize: '12px', wordBreak: 'break-all' }}>
+              <div style={{ color: TEXT_DIM, marginBottom: '6px' }}>Audio URL:</div>
+              <a href={audioDebug} target="_blank" rel="noopener noreferrer" style={{ color: CYAN, textDecoration: 'none' }}>{audioDebug}</a>
+              <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(audioDebug, { method: 'HEAD', mode: 'cors' });
+                      alert(`Status: ${res.status} ${res.statusText}\nContent-Type: ${res.headers.get('content-type') || 'none'}\nLength: ${res.headers.get('content-length') || 'none'}`);
+                    } catch (err: any) {
+                      alert(`Fetch failed: ${err.message}`);
+                    }
+                  }}
+                  style={{ padding: '6px 12px', borderRadius: '6px', border: `1px solid ${BORDER}`, background: 'transparent', color: TEXT_MUTED, fontSize: '12px', cursor: 'pointer' }}
+                >
+                  Test URL (CORS)
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(audioDebug, { method: 'HEAD', mode: 'no-cors' });
+                      alert('Request sent (opaque response). Check Network tab in DevTools.');
+                    } catch (err: any) {
+                      alert(`Fetch failed: ${err.message}`);
+                    }
+                  }}
+                  style={{ padding: '6px 12px', borderRadius: '6px', border: `1px solid ${BORDER}`, background: 'transparent', color: TEXT_MUTED, fontSize: '12px', cursor: 'pointer' }}
+                >
+                  Test URL (no-cors)
+                </button>
+              </div>
             </div>
           )}
 
