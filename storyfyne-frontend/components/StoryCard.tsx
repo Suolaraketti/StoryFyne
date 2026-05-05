@@ -75,25 +75,51 @@ export default function StoryCard({ story, apiUrl, onDelete }: StoryCardProps) {
 
       <div style={{ display: 'flex', gap: '10px' }}>
         {isComplete && (
-          <a
-            href={`${apiUrl}/api/download/${story.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              flex: 1,
-              padding: '10px',
-              borderRadius: '8px',
-              backgroundColor: '#1a1a1a',
-              color: '#e0e0e0',
-              textAlign: 'center',
-              textDecoration: 'none',
-              fontSize: '13px',
-              fontWeight: 500,
-              border: '1px solid #333',
-            }}
-          >
-            Download
-          </a>
+          <>
+            <a
+              href={`${apiUrl}/api/download/${story.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                flex: 1,
+                padding: '10px',
+                borderRadius: '8px',
+                backgroundColor: '#1a1a1a',
+                color: '#e0e0e0',
+                textAlign: 'center',
+                textDecoration: 'none',
+                fontSize: '13px',
+                fontWeight: 500,
+                border: '1px solid #333',
+              }}
+            >
+              Download
+            </a>
+            <button
+              onClick={async () => {
+                const url = `${window.location.origin}/share/${story.id}`;
+                try {
+                  await navigator.clipboard.writeText(url);
+                  alert('Share link copied!');
+                } catch {
+                  prompt('Copy this link:', url);
+                }
+              }}
+              style={{
+                flex: 1,
+                padding: '10px',
+                borderRadius: '8px',
+                backgroundColor: '#1a1a1a',
+                color: '#F5A623',
+                border: '1px solid #333',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 500,
+              }}
+            >
+              Copy Link
+            </button>
+          </>
         )}
         <button
           onClick={() => {
@@ -102,8 +128,7 @@ export default function StoryCard({ story, apiUrl, onDelete }: StoryCardProps) {
             }
           }}
           style={{
-            flex: isComplete ? 1 : undefined,
-            width: isComplete ? undefined : '100%',
+            flex: isComplete ? undefined : 1,
             padding: '10px',
             borderRadius: '8px',
             backgroundColor: '#1a1a1a',
