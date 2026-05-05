@@ -127,11 +127,11 @@ def _scrape_with_json(url: str) -> Dict:
     with httpx.Client(timeout=30.0, headers=headers, follow_redirects=True) as client:
         response = client.get(json_url)
 
-    # If blocked, try old.reddit.com which has less aggressive blocking
-    if response.status_code == 403:
-        old_url = clean_url.replace("www.reddit.com", "old.reddit.com").replace("reddit.com", "old.reddit.com")
-        json_url_old = f"{old_url}.json"
-        response = client.get(json_url_old)
+        # If blocked, try old.reddit.com which has less aggressive blocking
+        if response.status_code == 403:
+            old_url = clean_url.replace("www.reddit.com", "old.reddit.com").replace("reddit.com", "old.reddit.com")
+            json_url_old = f"{old_url}.json"
+            response = client.get(json_url_old)
 
     if response.status_code != 200:
         raise RuntimeError(
