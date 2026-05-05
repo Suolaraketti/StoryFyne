@@ -357,7 +357,7 @@ async def process_text(request: ProcessTextRequest):
 
     # Step 3: Generate audio
     try:
-        audio_bytes, duration_ms = await assemble_story_audio(segments, voice_assignments)
+        audio_bytes, duration_ms = await assemble_story_audio(segments, voice_assignments, sales_mode=True)
     except Exception as e:
         metadata = {
             "id": story_id,

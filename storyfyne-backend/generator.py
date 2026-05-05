@@ -203,19 +203,36 @@ async def generate_segment_audio(segment_text: str, voice_id: str) -> bytes:
     return buf.getvalue()
 
 
+def _strip_pause_tags(text: str) -> str:
+    """Remove pause tags that would inject silence into TTS output."""
+    text = re.sub(r'\[pause\]', '', text)
+    text = re.sub(r'\[long-pause\]', '', text)
+    return text
+
+
 async def assemble_story_audio(
     segments: List[Tuple[str, str, str]],
-    voice_assignments: Dict[str, str]
+    voice_assignments: Dict[str, str],
+    sales_mode: bool = False
 ) -> Tuple[bytes, int]:
     """Assemble all segments into final MP3 with proper silences."""
     final_audio = AudioSegment.empty()
-    inter_speaker_silence = AudioSegment.silent(duration=SILENCE_BETWEEN_SPEAKERS_MS)
-    intra_speaker_silence = AudioSegment.silent(duration=SILENCE_BETWEEN_CHUNKS_MS)
-    end_silence = AudioSegment.silent(duration=SILENCE_END_MS)
+
+    # Use much shorter silences for sales mode to keep the flow continuous
+    inter_speaker_ms = 50 if sales_mode else SILENCE_BETWEEN_SPEAKERS_MS
+    intra_speaker_ms = 50 if sales_mode else SILENCE_BETWEEN_CHUNKS_MS
+    end_ms = 300 if sales_mode else SILENCE_END_MS
+
+    inter_speaker_silence = AudioSegment.silent(duration=inter_speaker_ms)
+    intra_speaker_silence = AudioSegment.silent(duration=intra_speaker_ms)
+    end_silence = AudioSegment.silent(duration=end_ms)
 
     prev_speaker = None
 
     for speaker, text, _ in segments:
+        if sales_mode:
+            text = _strip_pause_tags(text)
+
         voice_id = voice_assignments.get(speaker.upper(), VOICE_ASSIGNMENTS["NARRATOR"])
 
         # Generate audio for this segment

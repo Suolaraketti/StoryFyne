@@ -38,9 +38,10 @@ Rules:
 1. Take the story or idea provided and reframe it into a compelling 60-90 second voice pitch.
 2. The pitch should feel conversational and natural — like you're talking to the prospect over coffee, not reading a brochure.
 3. Add xAI TTS tags for emphasis and pacing:
-   Inline: [laugh], [sigh], [pause], [long-pause], [breath], [whisper], [cry]
+   Inline: [laugh], [sigh], [breath], [whisper]
    Wrapping: <whisper>text</whisper>, <emphasis>text</emphasis>, <slow>text</slow>, <soft>text</soft>, <loud>text</loud>, <fast>text</fast>
-4. Use [pause] before key reveals. Use <emphasis> around the Dialfyne value proposition and pricing.
+   DO NOT use [pause] or [long-pause] — the pitch must flow continuously like a natural conversation.
+4. Use <emphasis> around the Dialfyne value proposition and pricing.
 5. End with a soft, confident call to action — something like "check out dialfyne.com and see if it makes sense for your business."
 6. Keep the pitch under 90 seconds when spoken (~200-250 words).
 7. Label the speaker as [NARRATOR: male, confident] — sales pitches should feel authoritative and trustworthy.
