@@ -1,14 +1,10 @@
 import json
-import asyncio
+import httpx
 from typing import Dict, List, Optional
 from datetime import datetime, timezone
-import boto3
-from botocore.config import Config as BotoConfig
-from botocore.exceptions import ClientError
 from config import (
     R2_ACCOUNT_ID,
-    R2_ACCESS_KEY_ID,
-    R2_SECRET_ACCESS_KEY,
+    R2_API_TOKEN,
     R2_BUCKET_NAME,
     R2_PUBLIC_URL,
     R2_AUDIO_PREFIX,
@@ -16,21 +12,27 @@ from config import (
     MASTER_INDEX_KEY,
 )
 
+CF_API_BASE = "https://api.cloudflare.com/client/v4"
 
-def get_s3_client():
-    """Create and return an S3-compatible client for Cloudflare R2."""
-    endpoint = f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-    return boto3.client(
-        "s3",
-        endpoint_url=endpoint,
-        aws_access_key_id=R2_ACCESS_KEY_ID,
-        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
-        config=BotoConfig(signature_version="s3v4"),
-    )
+
+def _headers() -> Dict[str, str]:
+    if not R2_API_TOKEN:
+        raise ValueError("R2_API_TOKEN not configured")
+    return {
+        "Authorization": f"Bearer {R2_API_TOKEN}",
+    }
+
+
+def _bucket_url() -> str:
+    if not R2_ACCOUNT_ID:
+        raise ValueError("R2_ACCOUNT_ID not configured")
+    return f"{CF_API_BASE}/accounts/{R2_ACCOUNT_ID}/r2/buckets/{R2_BUCKET_NAME}/objects"
 
 
 def get_audio_url(story_id: int) -> str:
     """Get public URL for a story's audio file."""
+    if not R2_PUBLIC_URL:
+        raise ValueError("R2_PUBLIC_URL not configured")
     return f"{R2_PUBLIC_URL}/{R2_AUDIO_PREFIX}story_{story_id}_final.mp3"
 
 
@@ -40,44 +42,41 @@ def get_story_key(story_id: int) -> str:
 
 
 async def upload_file(key: str, data: bytes, content_type: str = "application/octet-stream") -> None:
-    """Upload bytes to R2."""
-    s3 = get_s3_client()
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(
-        None,
-        lambda: s3.put_object(
-            Bucket=R2_BUCKET_NAME,
-            Key=key,
-            Body=data,
-            ContentType=content_type,
-        ),
-    )
+    """Upload bytes to R2 via Cloudflare REST API."""
+    url = f"{_bucket_url()}/{key}"
+    headers = {**_headers(), "Content-Type": content_type}
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.put(url, headers=headers, content=data)
+
+    if response.status_code not in (200, 201):
+        raise RuntimeError(f"R2 upload failed: {response.status_code} - {response.text[:200]}")
 
 
 async def download_file(key: str) -> Optional[bytes]:
-    """Download bytes from R2. Returns None if not found."""
-    s3 = get_s3_client()
-    loop = asyncio.get_event_loop()
-    try:
-        response = await loop.run_in_executor(
-            None,
-            lambda: s3.get_object(Bucket=R2_BUCKET_NAME, Key=key),
-        )
-        return response["Body"].read()
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "NoSuchKey":
-            return None
-        raise
+    """Download bytes from R2 via Cloudflare REST API. Returns None if not found."""
+    url = f"{_bucket_url()}/{key}"
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.get(url, headers=_headers())
+
+    if response.status_code == 404:
+        return None
+    if response.status_code != 200:
+        raise RuntimeError(f"R2 download failed: {response.status_code} - {response.text[:200]}")
+
+    return response.content
 
 
 async def delete_file(key: str) -> None:
-    """Delete a file from R2."""
-    s3 = get_s3_client()
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(
-        None,
-        lambda: s3.delete_object(Bucket=R2_BUCKET_NAME, Key=key),
-    )
+    """Delete a file from R2 via Cloudflare REST API."""
+    url = f"{_bucket_url()}/{key}"
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.delete(url, headers=_headers())
+
+    if response.status_code not in (200, 204, 404):
+        raise RuntimeError(f"R2 delete failed: {response.status_code} - {response.text[:200]}")
 
 
 async def upload_story_audio(story_id: int, audio_bytes: bytes) -> str:
@@ -170,13 +169,13 @@ async def delete_story(story_id: int) -> bool:
     audio_key = f"{R2_AUDIO_PREFIX}story_{story_id}_final.mp3"
     try:
         await delete_file(audio_key)
-    except ClientError:
+    except RuntimeError:
         pass
 
     # Delete metadata
     try:
         await delete_file(get_story_key(story_id))
-    except ClientError:
+    except RuntimeError:
         pass
 
     # Update index
