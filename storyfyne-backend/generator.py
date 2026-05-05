@@ -86,42 +86,27 @@ def parse_speaker_segments(tagged_text: str) -> List[Tuple[str, str, str]]:
 
 
 def _parse_voice_hint(hint: str) -> str:
-    """Parse a voice hint and return the best matching xAI voice."""
+    """Parse a voice hint and return the best matching xAI voice.
+
+    Story mode uses only ara (female) and sal (male).
+    Sales mode can use any voice.
+    """
     hint_lower = hint.lower()
 
-    # Direct voice mentions
+    # Direct voice mentions (any mode)
     for voice in ["eve", "ara", "rex", "sal", "leo"]:
         if voice in hint_lower:
             return voice
 
-    # Gender-based mapping
-    if "male" in hint_lower:
-        if "confident" in hint_lower or "clear" in hint_lower:
-            return "rex"
-        if "authoritative" in hint_lower or "strong" in hint_lower or "powerful" in hint_lower:
-            return "leo"
-        return "rex"
-
-    if "female" in hint_lower or "woman" in hint_lower:
-        if "warm" in hint_lower or "friendly" in hint_lower or "gentle" in hint_lower:
-            return "ara"
-        if "energetic" in hint_lower or "upbeat" in hint_lower:
-            return "eve"
+    # Story mode gender mapping (only ara and sal)
+    if "female" in hint_lower or "woman" in hint_lower or "feminine" in hint_lower:
         return "ara"
 
-    # Personality-based mapping
-    if "energetic" in hint_lower or "upbeat" in hint_lower:
-        return "eve"
-    if "warm" in hint_lower or "friendly" in hint_lower:
-        return "ara"
-    if "confident" in hint_lower or "clear" in hint_lower:
-        return "rex"
-    if "authoritative" in hint_lower or "strong" in hint_lower:
-        return "leo"
-    if "smooth" in hint_lower or "balanced" in hint_lower or "neutral" in hint_lower or "calm" in hint_lower:
+    if "male" in hint_lower or "man" in hint_lower or "masculine" in hint_lower:
         return "sal"
 
-    return ""
+    # Default to sal for neutral/narrator in story mode
+    return "sal"
 
 
 def get_voice_for_speaker(speaker: str, hint: str = "", existing_assignments: Dict[str, str] = None) -> str:

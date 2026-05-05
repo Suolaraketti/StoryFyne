@@ -15,7 +15,7 @@ from config import (
     TTS_MAX_CHARS,
     STORIES_CACHE_TTL_SECONDS,
 )
-from scraper import scrape_reddit_post
+from scraper import scrape_reddit_post, scrape_website
 from tagger import tag_text_with_claude
 from generator import (
     parse_speaker_segments,
@@ -50,6 +50,20 @@ class ProcessTextRequest(BaseModel):
     title: str = "Untitled Story"
     author: str = "Unknown"
     subreddit: str = "pasted"
+
+
+class SalesRequest(BaseModel):
+    text: str
+    title: str = "Dialfyne Pitch"
+    author: str = "Dennis Kaczmarowski"
+    website_url: str = ""
+    voice_id: str = "rex"
+    tagged_text: str = ""
+
+
+class DraftSalesResponse(BaseModel):
+    tagged_text: str
+    voice_assignments: Dict
 
 
 class ProcessResponse(BaseModel):
@@ -437,60 +451,126 @@ async def process_text(request: ProcessTextRequest):
     )
 
 
-@app.post("/api/process-sales", response_model=ProcessResponse)
-async def process_sales(request: ProcessTextRequest):
-    """Convert pasted text into a Dialfyne sales pitch audio."""
+@app.post("/api/draft-sales", response_model=DraftSalesResponse)
+async def draft_sales(request: SalesRequest):
+    """Generate a sales pitch draft (tagged text) without creating audio.
+
+    Optionally scrapes a prospect website for context.
+    """
     raw_text = request.text.strip()
-    if not raw_text:
-        raise HTTPException(status_code=400, detail="Text is required")
+    website_url = request.website_url.strip()
 
-    story_id = await get_next_story_id()
-    update_job_progress(story_id, "tagging", "Crafting sales pitch with Claude...")
+    if not raw_text and not website_url:
+        raise HTTPException(status_code=400, detail="Provide text, a website URL, or both")
 
-    start_time = time.time()
-    char_count = len(raw_text)
-    estimated_cost = estimate_cost(char_count)
+    website_content = ""
+    if website_url:
+        try:
+            website_content = scrape_website(website_url, max_chars=8000)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to scrape website: {str(e)}")
 
-    # Step 1: Tag with Claude in sales mode
+    # Build the prompt for Claude
+    user_content = raw_text
+    if website_content:
+        if raw_text:
+            user_content = f"Prospect website content:\n{website_content}\n\nAdditional context from me:\n{raw_text}"
+        else:
+            user_content = f"Prospect website content:\n{website_content}\n\nBuild a Dialfyne sales pitch for this company."
+
     try:
-        tagged_text = await tag_text_with_claude(raw_text, sales_mode=True)
+        tagged_text = await tag_text_with_claude(user_content, sales_mode=True)
     except Exception as e:
-        metadata = {
-            "id": story_id,
-            "reddit_url": "",
-            "title": request.title,
-            "author": request.author,
-            "subreddit": request.subreddit,
-            "status": "tag_failed",
-            "audio_url": "",
-            "duration_seconds": 0,
-            "file_size_bytes": 0,
-            "voice_assignments": {},
-            "tagged_text_preview": raw_text[:200],
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "processing_time_seconds": 0,
-            "error": str(e),
-        }
-        await upload_story_metadata(story_id, metadata)
-        await add_story_to_index({
-            "id": story_id,
-            "title": request.title,
-            "subreddit": request.subreddit,
-            "status": "tag_failed",
-            "audio_url": "",
-            "duration_seconds": 0,
-            "created_at": metadata["created_at"],
-        })
-        invalidate_cache()
         raise HTTPException(status_code=500, detail=f"Tagging failed: {str(e)}")
 
-    update_job_progress(story_id, "generating", f"Synthesizing speech with xAI TTS... (est. ${estimated_cost:.4f})")
-
-    # Step 2: Parse segments and assign voices
     segments = parse_speaker_segments(tagged_text)
     voice_assignments = build_voice_assignments(segments)
 
-    # Step 3: Generate audio
+    return DraftSalesResponse(
+        tagged_text=tagged_text,
+        voice_assignments=voice_assignments,
+    )
+
+
+@app.post("/api/process-sales", response_model=ProcessResponse)
+async def process_sales(request: SalesRequest):
+    """Convert pasted text (or pre-tagged text) into a Dialfyne sales pitch audio."""
+    raw_text = request.text.strip()
+    website_url = request.website_url.strip()
+
+    if not raw_text and not website_url:
+        raise HTTPException(status_code=400, detail="Provide text, a website URL, or both")
+
+    story_id = await get_next_story_id()
+    start_time = time.time()
+    char_count = len(raw_text)
+
+    # If pre-tagged text is provided, skip Claude
+    if request.tagged_text.strip():
+        tagged_text = request.tagged_text.strip()
+        update_job_progress(story_id, "generating", "Synthesizing speech with xAI TTS...")
+    else:
+        update_job_progress(story_id, "tagging", "Crafting sales pitch with Claude...")
+
+        website_content = ""
+        if website_url:
+            try:
+                website_content = scrape_website(website_url, max_chars=8000)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Failed to scrape website: {str(e)}")
+
+        # Build the prompt for Claude
+        user_content = raw_text
+        if website_content:
+            if raw_text:
+                user_content = f"Prospect website content:\n{website_content}\n\nAdditional context from me:\n{raw_text}"
+            else:
+                user_content = f"Prospect website content:\n{website_content}\n\nBuild a Dialfyne sales pitch for this company."
+
+        try:
+            tagged_text = await tag_text_with_claude(user_content, sales_mode=True)
+        except Exception as e:
+            metadata = {
+                "id": story_id,
+                "reddit_url": "",
+                "title": request.title,
+                "author": request.author,
+                "subreddit": "sales",
+                "status": "tag_failed",
+                "audio_url": "",
+                "duration_seconds": 0,
+                "file_size_bytes": 0,
+                "voice_assignments": {},
+                "tagged_text_preview": raw_text[:200],
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "processing_time_seconds": 0,
+                "error": str(e),
+            }
+            await upload_story_metadata(story_id, metadata)
+            await add_story_to_index({
+                "id": story_id,
+                "title": request.title,
+                "subreddit": "sales",
+                "status": "tag_failed",
+                "audio_url": "",
+                "duration_seconds": 0,
+                "created_at": metadata["created_at"],
+            })
+            invalidate_cache()
+            raise HTTPException(status_code=500, detail=f"Tagging failed: {str(e)}")
+
+    update_job_progress(story_id, "generating", "Synthesizing speech with xAI TTS...")
+
+    # Parse segments and assign voices
+    segments = parse_speaker_segments(tagged_text)
+    voice_assignments = build_voice_assignments(segments)
+
+    # Override voice if user selected one
+    if request.voice_id and request.voice_id in ["eve", "ara", "rex", "sal", "leo"]:
+        for speaker in voice_assignments:
+            voice_assignments[speaker] = request.voice_id
+
+    # Generate audio
     try:
         audio_bytes, duration_ms = await assemble_story_audio(segments, voice_assignments)
     except Exception as e:
@@ -499,7 +579,7 @@ async def process_sales(request: ProcessTextRequest):
             "reddit_url": "",
             "title": request.title,
             "author": request.author,
-            "subreddit": request.subreddit,
+            "subreddit": "sales",
             "status": "generate_failed",
             "audio_url": "",
             "duration_seconds": 0,
@@ -514,7 +594,7 @@ async def process_sales(request: ProcessTextRequest):
         await add_story_to_index({
             "id": story_id,
             "title": request.title,
-            "subreddit": request.subreddit,
+            "subreddit": "sales",
             "status": "generate_failed",
             "audio_url": "",
             "duration_seconds": 0,
@@ -528,7 +608,6 @@ async def process_sales(request: ProcessTextRequest):
 
     update_job_progress(story_id, "uploading", "Saving to Cloudflare R2...")
 
-    # Step 4: Upload audio and metadata
     try:
         audio_url = await upload_story_audio(story_id, audio_bytes)
     except Exception as e:
@@ -555,7 +634,7 @@ async def process_sales(request: ProcessTextRequest):
         "reddit_url": "",
         "title": request.title,
         "author": request.author,
-        "subreddit": request.subreddit,
+        "subreddit": "sales",
         "status": "complete",
         "audio_url": audio_url,
         "duration_seconds": duration_seconds,
@@ -572,7 +651,7 @@ async def process_sales(request: ProcessTextRequest):
     await add_story_to_index({
         "id": story_id,
         "title": request.title,
-        "subreddit": request.subreddit,
+        "subreddit": "sales",
         "status": "complete",
         "audio_url": audio_url,
         "duration_seconds": duration_seconds,

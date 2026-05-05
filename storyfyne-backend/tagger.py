@@ -15,15 +15,12 @@ Rules:
 7. For ALL CAPS text, use <emphasis>ALL CAPS TEXT</emphasis>
 8. For ellipsis (...), add [pause] before or after
 9. For exclamation marks indicating shouting, use <emphasis>text!</emphasis>
-10. Detect the gender and personality of each speaker based on context, pronouns, names, and narrative perspective.
-11. Append a voice hint to each speaker label using the format: [SPEAKER_A: male] or [NARRATOR: female] or [SPEAKER_B: male, confident]
-    Available voices and their personalities:
-    - eve: energetic, upbeat (best for enthusiastic female narrators)
-    - ara: warm, friendly (best for kind, gentle female voices)
-    - rex: confident, clear (best for authoritative male voices)
-    - leo: authoritative, strong (best for powerful, commanding male voices)
-    - sal: smooth, balanced (best for neutral, calm narration)
-    Pick the voice that best matches the speaker's gender and personality.
+10. Detect the gender of each speaker based on context, pronouns, names, and narrative perspective.
+11. Append a voice hint to each speaker label using the format: [SPEAKER_A: female] or [NARRATOR: male]
+    Story mode uses only two voices:
+    - ara: female voice (warm, friendly)
+    - sal: male voice (smooth, balanced)
+    If the speaker is female or feminine, hint ara. If male or masculine, hint sal. For neutral/narrator, use sal.
 
 Output format:
 Return ONLY the tagged text. No explanations, no markdown code blocks, no preamble."""
@@ -71,12 +68,16 @@ def _strip_code_blocks(text: str) -> str:
     return text
 
 
-async def tag_text_with_claude(text: str, sales_mode: bool = False) -> str:
+async def tag_text_with_claude(text: str, sales_mode: bool = False, website_content: str = "") -> str:
     """Send text to Claude for expressive tagging."""
     if not ANTHROPIC_API_KEY:
         raise ValueError("ANTHROPIC_API_KEY not configured")
 
     system = SALES_SYSTEM_PROMPT if sales_mode else SYSTEM_PROMPT
+
+    user_content = text
+    if website_content:
+        user_content = f"Prospect website content:\n{website_content}\n\nNow write a pitch based on this story/idea:\n{text}"
 
     async with httpx.AsyncClient(timeout=120.0) as client:
         response = await client.post(
@@ -91,7 +92,7 @@ async def tag_text_with_claude(text: str, sales_mode: bool = False) -> str:
                 "max_tokens": CLAUDE_MAX_TOKENS,
                 "system": system,
                 "messages": [
-                    {"role": "user", "content": text}
+                    {"role": "user", "content": user_content}
                 ],
             },
         )

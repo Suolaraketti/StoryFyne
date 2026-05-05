@@ -29,16 +29,16 @@ SILENCE_BETWEEN_SPEAKERS_MS = 300
 SILENCE_BETWEEN_CHUNKS_MS = 150
 SILENCE_END_MS = 1000
 
-# Voice Assignments
+# Voice Assignments (Story Mode: ara = female, sal = male)
 VOICE_ASSIGNMENTS: Dict[str, str] = {
-    "NARRATOR": "eve",
+    "NARRATOR": "sal",
     "SPEAKER_A": "ara",
-    "SPEAKER_B": "rex",
-    "SPEAKER_C": "leo",
+    "SPEAKER_B": "sal",
+    "SPEAKER_C": "ara",
     "SPEAKER_D": "sal",
 }
 
-VOICE_CYCLE: List[str] = ["eve", "ara", "rex", "leo", "sal"]
+VOICE_CYCLE: List[str] = ["ara", "sal"]
 
 # Claude
 CLAUDE_MODEL = "claude-haiku-4-5-20251001"

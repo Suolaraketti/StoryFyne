@@ -1,7 +1,34 @@
 import re
 import httpx
+from html.parser import HTMLParser
 from typing import Dict, List, Optional
 from config import REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USER_AGENT
+
+
+class _HTMLTextExtractor(HTMLParser):
+    """Simple HTML parser that extracts text content."""
+    def __init__(self):
+        super().__init__()
+        self.text_parts = []
+        self.skip_tags = {'script', 'style', 'nav', 'footer', 'header', 'aside'}
+        self.skip_depth = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.skip_tags:
+            self.skip_depth += 1
+
+    def handle_endtag(self, tag):
+        if tag in self.skip_tags:
+            self.skip_depth -= 1
+
+    def handle_data(self, data):
+        if self.skip_depth == 0:
+            self.text_parts.append(data)
+
+    def get_text(self) -> str:
+        text = ' '.join(self.text_parts)
+        text = re.sub(r'\s+', ' ', text).strip()
+        return text
 
 
 def extract_post_id(url: str) -> Optional[str]:
@@ -21,9 +48,7 @@ def extract_post_id(url: str) -> Optional[str]:
 
 def _clean_reddit_url(url: str) -> str:
     """Normalize a Reddit URL to its canonical form."""
-    # Remove query params and fragments
     url = url.split("?")[0].split("#")[0]
-    # Ensure trailing slash for .json append
     if not url.endswith("/"):
         url += "/"
     return url
@@ -103,12 +128,11 @@ def _extract_comments_from_json(comment_listing: List[Dict], max_comments: int =
 
 
 def _scrape_with_json(url: str) -> Dict:
-    """Scrape via Reddit's public .json endpoint (no API keys needed)."""
+    """Scrape via Reddit's public .json endpoint (no auth required)."""
     clean_url = _clean_reddit_url(url)
     json_url = f"{clean_url}.json"
     post_id = extract_post_id(url) or "unknown"
 
-    # Use realistic browser headers to avoid 403 blocks on cloud IPs
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -127,7 +151,6 @@ def _scrape_with_json(url: str) -> Dict:
     with httpx.Client(timeout=30.0, headers=headers, follow_redirects=True) as client:
         response = client.get(json_url)
 
-        # If blocked, try old.reddit.com which has less aggressive blocking
         if response.status_code == 403:
             old_url = clean_url.replace("www.reddit.com", "old.reddit.com").replace("reddit.com", "old.reddit.com")
             json_url_old = f"{old_url}.json"
@@ -142,7 +165,6 @@ def _scrape_with_json(url: str) -> Dict:
     if not isinstance(data, list) or len(data) < 2:
         raise ValueError("Unexpected Reddit JSON structure")
 
-    # Post data is in the first listing
     post_listing = data[0]
     post_children = post_listing.get("data", {}).get("children", [])
     if not post_children:
@@ -155,7 +177,6 @@ def _scrape_with_json(url: str) -> Dict:
     subreddit = post_data.get("subreddit", "")
     score = post_data.get("score", 0)
 
-    # Comments are in the second listing
     comments_listing = data[1]
     comment_children = comments_listing.get("data", {}).get("children", [])
     top_comments = _extract_comments_from_json(comment_children, max_comments=20)
@@ -189,7 +210,34 @@ def scrape_reddit_post(url: str) -> Dict:
         try:
             return _scrape_with_praw(url)
         except Exception:
-            # If PRAW fails for any reason, try JSON fallback
             pass
 
     return _scrape_with_json(url)
+
+
+def scrape_website(url: str, max_chars: int = 8000) -> str:
+    """Scrape a website and return its text content."""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+
+    with httpx.Client(timeout=30.0, headers=headers, follow_redirects=True) as client:
+        response = client.get(url)
+
+    if response.status_code != 200:
+        raise RuntimeError(f"Website returned {response.status_code}")
+
+    content_type = response.headers.get("content-type", "")
+    if "application/json" in content_type:
+        return response.text[:max_chars]
+
+    extractor = _HTMLTextExtractor()
+    try:
+        extractor.feed(response.text)
+    except Exception:
+        pass
+
+    text = extractor.get_text()
+    return text[:max_chars]

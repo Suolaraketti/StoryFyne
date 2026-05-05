@@ -137,17 +137,32 @@ export default function Home() {
     }
   };
 
-  const handleSubmitSales = async (text: string, title: string, author: string, subreddit: string) => {
+  const handlePreviewSales = async (text: string, websiteUrl: string) => {
+    const res = await fetch(`${API_URL}/api/draft-sales`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, website_url: websiteUrl, title: 'Dialfyne Pitch', author: 'Dennis Kaczmarowski', voice_id: 'rex' }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to generate preview');
+    }
+
+    return res.json();
+  };
+
+  const handleSubmitSales = async (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => {
     setIsLoading(true);
-    setProgressStep('tagging');
-    setProgressDetail('Crafting Dialfyne sales pitch...');
+    setProgressStep('generating');
+    setProgressDetail('Synthesizing speech with xAI TTS...');
     setCharCount(text.length);
 
     try {
       const res = await fetch(`${API_URL}/api/process-sales`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, title, author, subreddit }),
+        body: JSON.stringify({ text, title, author, voice_id: voiceId, website_url: websiteUrl, tagged_text: taggedText }),
       });
 
       if (!res.ok) {
@@ -160,8 +175,8 @@ export default function Home() {
 
       const data = await res.json();
       setActiveStoryId(data.story_id);
-      setProgressStep('generating');
-      setProgressDetail('Synthesizing speech with xAI TTS...');
+      setProgressStep('uploading');
+      setProgressDetail('Saving to Cloudflare R2...');
       fetchStories();
     } catch (e) {
       alert('Network error. Is the backend running?');
@@ -208,7 +223,7 @@ export default function Home() {
         </p>
       </div>
 
-      <StoryInput onSubmitUrl={handleSubmitUrl} onSubmitText={handleSubmitText} onSubmitSales={handleSubmitSales} isLoading={isLoading} />
+      <StoryInput onSubmitUrl={handleSubmitUrl} onSubmitText={handleSubmitText} onSubmitSales={handleSubmitSales} onPreviewSales={handlePreviewSales} isLoading={isLoading} />
 
       <ProgressTracker
         step={progressStep}
