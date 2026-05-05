@@ -1,4 +1,5 @@
 import json
+import re
 import httpx
 from typing import Dict, List, Optional
 from datetime import datetime, timezone
@@ -11,6 +12,16 @@ from config import (
     R2_INDEX_PREFIX,
     MASTER_INDEX_KEY,
 )
+
+
+def slugify(text: str, max_length: int = 50) -> str:
+    """Convert a title to a URL-safe slug."""
+    if not text:
+        return "untitled"
+    text = text.lower()
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"[-\s]+", "-", text)
+    return text.strip("-")[:max_length]
 
 CF_API_BASE = "https://api.cloudflare.com/client/v4"
 
@@ -29,11 +40,18 @@ def _bucket_url() -> str:
     return f"{CF_API_BASE}/accounts/{R2_ACCOUNT_ID}/r2/buckets/{R2_BUCKET_NAME}/objects"
 
 
-def get_audio_url(story_id: int) -> str:
+def get_audio_key(story_id: int, slug: str = "") -> str:
+    """Get R2 key for a story's audio file."""
+    suffix = f"-{slug}" if slug else ""
+    return f"{R2_AUDIO_PREFIX}story_{story_id}{suffix}_final.mp3"
+
+
+def get_audio_url(story_id: int, slug: str = "") -> str:
     """Get public URL for a story's audio file."""
     if not R2_PUBLIC_URL:
         raise ValueError("R2_PUBLIC_URL not configured")
-    return f"{R2_PUBLIC_URL}/{R2_AUDIO_PREFIX}story_{story_id}_final.mp3"
+    suffix = f"-{slug}" if slug else ""
+    return f"{R2_PUBLIC_URL}/{R2_AUDIO_PREFIX}story_{story_id}{suffix}_final.mp3"
 
 
 def get_story_key(story_id: int) -> str:
@@ -79,11 +97,11 @@ async def delete_file(key: str) -> None:
         raise RuntimeError(f"R2 delete failed: {response.status_code} - {response.text[:200]}")
 
 
-async def upload_story_audio(story_id: int, audio_bytes: bytes) -> str:
+async def upload_story_audio(story_id: int, audio_bytes: bytes, slug: str = "") -> str:
     """Upload story audio to R2 and return its public URL."""
-    key = f"{R2_AUDIO_PREFIX}story_{story_id}_final.mp3"
+    key = get_audio_key(story_id, slug)
     await upload_file(key, audio_bytes, content_type="audio/mpeg")
-    return get_audio_url(story_id)
+    return get_audio_url(story_id, slug)
 
 
 async def upload_story_metadata(story_id: int, metadata: Dict) -> None:
@@ -166,7 +184,7 @@ async def delete_story(story_id: int) -> bool:
         return False
 
     # Delete audio
-    audio_key = f"{R2_AUDIO_PREFIX}story_{story_id}_final.mp3"
+    audio_key = metadata.get("audio_key") or f"{R2_AUDIO_PREFIX}story_{story_id}_final.mp3"
     try:
         await delete_file(audio_key)
     except RuntimeError:

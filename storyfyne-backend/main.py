@@ -31,6 +31,8 @@ from storage import (
     add_story_to_index,
     delete_story,
     get_audio_url,
+    get_audio_key,
+    slugify,
 )
 
 # In-memory cache for stories index
@@ -239,7 +241,7 @@ async def process_story(request: ProcessRequest):
 
     # Step 5: Upload audio and metadata
     try:
-        audio_url = await upload_story_audio(story_id, audio_bytes)
+        audio_url = await upload_story_audio(story_id, audio_bytes, slug=slugify(post_data["title"]))
     except Exception as e:
         # Retry loop: save locally, retry every 30s for 5 mins
         temp_path = f"/tmp/story_{story_id}_final.mp3"
@@ -250,7 +252,7 @@ async def process_story(request: ProcessRequest):
         for attempt in range(10):
             await asyncio.sleep(30)
             try:
-                audio_url = await upload_story_audio(story_id, audio_bytes)
+                audio_url = await upload_story_audio(story_id, audio_bytes, slug=slugify(post_data["title"]))
                 os.remove(temp_path)
                 break
             except Exception:
@@ -268,6 +270,7 @@ async def process_story(request: ProcessRequest):
         "subreddit": post_data["subreddit"],
         "status": "complete",
         "audio_url": audio_url,
+        "audio_key": get_audio_key(story_id, slug=slugify(post_data["title"])),
         "duration_seconds": duration_seconds,
         "file_size_bytes": file_size_bytes,
         "voice_assignments": voice_assignments,
@@ -392,7 +395,7 @@ async def process_text(request: ProcessTextRequest):
 
     # Step 4: Upload audio and metadata
     try:
-        audio_url = await upload_story_audio(story_id, audio_bytes)
+        audio_url = await upload_story_audio(story_id, audio_bytes, slug=slugify(request.title))
     except Exception as e:
         temp_path = f"/tmp/story_{story_id}_final.mp3"
         os.makedirs("/tmp", exist_ok=True)
@@ -402,7 +405,7 @@ async def process_text(request: ProcessTextRequest):
         for attempt in range(10):
             await asyncio.sleep(30)
             try:
-                audio_url = await upload_story_audio(story_id, audio_bytes)
+                audio_url = await upload_story_audio(story_id, audio_bytes, slug=slugify(request.title))
                 os.remove(temp_path)
                 break
             except Exception:
@@ -420,6 +423,7 @@ async def process_text(request: ProcessTextRequest):
         "subreddit": request.subreddit,
         "status": "complete",
         "audio_url": audio_url,
+        "audio_key": get_audio_key(story_id, slug=slugify(request.title)),
         "duration_seconds": duration_seconds,
         "file_size_bytes": file_size_bytes,
         "voice_assignments": voice_assignments,
@@ -609,7 +613,7 @@ async def process_sales(request: SalesRequest):
     update_job_progress(story_id, "uploading", "Saving to Cloudflare R2...")
 
     try:
-        audio_url = await upload_story_audio(story_id, audio_bytes)
+        audio_url = await upload_story_audio(story_id, audio_bytes, slug=slugify(request.title))
     except Exception as e:
         temp_path = f"/tmp/story_{story_id}_final.mp3"
         os.makedirs("/tmp", exist_ok=True)
@@ -619,7 +623,7 @@ async def process_sales(request: SalesRequest):
         for attempt in range(10):
             await asyncio.sleep(30)
             try:
-                audio_url = await upload_story_audio(story_id, audio_bytes)
+                audio_url = await upload_story_audio(story_id, audio_bytes, slug=slugify(request.title))
                 os.remove(temp_path)
                 break
             except Exception:
@@ -637,6 +641,7 @@ async def process_sales(request: SalesRequest):
         "subreddit": "sales",
         "status": "complete",
         "audio_url": audio_url,
+        "audio_key": get_audio_key(story_id, slug=slugify(request.title)),
         "duration_seconds": duration_seconds,
         "file_size_bytes": file_size_bytes,
         "voice_assignments": voice_assignments,
