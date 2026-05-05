@@ -15,10 +15,14 @@ interface Story {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
-const AMBER = '#F5A623';
-const DARK = '#0a0f1e';
-const CARD = '#111a2e';
-const BORDER = '#1a2744';
+
+// Dialfyne brand colors from screenshots
+const CYAN = '#0EA5E9';
+const DARK_BG = '#0B1120';
+const CARD_BG = '#111827';
+const BORDER = '#1e293b';
+const TEXT_MUTED = '#94a3b8';
+const TEXT_DIM = '#64748b';
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -38,53 +42,56 @@ function formatDate(iso: string): string {
   }
 }
 
-function DialfyneLogo({ size = 40 }: { size?: number }) {
+/** Built-in Dialfyne "D" logo — matches the brand without needing an image file */
+function DialfyneLogo({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-      <circle cx="50" cy="50" r="48" stroke={AMBER} strokeWidth="4" />
+      <circle cx="50" cy="50" r="46" stroke={CYAN} strokeWidth="5" />
       <path
-        d="M30 28 L30 72 L55 72 C68 72 75 62 75 50 C75 38 68 28 55 28 Z"
-        fill={AMBER}
+        d="M32 26 L32 74 L54 74 C66 74 72 65 72 50 C72 35 66 26 54 26 Z"
+        fill={CYAN}
       />
-      <rect x="38" y="40" width="8" height="20" rx="2" fill={DARK} />
+      <rect x="40" y="40" width="8" height="20" rx="3" fill={DARK_BG} />
     </svg>
   );
 }
 
+/** Animated waveform bars */
 function Waveform({ isPlaying }: { isPlaying: boolean }) {
-  const bars = 24;
+  const bars = 28;
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'flex-end',
         gap: '3px',
-        height: '40px',
+        height: '44px',
         justifyContent: 'center',
       }}
     >
       {Array.from({ length: bars }).map((_, i) => {
-        const delay = i * 0.05;
-        const baseHeight = 20 + Math.sin(i * 1.3) * 15;
+        const delay = i * 0.04;
+        const baseHeight = 25 + Math.sin(i * 1.4) * 18;
         return (
           <div
             key={i}
             style={{
               width: '3px',
               borderRadius: '2px',
-              backgroundColor: isPlaying ? AMBER : '#334155',
+              backgroundColor: isPlaying ? CYAN : '#334155',
               height: `${baseHeight}%`,
               transition: 'background-color 0.3s ease',
               animation: isPlaying
-                ? `wave 0.8s ease-in-out ${delay}s infinite alternate`
+                ? `wave 0.7s ease-in-out ${delay}s infinite alternate`
                 : 'none',
+              opacity: isPlaying ? 1 : 0.5,
             }}
           />
         );
       })}
       <style jsx>{`
         @keyframes wave {
-          0% { transform: scaleY(0.3); }
+          0% { transform: scaleY(0.25); }
           100% { transform: scaleY(1); }
         }
       `}</style>
@@ -102,6 +109,7 @@ export default function SharePage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [audioError, setAudioError] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -127,7 +135,14 @@ export default function SharePage() {
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play();
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.error('Playback error:', err);
+          setAudioError('Playback blocked. Try downloading the MP3.');
+          setIsPlaying(false);
+        });
+      }
     }
   }, [isPlaying]);
 
@@ -146,6 +161,11 @@ export default function SharePage() {
   const handleEnded = useCallback(() => {
     setIsPlaying(false);
     setCurrentTime(0);
+  }, []);
+
+  const handleAudioError = useCallback(() => {
+    setAudioError('Could not load audio. The file may be missing or CORS is not configured on R2.');
+    setIsPlaying(false);
   }, []);
 
   const seek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,7 +195,7 @@ export default function SharePage() {
             width: '40px',
             height: '40px',
             border: `3px solid ${BORDER}`,
-            borderTopColor: AMBER,
+            borderTopColor: CYAN,
             borderRadius: '50%',
             animation: 'spin 0.8s linear infinite',
           }}
@@ -205,7 +225,7 @@ export default function SharePage() {
             >
               Not Found
             </h2>
-            <p style={{ color: '#64748b', margin: 0, fontSize: '15px' }}>
+            <p style={{ color: TEXT_DIM, margin: 0, fontSize: '15px' }}>
               This audio clip does not exist or has been removed.
             </p>
           </div>
@@ -216,38 +236,47 @@ export default function SharePage() {
 
   const isSales = story.subreddit === 'sales';
   const tagLabel = isSales ? 'Sales Pitch' : 'Audio Story';
-  const tagColor = isSales ? AMBER : '#0EA5E9';
+  const tagColor = isSales ? CYAN : '#8B5CF6';
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <div style={pageStyle}>
-      {/* Background glow */}
+      {/* Subtle radial glow */}
       <div
         style={{
           position: 'fixed',
-          top: '50%',
+          top: '40%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '600px',
-          height: '600px',
-          background: `radial-gradient(circle, ${AMBER}15 0%, transparent 70%)`,
+          width: '700px',
+          height: '700px',
+          background: `radial-gradient(circle, ${CYAN}10 0%, transparent 65%)`,
           pointerEvents: 'none',
           zIndex: 0,
         }}
       />
 
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '560px' }}>
-        {/* Header */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          width: '100%',
+          maxWidth: '520px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '28px',
+        }}
+      >
+        {/* Header / Logo */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
             gap: '12px',
-            marginBottom: '28px',
           }}
         >
-          <DialfyneLogo size={36} />
+          <DialfyneLogo size={32} />
           <span
             style={{
               color: '#fff',
@@ -260,21 +289,21 @@ export default function SharePage() {
           </span>
         </div>
 
-        {/* Card */}
+        {/* Main Card */}
         <div style={cardStyle}>
-          {/* Tag */}
+          {/* Tag badge */}
           <div
             style={{
               alignSelf: 'flex-start',
               padding: '5px 14px',
-              borderRadius: '20px',
-              backgroundColor: `${tagColor}18`,
+              borderRadius: '999px',
+              backgroundColor: `${tagColor}15`,
               color: tagColor,
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.8px',
-              border: `1px solid ${tagColor}30`,
+              border: `1px solid ${tagColor}25`,
             }}
           >
             {tagLabel}
@@ -285,49 +314,44 @@ export default function SharePage() {
             style={{
               margin: 0,
               color: '#fff',
-              fontSize: '26px',
+              fontSize: '24px',
               fontWeight: 700,
-              lineHeight: 1.3,
+              lineHeight: 1.25,
               letterSpacing: '-0.3px',
             }}
           >
             {story.title || 'Untitled'}
           </h1>
 
-          {/* Meta */}
-          <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+          {/* Meta line */}
+          <p style={{ margin: 0, color: TEXT_DIM, fontSize: '14px' }}>
             {story.author || 'Unknown'} · {formatDuration(story.duration_seconds)} ·{' '}
             {formatDate(story.created_at)}
           </p>
 
           {/* Waveform */}
-          <div style={{ margin: '8px 0' }}>
+          <div style={{ margin: '4px 0' }}>
             <Waveform isPlaying={isPlaying} />
           </div>
 
-          {/* Player controls */}
+          {/* Player row */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '16px',
-              marginTop: '4px',
+              marginTop: '2px',
             }}
           >
+            {/* Play/Pause button — pill style like Dialfyne CTAs */}
             <button
               onClick={togglePlay}
-              onMouseEnter={(e) => {
-                (e.target as HTMLButtonElement).style.transform = 'scale(1.08)';
-              }}
-              onMouseLeave={(e) => {
-                (e.target as HTMLButtonElement).style.transform = 'scale(1)';
-              }}
               style={{
-                width: '60px',
-                height: '60px',
+                width: '56px',
+                height: '56px',
                 borderRadius: '50%',
                 border: 'none',
-                backgroundColor: AMBER,
+                backgroundColor: CYAN,
                 color: '#fff',
                 cursor: 'pointer',
                 display: 'flex',
@@ -335,21 +359,31 @@ export default function SharePage() {
                 justifyContent: 'center',
                 flexShrink: 0,
                 transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                boxShadow: `0 4px 20px ${AMBER}40`,
+                boxShadow: `0 4px 16px ${CYAN}40`,
+              }}
+              onMouseDown={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.95)';
+              }}
+              onMouseUp={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
               }}
             >
               {isPlaying ? (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="6" y="4" width="4" height="16" rx="1.5" />
-                  <rect x="14" y="4" width="4" height="16" rx="1.5" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="7" y="5" width="3" height="14" rx="1.5" />
+                  <rect x="14" y="5" width="3" height="14" rx="1.5" />
                 </svg>
               ) : (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="6,3 20,12 6,21" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="7,5 19,12 7,19" />
                 </svg>
               )}
             </button>
 
+            {/* Progress */}
             <div
               style={{
                 flex: 1,
@@ -359,28 +393,25 @@ export default function SharePage() {
                 position: 'relative',
               }}
             >
-              {/* Progress track */}
               <div
                 style={{
                   width: '100%',
-                  height: '6px',
-                  backgroundColor: '#1a2744',
+                  height: '5px',
+                  backgroundColor: '#1e293b',
                   borderRadius: '3px',
                   overflow: 'hidden',
-                  cursor: 'pointer',
                 }}
               >
                 <div
                   style={{
                     height: '100%',
-                    backgroundColor: AMBER,
+                    backgroundColor: CYAN,
                     borderRadius: '3px',
                     width: `${progressPercent}%`,
                     transition: 'width 0.1s linear',
                   }}
                 />
               </div>
-              {/* Invisible range input for seeking */}
               <input
                 type="range"
                 min={0}
@@ -408,7 +439,7 @@ export default function SharePage() {
               >
                 <span
                   style={{
-                    color: '#64748b',
+                    color: TEXT_DIM,
                     fontSize: '12px',
                     fontVariantNumeric: 'tabular-nums',
                   }}
@@ -417,7 +448,7 @@ export default function SharePage() {
                 </span>
                 <span
                   style={{
-                    color: '#64748b',
+                    color: TEXT_DIM,
                     fontSize: '12px',
                     fontVariantNumeric: 'tabular-nums',
                   }}
@@ -428,45 +459,66 @@ export default function SharePage() {
             </div>
           </div>
 
+          {/* Hidden audio element with CORS fix */}
           <audio
             ref={audioRef}
             src={story.audio_url}
-            onPlay={() => setIsPlaying(true)}
+            crossOrigin="anonymous"
+            onPlay={() => {
+              setIsPlaying(true);
+              setAudioError('');
+            }}
             onPause={() => setIsPlaying(false)}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={handleEnded}
+            onError={handleAudioError}
             preload="metadata"
+            playsInline
           />
 
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+          {/* Audio error message */}
+          {audioError && (
+            <div
+              style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                backgroundColor: '#ef444415',
+                border: '1px solid #ef444430',
+                color: '#f87171',
+                fontSize: '13px',
+                textAlign: 'center',
+              }}
+            >
+              {audioError}
+            </div>
+          )}
+
+          {/* Action buttons — Dialfyne pill style */}
+          <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
             <a
               href={story.audio_url}
               download
               style={{
                 flex: 1,
-                padding: '12px 16px',
-                borderRadius: '10px',
-                border: `1px solid ${BORDER}`,
-                backgroundColor: 'transparent',
-                color: '#94a3b8',
+                padding: '12px 20px',
+                borderRadius: '999px',
+                border: 'none',
+                backgroundColor: CYAN,
+                color: '#fff',
                 textAlign: 'center',
                 textDecoration: 'none',
                 fontSize: '14px',
-                fontWeight: 500,
+                fontWeight: 600,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                transition: 'opacity 0.15s ease',
+                boxShadow: `0 4px 12px ${CYAN}30`,
               }}
               onMouseEnter={(e) => {
-                const el = e.currentTarget;
-                el.style.backgroundColor = '#1a2744';
-                el.style.color = '#fff';
+                (e.currentTarget as HTMLAnchorElement).style.opacity = '0.9';
               }}
               onMouseLeave={(e) => {
-                const el = e.currentTarget;
-                el.style.backgroundColor = 'transparent';
-                el.style.color = '#94a3b8';
+                (e.currentTarget as HTMLAnchorElement).style.opacity = '1';
               }}
             >
               Download MP3
@@ -475,29 +527,27 @@ export default function SharePage() {
               onClick={copyLink}
               style={{
                 flex: 1,
-                padding: '12px 16px',
-                borderRadius: '10px',
+                padding: '12px 20px',
+                borderRadius: '999px',
                 border: `1px solid ${BORDER}`,
-                backgroundColor: copied ? `${AMBER}18` : 'transparent',
-                color: copied ? AMBER : '#94a3b8',
+                backgroundColor: copied ? `${CYAN}12` : 'transparent',
+                color: copied ? CYAN : TEXT_MUTED,
                 textAlign: 'center',
                 fontSize: '14px',
-                fontWeight: 500,
+                fontWeight: 600,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 if (!copied) {
-                  const el = e.currentTarget;
-                  el.style.backgroundColor = '#1a2744';
-                  el.style.color = '#fff';
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1e293b';
+                  (e.currentTarget as HTMLButtonElement).style.color = '#fff';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!copied) {
-                  const el = e.currentTarget;
-                  el.style.backgroundColor = 'transparent';
-                  el.style.color = '#94a3b8';
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
+                  (e.currentTarget as HTMLButtonElement).style.color = TEXT_MUTED;
                 }
               }}
             >
@@ -507,15 +557,15 @@ export default function SharePage() {
         </div>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center', marginTop: '28px' }}>
-          <p style={{ margin: 0, color: '#475569', fontSize: '13px' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ margin: 0, color: TEXT_DIM, fontSize: '13px' }}>
             Generated with{' '}
             <a
               href="https://dialfyne.com"
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                color: AMBER,
+                color: CYAN,
                 textDecoration: 'none',
                 fontWeight: 600,
               }}
@@ -523,7 +573,7 @@ export default function SharePage() {
               Dialfyne
             </a>
           </p>
-          <p style={{ margin: '4px 0 0 0', color: '#334155', fontSize: '12px' }}>
+          <p style={{ margin: '4px 0 0 0', color: '#475569', fontSize: '12px' }}>
             AI voice, automations, and sales training for small businesses.
           </p>
         </div>
@@ -534,7 +584,7 @@ export default function SharePage() {
 
 const pageStyle: React.CSSProperties = {
   minHeight: '100vh',
-  backgroundColor: DARK,
+  backgroundColor: DARK_BG,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -545,12 +595,12 @@ const pageStyle: React.CSSProperties = {
 
 const cardStyle: React.CSSProperties = {
   width: '100%',
-  backgroundColor: CARD,
+  backgroundColor: CARD_BG,
   border: `1px solid ${BORDER}`,
-  borderRadius: '20px',
-  padding: '32px',
+  borderRadius: '16px',
+  padding: '28px',
   display: 'flex',
   flexDirection: 'column',
-  gap: '14px',
-  boxShadow: `0 0 60px ${AMBER}08, 0 8px 32px rgba(0,0,0,0.4)`,
+  gap: '12px',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
 };
