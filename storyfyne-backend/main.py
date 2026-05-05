@@ -320,6 +320,12 @@ async def delete_story_endpoint(story_id: int):
     return {"deleted": True, "story_id": story_id}
 
 
+@app.get("/")
+async def root():
+    """Root endpoint for Railway health checks."""
+    return {"status": "ok", "service": "storyfyne"}
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
