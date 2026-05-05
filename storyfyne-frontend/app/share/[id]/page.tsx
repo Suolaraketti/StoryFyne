@@ -42,17 +42,28 @@ function formatDate(iso: string): string {
   }
 }
 
-/** Built-in Dialfyne "D" logo — matches the brand without needing an image file */
-function DialfyneLogo({ size = 36 }: { size?: number }) {
+/** Logo image with SVG fallback */
+function DialfyneLogo({ height = 44 }: { height?: number }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <svg width={height} height={height} viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="46" stroke={CYAN} strokeWidth="5" />
+        <path d="M32 26 L32 74 L54 74 C66 74 72 65 72 50 C72 35 66 26 54 26 Z" fill={CYAN} />
+        <rect x="40" y="40" width="8" height="20" rx="3" fill={DARK_BG} />
+      </svg>
+    );
+  }
+
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-      <circle cx="50" cy="50" r="46" stroke={CYAN} strokeWidth="5" />
-      <path
-        d="M32 26 L32 74 L54 74 C66 74 72 65 72 50 C72 35 66 26 54 26 Z"
-        fill={CYAN}
-      />
-      <rect x="40" y="40" width="8" height="20" rx="3" fill={DARK_BG} />
-    </svg>
+    <img
+      src="/dialfyne-logo.png"
+      alt="Dialfyne"
+      height={height}
+      style={{ height: `${height}px`, width: 'auto', display: 'block' }}
+      onError={() => setFailed(true)}
+    />
   );
 }
 
@@ -214,7 +225,7 @@ export default function SharePage() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <div style={{ textAlign: 'center' }}>
-            <DialfyneLogo size={48} />
+            <DialfyneLogo height={56} />
             <h2
               style={{
                 color: '#fff',
@@ -276,7 +287,7 @@ export default function SharePage() {
             gap: '12px',
           }}
         >
-          <DialfyneLogo size={32} />
+          <DialfyneLogo height={44} />
           <span
             style={{
               color: '#fff',
