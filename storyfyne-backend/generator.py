@@ -28,7 +28,6 @@ def split_at_sentence_boundaries(text: str, max_chars: int = TTS_MAX_CHARS) -> L
             if current:
                 chunks.append(current)
             if len(sentence) > max_chars:
-                # Hard split if a single sentence is too long
                 for i in range(0, len(sentence), max_chars):
                     chunks.append(sentence[i:i + max_chars])
             else:
@@ -39,14 +38,19 @@ def split_at_sentence_boundaries(text: str, max_chars: int = TTS_MAX_CHARS) -> L
     return chunks
 
 
-def parse_speaker_segments(tagged_text: str) -> List[Tuple[str, str]]:
-    """Parse tagged text into (speaker, text) segments."""
-    pattern = r'\[(NARRATOR|SPEAKER_[A-Z])\]'
+def parse_speaker_segments(tagged_text: str) -> List[Tuple[str, str, str]]:
+    """Parse tagged text into (speaker, text, voice_hint) segments.
+
+    Voice hints look like [NARRATOR: male] or [SPEAKER_A: female, confident]
+    """
+    # Pattern matches [SPEAKER] or [SPEAKER: hint]
+    pattern = r'\[(NARRATOR|SPEAKER_[A-Z])(?::\s*([^\]]*))?\]'
     parts = re.split(pattern, tagged_text)
 
-    segments: List[Tuple[str, str]] = []
+    segments: List[Tuple[str, str, str]] = []
     current_speaker = "NARRATOR"
     current_text = ""
+    current_hint = ""
 
     i = 0
     while i < len(parts):
@@ -55,30 +59,80 @@ def parse_speaker_segments(tagged_text: str) -> List[Tuple[str, str]]:
             i += 1
             continue
 
-        if re.match(pattern, f"[{part}]" if not part.startswith("[") else part):
+        if re.match(r'^(NARRATOR|SPEAKER_[A-Z])$', part):
             # This is a speaker tag like NARRATOR or SPEAKER_A
-            speaker = part.strip("[]")
+            speaker = part
+            hint = ""
+            if i + 1 < len(parts) and parts[i + 1] is not None:
+                hint = parts[i + 1].strip()
+                i += 1
             if current_text.strip():
-                segments.append((current_speaker, current_text.strip()))
+                segments.append((current_speaker, current_text.strip(), current_hint))
             current_speaker = speaker
             current_text = ""
+            current_hint = hint
         else:
             current_text += part
         i += 1
 
     if current_text.strip():
-        segments.append((current_speaker, current_text.strip()))
+        segments.append((current_speaker, current_text.strip(), current_hint))
 
     # If no speaker tags found, treat entire text as NARRATOR
     if not segments and tagged_text.strip():
-        segments.append(("NARRATOR", tagged_text.strip()))
+        segments.append(("NARRATOR", tagged_text.strip(), ""))
 
     return segments
 
 
-def get_voice_for_speaker(speaker: str, existing_assignments: Dict[str, str] = None) -> str:
-    """Determine voice for a speaker."""
+def _parse_voice_hint(hint: str) -> str:
+    """Parse a voice hint and return the best matching xAI voice."""
+    hint_lower = hint.lower()
+
+    # Direct voice mentions
+    for voice in ["eve", "ara", "rex", "sal", "leo"]:
+        if voice in hint_lower:
+            return voice
+
+    # Gender-based mapping
+    if "male" in hint_lower:
+        if "confident" in hint_lower or "clear" in hint_lower:
+            return "rex"
+        if "authoritative" in hint_lower or "strong" in hint_lower or "powerful" in hint_lower:
+            return "leo"
+        return "rex"
+
+    if "female" in hint_lower or "woman" in hint_lower:
+        if "warm" in hint_lower or "friendly" in hint_lower or "gentle" in hint_lower:
+            return "ara"
+        if "energetic" in hint_lower or "upbeat" in hint_lower:
+            return "eve"
+        return "ara"
+
+    # Personality-based mapping
+    if "energetic" in hint_lower or "upbeat" in hint_lower:
+        return "eve"
+    if "warm" in hint_lower or "friendly" in hint_lower:
+        return "ara"
+    if "confident" in hint_lower or "clear" in hint_lower:
+        return "rex"
+    if "authoritative" in hint_lower or "strong" in hint_lower:
+        return "leo"
+    if "smooth" in hint_lower or "balanced" in hint_lower or "neutral" in hint_lower or "calm" in hint_lower:
+        return "sal"
+
+    return ""
+
+
+def get_voice_for_speaker(speaker: str, hint: str = "", existing_assignments: Dict[str, str] = None) -> str:
+    """Determine voice for a speaker using hint if available, otherwise fall back to defaults."""
     speaker_upper = speaker.upper()
+
+    # Use hint if provided
+    if hint:
+        voice = _parse_voice_hint(hint)
+        if voice:
+            return voice
 
     if existing_assignments and speaker_upper in existing_assignments:
         return existing_assignments[speaker_upper]
@@ -95,13 +149,13 @@ def get_voice_for_speaker(speaker: str, existing_assignments: Dict[str, str] = N
     return VOICE_ASSIGNMENTS["NARRATOR"]
 
 
-def build_voice_assignments(segments: List[Tuple[str, str]], existing: Dict[str, str] = None) -> Dict[str, str]:
+def build_voice_assignments(segments: List[Tuple[str, str, str]], existing: Dict[str, str] = None) -> Dict[str, str]:
     """Build voice assignment map for all speakers in segments."""
     assignments = dict(existing) if existing else {}
-    for speaker, _ in segments:
+    for speaker, _, hint in segments:
         speaker_upper = speaker.upper()
         if speaker_upper not in assignments:
-            assignments[speaker_upper] = get_voice_for_speaker(speaker_upper, assignments)
+            assignments[speaker_upper] = get_voice_for_speaker(speaker_upper, hint, assignments)
     return assignments
 
 
@@ -165,7 +219,7 @@ async def generate_segment_audio(segment_text: str, voice_id: str) -> bytes:
 
 
 async def assemble_story_audio(
-    segments: List[Tuple[str, str]],
+    segments: List[Tuple[str, str, str]],
     voice_assignments: Dict[str, str]
 ) -> Tuple[bytes, int]:
     """Assemble all segments into final MP3 with proper silences."""
@@ -176,7 +230,7 @@ async def assemble_story_audio(
 
     prev_speaker = None
 
-    for speaker, text in segments:
+    for speaker, text, _ in segments:
         voice_id = voice_assignments.get(speaker.upper(), VOICE_ASSIGNMENTS["NARRATOR"])
 
         # Generate audio for this segment

@@ -137,6 +137,39 @@ export default function Home() {
     }
   };
 
+  const handleSubmitSales = async (text: string, title: string, author: string, subreddit: string) => {
+    setIsLoading(true);
+    setProgressStep('tagging');
+    setProgressDetail('Crafting Dialfyne sales pitch...');
+    setCharCount(text.length);
+
+    try {
+      const res = await fetch(`${API_URL}/api/process-sales`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, title, author, subreddit }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || 'Failed to process sales pitch');
+        setIsLoading(false);
+        setProgressStep('');
+        return;
+      }
+
+      const data = await res.json();
+      setActiveStoryId(data.story_id);
+      setProgressStep('generating');
+      setProgressDetail('Synthesizing speech with xAI TTS...');
+      fetchStories();
+    } catch (e) {
+      alert('Network error. Is the backend running?');
+      setIsLoading(false);
+      setProgressStep('');
+    }
+  };
+
   const handleDelete = async (id: number) => {
     try {
       const res = await fetch(`${API_URL}/api/stories/${id}`, {
@@ -175,7 +208,7 @@ export default function Home() {
         </p>
       </div>
 
-      <StoryInput onSubmitUrl={handleSubmitUrl} onSubmitText={handleSubmitText} isLoading={isLoading} />
+      <StoryInput onSubmitUrl={handleSubmitUrl} onSubmitText={handleSubmitText} onSubmitSales={handleSubmitSales} isLoading={isLoading} />
 
       <ProgressTracker
         step={progressStep}
