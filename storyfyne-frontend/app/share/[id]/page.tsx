@@ -16,9 +16,10 @@ interface Story {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const CYAN = '#0EA5E9';
-const DARK_BG = '#0B1120';
-const CARD_BG = '#111827';
-const BORDER = '#1e293b';
+const CYAN_GLOW = 'rgba(14, 165, 233, 0.15)';
+const DARK_BG = '#0a0e1a';
+const CARD_BG = 'rgba(17, 24, 39, 0.8)';
+const BORDER = 'rgba(30, 41, 59, 0.6)';
 const TEXT_MUTED = '#94a3b8';
 const TEXT_DIM = '#64748b';
 
@@ -30,17 +31,13 @@ function formatDuration(seconds: number): string {
 
 function formatDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   } catch {
     return iso;
   }
 }
 
-function DialfyneLogo({ height = 44 }: { height?: number }) {
+function DialfyneLogo({ height = 40 }: { height?: number }) {
   const [failed, setFailed] = useState(false);
   if (failed) {
     return (
@@ -62,35 +59,54 @@ function DialfyneLogo({ height = 44 }: { height?: number }) {
   );
 }
 
-function Waveform({ isPlaying }: { isPlaying: boolean }) {
-  const bars = 28;
+function Waveform({ isPlaying, progress }: { isPlaying: boolean; progress: number }) {
+  const bars = 32;
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '44px', justifyContent: 'center' }}>
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '48px', justifyContent: 'center', width: '100%' }}>
       {Array.from({ length: bars }).map((_, i) => {
-        const delay = i * 0.04;
-        const baseHeight = 25 + Math.sin(i * 1.4) * 18;
+        const barProgress = i / bars;
+        const isActive = barProgress <= progress;
+        const baseHeight = 15 + Math.abs(Math.sin(i * 0.8)) * 75;
+        const delay = i * 0.03;
         return (
           <div
             key={i}
             style={{
               width: '3px',
               borderRadius: '2px',
-              backgroundColor: isPlaying ? CYAN : '#334155',
+              backgroundColor: isActive ? CYAN : '#1e3a5f',
               height: `${baseHeight}%`,
-              transition: 'background-color 0.3s ease',
-              animation: isPlaying ? `wave 0.7s ease-in-out ${delay}s infinite alternate` : 'none',
-              opacity: isPlaying ? 1 : 0.5,
+              transition: 'background-color 0.2s ease',
+              animation: isPlaying ? `wave 0.6s ease-in-out ${delay}s infinite alternate` : 'none',
+              opacity: isPlaying || isActive ? 1 : 0.4,
             }}
           />
         );
       })}
       <style jsx>{`
         @keyframes wave {
-          0% { transform: scaleY(0.25); }
+          0% { transform: scaleY(0.3); }
           100% { transform: scaleY(1); }
         }
       `}</style>
     </div>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+      <polygon points="8,5 20,12 8,19" />
+    </svg>
+  );
+}
+
+function PauseIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+      <rect x="7" y="5" width="4" height="14" rx="1.5" />
+      <rect x="13" y="5" width="4" height="14" rx="1.5" />
+    </svg>
   );
 }
 
@@ -105,91 +121,45 @@ export default function SharePage() {
   const [duration, setDuration] = useState(0);
   const [copied, setCopied] = useState(false);
   const [audioError, setAudioError] = useState('');
-  const [audioDebug, setAudioDebug] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Fetch story metadata
   useEffect(() => {
     if (!storyId) return;
     fetch(`${API_URL}/api/stories/${storyId}`)
-      .then((r) => {
-        if (!r.ok) throw new Error('Story not found');
-        return r.json();
-      })
-      .then((data) => {
-        setStory(data);
-        setDuration(data.duration_seconds || 0);
-        setLoading(false);
-      })
-      .catch((e) => {
-        setError(e.message);
-        setLoading(false);
-      });
+      .then((r) => { if (!r.ok) throw new Error('Story not found'); return r.json(); })
+      .then((data) => { setStory(data); setDuration(data.duration_seconds || 0); setLoading(false); })
+      .catch((e) => { setError(e.message); setLoading(false); });
   }, [storyId]);
 
-  // Log audio URL for debugging
-  useEffect(() => {
-    if (story?.audio_url) {
-      console.log('Audio URL:', story.audio_url);
-      setAudioDebug(story.audio_url);
-    }
-  }, [story?.audio_url]);
-
   const togglePlay = useCallback(() => {
-    if (!audioRef.current) {
-      setAudioError('Audio player not ready.');
-      return;
-    }
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
+    if (!audioRef.current) { setAudioError('Audio player not ready.'); return; }
+    if (isPlaying) { audioRef.current.pause(); }
+    else {
       const promise = audioRef.current.play();
       if (promise !== undefined) {
-        promise.catch((err: any) => {
-          console.error('Play error:', err.name, err.message);
-          setAudioError(`${err.name}: ${err.message}`);
-          setIsPlaying(false);
-        });
+        promise.catch((err: any) => { console.error('Play error:', err.name, err.message); setAudioError(`${err.name}: ${err.message}`); setIsPlaying(false); });
       }
     }
   }, [isPlaying]);
 
-  const handleTimeUpdate = useCallback(() => {
-    if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
-  }, []);
-
-  const handleLoadedMetadata = useCallback(() => {
-    if (audioRef.current) setDuration(audioRef.current.duration);
-  }, []);
-
-  const handleEnded = useCallback(() => {
-    setIsPlaying(false);
-    setCurrentTime(0);
-  }, []);
+  const handleTimeUpdate = useCallback(() => { if (audioRef.current) setCurrentTime(audioRef.current.currentTime); }, []);
+  const handleLoadedMetadata = useCallback(() => { if (audioRef.current) setDuration(audioRef.current.duration); }, []);
+  const handleEnded = useCallback(() => { setIsPlaying(false); setCurrentTime(0); }, []);
 
   const seek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const time = parseFloat(e.target.value);
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
+    if (audioRef.current) { audioRef.current.currentTime = time; setCurrentTime(time); }
   }, []);
 
   const copyLink = useCallback(async () => {
-    const url = window.location.href;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      prompt('Copy this link:', url);
-    }
+    try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    catch { prompt('Copy this link:', window.location.href); }
   }, []);
 
   if (loading) {
     return (
       <div style={pageStyle}>
-        <div style={{ width: '40px', height: '40px', border: `3px solid ${BORDER}`, borderTopColor: CYAN, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: '44px', height: '44px', border: `2px solid ${BORDER}`, borderTopColor: CYAN, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <style jsx>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -200,9 +170,9 @@ export default function SharePage() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <div style={{ textAlign: 'center' }}>
-            <DialfyneLogo height={56} />
-            <h2 style={{ color: '#fff', margin: '20px 0 8px 0', fontSize: '22px', fontWeight: 700 }}>Not Found</h2>
-            <p style={{ color: TEXT_DIM, margin: 0, fontSize: '15px' }}>This audio clip does not exist or has been removed.</p>
+            <DialfyneLogo height={52} />
+            <h2 style={{ color: '#fff', margin: '24px 0 8px', fontSize: '22px', fontWeight: 700 }}>Audio Not Found</h2>
+            <p style={{ color: TEXT_DIM, margin: 0, fontSize: '15px', lineHeight: 1.5 }}>This clip may have been removed or the link is incorrect.</p>
           </div>
         </div>
       </div>
@@ -213,29 +183,30 @@ export default function SharePage() {
   const tagLabel = isSales ? 'Sales Pitch' : 'Audio Story';
   const tagColor = isSales ? CYAN : '#8B5CF6';
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const canPlay = !!story?.audio_url;
 
   return (
     <div style={pageStyle}>
-      {/* Background glow */}
-      <div style={{ position: 'fixed', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', width: '700px', height: '700px', background: `radial-gradient(circle, ${CYAN}10 0%, transparent 65%)`, pointerEvents: 'none', zIndex: 0 }} />
+      {/* Ambient background */}
+      <div style={{ position: 'fixed', inset: 0, background: `radial-gradient(ellipse at 50% 0%, ${CYAN_GLOW} 0%, transparent 50%)`, pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', inset: 0, background: `radial-gradient(ellipse at 50% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)`, pointerEvents: 'none', zIndex: 0 }} />
 
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '520px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '28px' }}>
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '560px', padding: '0 20px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <DialfyneLogo height={44} />
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '32px' }}>
+          <DialfyneLogo height={36} />
           <span style={{ color: '#fff', fontSize: '20px', fontWeight: 700, letterSpacing: '-0.3px' }}>Dialfyne</span>
-        </div>
+        </header>
 
-        {/* Card */}
+        {/* Main Card */}
         <div style={cardStyle}>
           {/* Tag */}
-          <div style={{ alignSelf: 'flex-start', padding: '5px 14px', borderRadius: '999px', backgroundColor: `${tagColor}15`, color: tagColor, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', border: `1px solid ${tagColor}25` }}>
+          <div style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 14px', borderRadius: '999px', backgroundColor: `${tagColor}12`, color: tagColor, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', border: `1px solid ${tagColor}20` }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: tagColor, display: 'inline-block' }} />
             {tagLabel}
           </div>
 
           {/* Title */}
-          <h1 style={{ margin: 0, color: '#fff', fontSize: '24px', fontWeight: 700, lineHeight: 1.25, letterSpacing: '-0.3px' }}>
+          <h1 style={{ margin: '4px 0 0', color: '#fff', fontSize: '26px', fontWeight: 700, lineHeight: 1.25, letterSpacing: '-0.4px' }}>
             {story.title || 'Untitled'}
           </h1>
 
@@ -245,64 +216,62 @@ export default function SharePage() {
           </p>
 
           {/* Waveform */}
-          <div style={{ margin: '4px 0' }}>
-            <Waveform isPlaying={isPlaying} />
+          <div style={{ margin: '8px 0' }}>
+            <Waveform isPlaying={isPlaying} progress={progressPercent / 100} />
           </div>
 
-          {/* Player */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '2px' }}>
-            {/* Play button */}
+          {/* Player controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
+            {/* Play/Pause */}
             <button
               onClick={togglePlay}
-              disabled={!canPlay}
               style={{
-                width: '56px',
-                height: '56px',
+                width: '64px',
+                height: '64px',
                 borderRadius: '50%',
                 border: 'none',
-                backgroundColor: canPlay ? CYAN : '#334155',
+                backgroundColor: CYAN,
                 color: '#fff',
-                cursor: canPlay ? 'pointer' : 'not-allowed',
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                boxShadow: canPlay ? `0 4px 16px ${CYAN}40` : 'none',
+                transition: 'all 0.2s ease',
+                boxShadow: `0 4px 20px ${CYAN}50`,
               }}
-              onMouseDown={(e) => { if (canPlay) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.95)'; }}
-              onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.06)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 6px 28px ${CYAN}60`; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 4px 20px ${CYAN}50`; }}
+              onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.96)'; }}
+              onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.06)'; }}
             >
-              {isPlaying ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="5" width="3" height="14" rx="1.5" /><rect x="14" y="5" width="3" height="14" rx="1.5" /></svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="7,5 19,12 7,19" /></svg>
-              )}
+              {isPlaying ? <PauseIcon /> : <PlayIcon />}
             </button>
 
-            {/* Progress */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', position: 'relative' }}>
-              <div style={{ width: '100%', height: '5px', backgroundColor: '#1e293b', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', backgroundColor: CYAN, borderRadius: '3px', width: `${progressPercent}%`, transition: 'width 0.1s linear' }} />
+            {/* Progress area */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* Progress bar */}
+              <div style={{ position: 'relative', width: '100%', height: '6px', backgroundColor: '#1a2744', borderRadius: '3px', overflow: 'hidden', cursor: 'pointer' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', backgroundColor: CYAN, borderRadius: '3px', width: `${progressPercent}%`, transition: 'width 0.08s linear' }} />
+                <input
+                  type="range"
+                  min={0}
+                  max={duration || 1}
+                  step={0.1}
+                  value={currentTime}
+                  onChange={seek}
+                  style={{ position: 'absolute', top: '-6px', left: 0, width: '100%', height: '18px', margin: 0, padding: 0, opacity: 0, cursor: 'pointer' }}
+                />
               </div>
-              <input
-                type="range"
-                min={0}
-                max={duration || 1}
-                step={0.1}
-                value={currentTime}
-                onChange={seek}
-                style={{ position: 'absolute', top: -8, left: 0, width: '100%', height: '22px', margin: 0, padding: 0, opacity: 0, cursor: 'pointer' }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: TEXT_DIM, fontSize: '12px', fontVariantNumeric: 'tabular-nums' }}>{formatDuration(Math.floor(currentTime))}</span>
-                <span style={{ color: TEXT_DIM, fontSize: '12px', fontVariantNumeric: 'tabular-nums' }}>{formatDuration(Math.floor(duration))}</span>
+              {/* Times */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: TEXT_DIM, fontSize: '12px', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{formatDuration(Math.floor(currentTime))}</span>
+                <span style={{ color: TEXT_DIM, fontSize: '12px', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{formatDuration(Math.floor(duration))}</span>
               </div>
             </div>
           </div>
 
-          {/* Audio element — direct R2 URL */}
+          {/* Audio element */}
           <audio
             ref={audioRef}
             src={story?.audio_url || ''}
@@ -313,85 +282,88 @@ export default function SharePage() {
             onEnded={handleEnded}
             onError={(e) => {
               const el = e.currentTarget as HTMLAudioElement;
-              console.error('Audio element error. code:', el.error?.code, 'message:', el.error?.message);
-              setAudioError(`Audio load error (code ${el.error?.code || '?'}). File may be missing or R2 CORS is not configured.`);
+              console.error('Audio error:', el.error?.code, el.error?.message);
+              setAudioError('Unable to play this audio file.');
             }}
             preload="auto"
             playsInline
           />
 
-          {/* Error message */}
+          {/* Error */}
           {audioError && (
-            <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: '#ef444415', border: '1px solid #ef444430', color: '#f87171', fontSize: '13px', textAlign: 'center' }}>
+            <div style={{ padding: '12px 16px', borderRadius: '10px', backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#f87171', fontSize: '13px', textAlign: 'center' }}>
               {audioError}
             </div>
           )}
 
-          {/* Debug URL tester */}
-          {audioDebug && (
-            <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: '#1e293b', border: `1px solid ${BORDER}`, fontSize: '12px', wordBreak: 'break-all' }}>
-              <div style={{ color: TEXT_DIM, marginBottom: '6px' }}>Audio URL:</div>
-              <a href={audioDebug} target="_blank" rel="noopener noreferrer" style={{ color: CYAN, textDecoration: 'none' }}>{audioDebug}</a>
-              <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(audioDebug, { method: 'HEAD', mode: 'cors' });
-                      alert(`Status: ${res.status} ${res.statusText}\nContent-Type: ${res.headers.get('content-type') || 'none'}\nLength: ${res.headers.get('content-length') || 'none'}`);
-                    } catch (err: any) {
-                      alert(`Fetch failed: ${err.message}`);
-                    }
-                  }}
-                  style={{ padding: '6px 12px', borderRadius: '6px', border: `1px solid ${BORDER}`, background: 'transparent', color: TEXT_MUTED, fontSize: '12px', cursor: 'pointer' }}
-                >
-                  Test URL (CORS)
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(audioDebug, { method: 'HEAD', mode: 'no-cors' });
-                      alert('Request sent (opaque response). Check Network tab in DevTools.');
-                    } catch (err: any) {
-                      alert(`Fetch failed: ${err.message}`);
-                    }
-                  }}
-                  style={{ padding: '6px 12px', borderRadius: '6px', border: `1px solid ${BORDER}`, background: 'transparent', color: TEXT_MUTED, fontSize: '12px', cursor: 'pointer' }}
-                >
-                  Test URL (no-cors)
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Buttons */}
-          <div style={{ display: 'flex', gap: '10px', marginTop: '2px' }}>
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
             <a
               href={story.audio_url}
               download
-              style={{ flex: 1, padding: '12px 20px', borderRadius: '999px', border: 'none', backgroundColor: CYAN, color: '#fff', textAlign: 'center', textDecoration: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'opacity 0.15s ease', boxShadow: `0 4px 12px ${CYAN}30` }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = '0.9'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = '1'; }}
+              style={{
+                flex: 1,
+                padding: '12px 20px',
+                borderRadius: '999px',
+                border: 'none',
+                backgroundColor: CYAN,
+                color: '#fff',
+                textAlign: 'center',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                boxShadow: `0 4px 14px ${CYAN}30`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = '0.9'; (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = '1'; (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(0)'; }}
             >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Download MP3
             </a>
             <button
               onClick={copyLink}
-              style={{ flex: 1, padding: '12px 20px', borderRadius: '999px', border: `1px solid ${BORDER}`, backgroundColor: copied ? `${CYAN}12` : 'transparent', color: copied ? CYAN : TEXT_MUTED, textAlign: 'center', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease' }}
-              onMouseEnter={(e) => { if (!copied) { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#1e293b'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}}
+              style={{
+                flex: 1,
+                padding: '12px 20px',
+                borderRadius: '999px',
+                border: `1px solid ${BORDER}`,
+                backgroundColor: copied ? `${CYAN}10` : 'transparent',
+                color: copied ? CYAN : TEXT_MUTED,
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+              }}
+              onMouseEnter={(e) => { if (!copied) { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(30, 41, 59, 0.8)'; (e.currentTarget as HTMLButtonElement).style.color = '#fff'; }}}
               onMouseLeave={(e) => { if (!copied) { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = TEXT_MUTED; }}}
             >
-              {copied ? 'Copied!' : 'Copy Link'}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              {copied ? 'Link Copied!' : 'Copy Link'}
             </button>
           </div>
         </div>
 
         {/* Footer */}
-        <div style={{ textAlign: 'center' }}>
+        <footer style={{ textAlign: 'center', marginTop: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '32px', height: '1px', backgroundColor: BORDER, marginBottom: '4px' }} />
           <p style={{ margin: 0, color: TEXT_DIM, fontSize: '13px' }}>
             Generated with <a href="https://dialfyne.com" target="_blank" rel="noopener noreferrer" style={{ color: CYAN, textDecoration: 'none', fontWeight: 600 }}>Dialfyne</a>
           </p>
-          <p style={{ margin: '4px 0 0 0', color: '#475569', fontSize: '12px' }}>AI voice, automations, and sales training for small businesses.</p>
-        </div>
+          <p style={{ margin: 0, color: '#475569', fontSize: '12px', maxWidth: '280px', lineHeight: 1.5 }}>
+            AI voice, automations, and sales training for small businesses.
+          </p>
+        </footer>
       </div>
     </div>
   );
@@ -400,10 +372,11 @@ export default function SharePage() {
 const pageStyle: React.CSSProperties = {
   minHeight: '100vh',
   backgroundColor: DARK_BG,
+  backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.08) 0%, transparent 60%)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: '40px 20px',
+  padding: '48px 0',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
 };
 
@@ -411,10 +384,11 @@ const cardStyle: React.CSSProperties = {
   width: '100%',
   backgroundColor: CARD_BG,
   border: `1px solid ${BORDER}`,
-  borderRadius: '16px',
-  padding: '28px',
+  borderRadius: '20px',
+  padding: '32px',
   display: 'flex',
   flexDirection: 'column',
-  gap: '12px',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+  gap: '16px',
+  boxShadow: '0 0 0 1px rgba(14, 165, 233, 0.05), 0 20px 60px rgba(0, 0, 0, 0.5)',
+  backdropFilter: 'blur(20px)',
 };
