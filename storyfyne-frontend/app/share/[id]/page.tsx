@@ -105,8 +105,7 @@ export default function SharePage() {
   const [duration, setDuration] = useState(0);
   const [copied, setCopied] = useState(false);
   const [audioError, setAudioError] = useState('');
-  const [audioLoading, setAudioLoading] = useState(false);
-  const [audioBlobUrl, setAudioBlobUrl] = useState<string>('');
+  const [audioDebug, setAudioDebug] = useState('');
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Fetch story metadata
@@ -128,63 +127,27 @@ export default function SharePage() {
       });
   }, [storyId]);
 
-  // Fetch audio: try Blob URL first (bypasses CORS), fall back to direct streaming
+  // Log audio URL for debugging
   useEffect(() => {
-    if (!story?.audio_url) return;
-    const audioUrl: string = story.audio_url;
-    let cancelled = false;
-    let objectUrl = '';
-
-    async function loadAudio() {
-      setAudioLoading(true);
-      setAudioError('');
-      try {
-        // Attempt 1: fetch via CORS + Blob URL (most reliable if CORS works)
-        const res = await fetch(audioUrl, { mode: 'cors' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const blob = await res.blob();
-        if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
-        setAudioBlobUrl(objectUrl);
-        setAudioLoading(false);
-      } catch (err: any) {
-        if (cancelled) return;
-        console.warn('Blob fetch failed, falling back to direct stream:', err);
-        // Attempt 2: fallback to direct audio src streaming
-        setAudioBlobUrl('');
-        setAudioLoading(false);
-        // Don't show error in fallback mode — let the browser try direct streaming
-      }
+    if (story?.audio_url) {
+      console.log('Audio URL:', story.audio_url);
+      setAudioDebug(story.audio_url);
     }
-
-    loadAudio();
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
   }, [story?.audio_url]);
 
-  // Wire audio source: Blob URL if available, else direct R2 URL
-  useEffect(() => {
-    if (!audioRef.current || !story?.audio_url) return;
-    if (audioBlobUrl) {
-      audioRef.current.src = audioBlobUrl;
-    } else {
-      audioRef.current.src = story.audio_url;
-    }
-    audioRef.current.load();
-  }, [audioBlobUrl, story?.audio_url]);
-
   const togglePlay = useCallback(() => {
-    if (!audioRef.current) return;
+    if (!audioRef.current) {
+      setAudioError('Audio player not ready.');
+      return;
+    }
     if (isPlaying) {
       audioRef.current.pause();
     } else {
       const promise = audioRef.current.play();
       if (promise !== undefined) {
-        promise.catch((err) => {
-          console.error('Play error:', err);
-          setAudioError('Playback blocked by browser.');
+        promise.catch((err: any) => {
+          console.error('Play error:', err.name, err.message);
+          setAudioError(`${err.name}: ${err.message}`);
           setIsPlaying(false);
         });
       }
@@ -250,7 +213,7 @@ export default function SharePage() {
   const tagLabel = isSales ? 'Sales Pitch' : 'Audio Story';
   const tagColor = isSales ? CYAN : '#8B5CF6';
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const canPlay = !audioLoading;
+  const canPlay = !!story?.audio_url;
 
   return (
     <div style={pageStyle}>
@@ -341,15 +304,22 @@ export default function SharePage() {
             </div>
           </div>
 
-          {/* Audio element (src wired via blob URL in useEffect) */}
+          {/* Audio element — direct R2 URL with CORS */}
           <audio
             ref={audioRef}
+            crossOrigin="anonymous"
+            src={story?.audio_url || ''}
             onPlay={() => { setIsPlaying(true); setAudioError(''); }}
             onPause={() => setIsPlaying(false)}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onEnded={handleEnded}
-            preload="metadata"
+            onError={(e) => {
+              const el = e.currentTarget as HTMLAudioElement;
+              console.error('Audio element error. code:', el.error?.code, 'message:', el.error?.message);
+              setAudioError(`Audio load error (code ${el.error?.code || '?'}). Check R2 CORS.`);
+            }}
+            preload="auto"
             playsInline
           />
 
