@@ -45,6 +45,13 @@ class ProcessRequest(BaseModel):
     url: str
 
 
+class ProcessTextRequest(BaseModel):
+    text: str
+    title: str = "Untitled Story"
+    author: str = "Unknown"
+    subreddit: str = "pasted"
+
+
 class ProcessResponse(BaseModel):
     story_id: int
     audio_url: str
@@ -262,6 +269,158 @@ async def process_story(request: ProcessRequest):
         "id": story_id,
         "title": post_data["title"],
         "subreddit": post_data["subreddit"],
+        "status": "complete",
+        "audio_url": audio_url,
+        "duration_seconds": duration_seconds,
+        "created_at": metadata["created_at"],
+    })
+    invalidate_cache()
+    update_job_progress(story_id, "complete", "Done!")
+
+    return ProcessResponse(
+        story_id=story_id,
+        audio_url=audio_url,
+        duration_seconds=duration_seconds,
+        status="complete",
+    )
+
+
+@app.post("/api/process-text", response_model=ProcessResponse)
+async def process_text(request: ProcessTextRequest):
+    """Process pasted text into expressive audio."""
+    raw_text = request.text.strip()
+    if not raw_text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    story_id = await get_next_story_id()
+    update_job_progress(story_id, "tagging", "Analyzing with Claude...")
+
+    start_time = time.time()
+    char_count = len(raw_text)
+    estimated_cost = estimate_cost(char_count)
+
+    # Step 1: Tag with Claude
+    try:
+        tagged_text = await tag_text_with_claude(raw_text)
+    except Exception as e:
+        metadata = {
+            "id": story_id,
+            "reddit_url": "",
+            "title": request.title,
+            "author": request.author,
+            "subreddit": request.subreddit,
+            "status": "tag_failed",
+            "audio_url": "",
+            "duration_seconds": 0,
+            "file_size_bytes": 0,
+            "voice_assignments": {},
+            "tagged_text_preview": raw_text[:200],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "processing_time_seconds": 0,
+            "error": str(e),
+        }
+        await upload_story_metadata(story_id, metadata)
+        await add_story_to_index({
+            "id": story_id,
+            "title": request.title,
+            "subreddit": request.subreddit,
+            "status": "tag_failed",
+            "audio_url": "",
+            "duration_seconds": 0,
+            "created_at": metadata["created_at"],
+        })
+        invalidate_cache()
+        raise HTTPException(status_code=500, detail=f"Tagging failed: {str(e)}")
+
+    update_job_progress(story_id, "generating", f"Synthesizing speech with xAI TTS... (est. ${estimated_cost:.4f})")
+
+    # Step 2: Parse segments and assign voices
+    segments = parse_speaker_segments(tagged_text)
+    voice_assignments = build_voice_assignments(segments)
+
+    # Step 3: Generate audio
+    try:
+        audio_bytes, duration_ms = await assemble_story_audio(segments, voice_assignments)
+    except Exception as e:
+        metadata = {
+            "id": story_id,
+            "reddit_url": "",
+            "title": request.title,
+            "author": request.author,
+            "subreddit": request.subreddit,
+            "status": "generate_failed",
+            "audio_url": "",
+            "duration_seconds": 0,
+            "file_size_bytes": 0,
+            "voice_assignments": voice_assignments,
+            "tagged_text_preview": tagged_text[:200],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "processing_time_seconds": 0,
+            "error": str(e),
+        }
+        await upload_story_metadata(story_id, metadata)
+        await add_story_to_index({
+            "id": story_id,
+            "title": request.title,
+            "subreddit": request.subreddit,
+            "status": "generate_failed",
+            "audio_url": "",
+            "duration_seconds": 0,
+            "created_at": metadata["created_at"],
+        })
+        invalidate_cache()
+        raise HTTPException(status_code=500, detail=f"Audio generation failed: {str(e)}")
+
+    duration_seconds = duration_ms // 1000
+    file_size_bytes = len(audio_bytes)
+
+    update_job_progress(story_id, "uploading", "Saving to Cloudflare R2...")
+
+    # Step 4: Upload audio and metadata
+    try:
+        audio_url = await upload_story_audio(story_id, audio_bytes)
+    except Exception as e:
+        temp_path = f"/tmp/story_{story_id}_final.mp3"
+        os.makedirs("/tmp", exist_ok=True)
+        with open(temp_path, "wb") as f:
+            f.write(audio_bytes)
+
+        for attempt in range(10):
+            await asyncio.sleep(30)
+            try:
+                audio_url = await upload_story_audio(story_id, audio_bytes)
+                os.remove(temp_path)
+                break
+            except Exception:
+                continue
+        else:
+            raise HTTPException(status_code=500, detail=f"R2 upload failed after retries: {str(e)}")
+
+    processing_time = int(time.time() - start_time)
+
+    metadata = {
+        "id": story_id,
+        "reddit_url": "",
+        "title": request.title,
+        "author": request.author,
+        "subreddit": request.subreddit,
+        "status": "complete",
+        "audio_url": audio_url,
+        "duration_seconds": duration_seconds,
+        "file_size_bytes": file_size_bytes,
+        "voice_assignments": voice_assignments,
+        "tagged_text_preview": tagged_text[:200],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "processing_time_seconds": processing_time,
+        "char_count": char_count,
+        "estimated_cost_usd": round(estimate_cost(char_count), 6),
+    }
+
+    await upload_story_metadata(story_id, metadata)
+    await add_story_to_index({
+        "id": story_id,
+        "title": request.title,
+        "subreddit": request.subreddit,
         "status": "complete",
         "audio_url": audio_url,
         "duration_seconds": duration_seconds,

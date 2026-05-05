@@ -71,7 +71,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [activeStoryId, fetchStories]);
 
-  const handleSubmit = async (url: string) => {
+  const handleSubmitUrl = async (url: string) => {
     setIsLoading(true);
     setProgressStep('scraping');
     setProgressDetail('Fetching Reddit post...');
@@ -96,6 +96,39 @@ export default function Home() {
       setActiveStoryId(data.story_id);
       setProgressStep('tagging');
       setProgressDetail('Analyzing with Claude...');
+      fetchStories();
+    } catch (e) {
+      alert('Network error. Is the backend running?');
+      setIsLoading(false);
+      setProgressStep('');
+    }
+  };
+
+  const handleSubmitText = async (text: string, title: string, author: string, subreddit: string) => {
+    setIsLoading(true);
+    setProgressStep('tagging');
+    setProgressDetail('Analyzing with Claude...');
+    setCharCount(text.length);
+
+    try {
+      const res = await fetch(`${API_URL}/api/process-text`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, title, author, subreddit }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || 'Failed to process story');
+        setIsLoading(false);
+        setProgressStep('');
+        return;
+      }
+
+      const data = await res.json();
+      setActiveStoryId(data.story_id);
+      setProgressStep('generating');
+      setProgressDetail('Synthesizing speech with xAI TTS...');
       fetchStories();
     } catch (e) {
       alert('Network error. Is the backend running?');
@@ -142,7 +175,7 @@ export default function Home() {
         </p>
       </div>
 
-      <StoryInput onSubmit={handleSubmit} isLoading={isLoading} />
+      <StoryInput onSubmitUrl={handleSubmitUrl} onSubmitText={handleSubmitText} isLoading={isLoading} />
 
       <ProgressTracker
         step={progressStep}
