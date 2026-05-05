@@ -128,7 +128,7 @@ export default function SharePage() {
       });
   }, [storyId]);
 
-  // Fetch audio via fetch() + Blob URL to bypass <audio> CORS issues entirely
+  // Fetch audio: try Blob URL first (bypasses CORS), fall back to direct streaming
   useEffect(() => {
     if (!story?.audio_url) return;
     const audioUrl: string = story.audio_url;
@@ -139,6 +139,7 @@ export default function SharePage() {
       setAudioLoading(true);
       setAudioError('');
       try {
+        // Attempt 1: fetch via CORS + Blob URL (most reliable if CORS works)
         const res = await fetch(audioUrl, { mode: 'cors' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const blob = await res.blob();
@@ -148,9 +149,11 @@ export default function SharePage() {
         setAudioLoading(false);
       } catch (err: any) {
         if (cancelled) return;
-        console.error('Audio fetch failed:', err);
-        setAudioError(err.message || 'Could not load audio from R2.');
+        console.warn('Blob fetch failed, falling back to direct stream:', err);
+        // Attempt 2: fallback to direct audio src streaming
+        setAudioBlobUrl('');
         setAudioLoading(false);
+        // Don't show error in fallback mode — let the browser try direct streaming
       }
     }
 
@@ -161,13 +164,16 @@ export default function SharePage() {
     };
   }, [story?.audio_url]);
 
-  // Wire blob URL into audio element when ready
+  // Wire audio source: Blob URL if available, else direct R2 URL
   useEffect(() => {
-    if (audioRef.current && audioBlobUrl) {
+    if (!audioRef.current || !story?.audio_url) return;
+    if (audioBlobUrl) {
       audioRef.current.src = audioBlobUrl;
-      audioRef.current.load();
+    } else {
+      audioRef.current.src = story.audio_url;
     }
-  }, [audioBlobUrl]);
+    audioRef.current.load();
+  }, [audioBlobUrl, story?.audio_url]);
 
   const togglePlay = useCallback(() => {
     if (!audioRef.current) return;
@@ -244,7 +250,7 @@ export default function SharePage() {
   const tagLabel = isSales ? 'Sales Pitch' : 'Audio Story';
   const tagColor = isSales ? CYAN : '#8B5CF6';
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const canPlay = !!audioBlobUrl && !audioLoading;
+  const canPlay = !audioLoading;
 
   return (
     <div style={pageStyle}>
