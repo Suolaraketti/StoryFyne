@@ -1,17 +1,19 @@
 import re
 import io
+import base64
 import httpx
 from typing import List, Tuple, Dict
 from pydub import AudioSegment
 from config import (
-    XAI_API_KEY,
-    XAI_TTS_URL,
+    GEMINI_API_KEY,
+    GEMINI_TTS_URL,
     TTS_MAX_CHARS,
     SILENCE_BETWEEN_SPEAKERS_MS,
     SILENCE_BETWEEN_CHUNKS_MS,
     SILENCE_END_MS,
     VOICE_ASSIGNMENTS,
     VOICE_CYCLE,
+    VOICES,
 )
 
 
@@ -86,27 +88,27 @@ def parse_speaker_segments(tagged_text: str) -> List[Tuple[str, str, str]]:
 
 
 def _parse_voice_hint(hint: str) -> str:
-    """Parse a voice hint and return the best matching xAI voice.
+    """Parse a voice hint and return the best matching Gemini voice.
 
-    Story mode uses only ara (female) and sal (male).
+    Story mode uses only Kore (female) and Fenrir (male).
     Sales mode can use any voice.
     """
     hint_lower = hint.lower()
 
     # Direct voice mentions (any mode)
-    for voice in ["eve", "ara", "rex", "sal", "leo"]:
-        if voice in hint_lower:
+    for voice in VOICES:
+        if voice.lower() in hint_lower:
             return voice
 
-    # Story mode gender mapping (only ara and sal)
+    # Story mode gender mapping (only Kore and Fenrir)
     if "female" in hint_lower or "woman" in hint_lower or "feminine" in hint_lower:
-        return "ara"
+        return "Kore"
 
     if "male" in hint_lower or "man" in hint_lower or "masculine" in hint_lower:
-        return "sal"
+        return "Fenrir"
 
-    # Default to sal for neutral/narrator in story mode
-    return "sal"
+    # Default to Puck for neutral/narrator in story mode
+    return "Puck"
 
 
 def get_voice_for_speaker(speaker: str, hint: str = "", existing_assignments: Dict[str, str] = None) -> str:
@@ -144,36 +146,87 @@ def build_voice_assignments(segments: List[Tuple[str, str, str]], existing: Dict
     return assignments
 
 
+def _convert_xai_tags_to_gemini(text: str) -> str:
+    """Convert xAI TTS tags to Gemini TTS expressive tags."""
+    # Non-speech sounds
+    text = re.sub(r'\[laugh\]', '[laughing]', text)
+    text = re.sub(r'\[sigh\]', '[sighing]', text)
+    text = re.sub(r'\[pause\]', '[short pause]', text)
+    text = re.sub(r'\[long-pause\]', '[long pause]', text)
+    text = re.sub(r'\[breath\]', '', text)
+    text = re.sub(r'\[whisper\]', '[whispering]', text)
+    text = re.sub(r'\[cry\]', '[crying]', text)
+
+    # XML wrapping tags → Gemini style modifiers (affect text that follows)
+    text = re.sub(r'<whisper>(.*?)</whisper>', r'[whispering] \1', text)
+    text = re.sub(r'<emphasis>(.*?)</emphasis>', r'[excitedly] \1', text)
+    text = re.sub(r'<slow>(.*?)</slow>', r'[speaking slowly] \1', text)
+    text = re.sub(r'<soft>(.*?)</soft>', r'[speaking softly] \1', text)
+    text = re.sub(r'<loud>(.*?)</loud>', r'[shouting] \1', text)
+    text = re.sub(r'<fast>(.*?)</fast>', r'[extremely fast] \1', text)
+
+    # Clean up extra spaces
+    text = re.sub(r'  +', ' ', text)
+    return text.strip()
+
+
+def _pcm_to_mp3(pcm_bytes: bytes) -> bytes:
+    """Convert raw PCM 16-bit 24kHz mono audio to MP3 bytes."""
+    audio = AudioSegment(
+        data=pcm_bytes,
+        sample_width=2,      # 16-bit
+        frame_rate=24000,    # 24kHz
+        channels=1           # mono
+    )
+    buf = io.BytesIO()
+    audio.export(buf, format="mp3")
+    return buf.getvalue()
+
+
 async def generate_tts_audio(text: str, voice_id: str, output_format: str = "mp3") -> bytes:
-    """Call xAI TTS API to generate audio for text."""
-    if not XAI_API_KEY:
-        raise ValueError("XAI_API_KEY not configured")
+    """Call Gemini TTS API to generate audio for text."""
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY not configured")
+
+    text = _convert_xai_tags_to_gemini(text)
 
     payload = {
-        "text": text,
-        "voice_id": voice_id,
-        "language": "en",
-        "output_format": {
-            "format": output_format,
-            "sample_rate": 24000,
-            "bitrate": 128000,
+        "contents": [{"parts": [{"text": text}]}],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {
+                "voiceConfig": {
+                    "prebuiltVoiceConfig": {"voiceName": voice_id}
+                }
+            }
         },
     }
 
     async with httpx.AsyncClient(timeout=120.0) as client:
         response = await client.post(
-            XAI_TTS_URL,
+            GEMINI_TTS_URL,
             headers={
-                "Authorization": f"Bearer {XAI_API_KEY}",
+                "x-goog-api-key": GEMINI_API_KEY,
                 "Content-Type": "application/json",
             },
             json=payload,
         )
 
     if response.status_code != 200:
-        raise RuntimeError(f"xAI TTS error: {response.status_code} - {response.text}")
+        raise RuntimeError(f"Gemini TTS error: {response.status_code} - {response.text}")
 
-    return response.content
+    data = response.json()
+    try:
+        parts = data["candidates"][0]["content"]["parts"]
+        for part in parts:
+            if "inlineData" in part:
+                b64_audio = part["inlineData"]["data"]
+                pcm_bytes = base64.b64decode(b64_audio)
+                return _pcm_to_mp3(pcm_bytes)
+    except (KeyError, IndexError, TypeError) as e:
+        raise RuntimeError(f"Unexpected Gemini TTS response format: {e}")
+
+    raise RuntimeError("No audio data in Gemini TTS response")
 
 
 async def generate_segment_audio(segment_text: str, voice_id: str) -> bytes:
@@ -207,6 +260,9 @@ def _strip_pause_tags(text: str) -> str:
     """Remove pause tags that would inject silence into TTS output."""
     text = re.sub(r'\[pause\]', '', text)
     text = re.sub(r'\[long-pause\]', '', text)
+    text = re.sub(r'\[short pause\]', '', text)
+    text = re.sub(r'\[medium pause\]', '', text)
+    text = re.sub(r'\[long pause\]', '', text)
     return text
 
 

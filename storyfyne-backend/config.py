@@ -6,7 +6,7 @@ load_dotenv()
 
 # API Keys
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-XAI_API_KEY = os.getenv("XAI_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", os.getenv("GOOGLE_API_KEY", ""))
 
 # Reddit
 REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
@@ -20,25 +20,26 @@ R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "storyfyne-audio")
 R2_PUBLIC_URL = os.getenv("R2_PUBLIC_URL", "")
 
 # TTS
-XAI_TTS_URL = "https://api.x.ai/v1/tts"
+GEMINI_TTS_MODEL = os.getenv("GEMINI_TTS_MODEL", "gemini-3.1-flash-tts-preview")
+GEMINI_TTS_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_TTS_MODEL}:generateContent"
 TTS_MAX_CHARS = 15000
-TTS_COST_PER_MILLION_CHARS = 4.20
+TTS_COST_PER_MILLION_CHARS = 4.20  # TODO: update with Gemini pricing when available
 
 # Audio Assembly
 SILENCE_BETWEEN_SPEAKERS_MS = 300
 SILENCE_BETWEEN_CHUNKS_MS = 150
 SILENCE_END_MS = 1000
 
-# Voice Assignments (Story Mode: ara = female, sal = male)
+# Voice Assignments (Story Mode)
 VOICE_ASSIGNMENTS: Dict[str, str] = {
-    "NARRATOR": "sal",
-    "SPEAKER_A": "ara",
-    "SPEAKER_B": "sal",
-    "SPEAKER_C": "ara",
-    "SPEAKER_D": "sal",
+    "NARRATOR": "Puck",
+    "SPEAKER_A": "Kore",
+    "SPEAKER_B": "Fenrir",
+    "SPEAKER_C": "Leda",
+    "SPEAKER_D": "Orus",
 }
 
-VOICE_CYCLE: List[str] = ["ara", "sal"]
+VOICE_CYCLE: List[str] = ["Kore", "Fenrir"]
 
 # Claude
 CLAUDE_MODEL = "claude-haiku-4-5-20251001"
@@ -49,8 +50,14 @@ R2_AUDIO_PREFIX = "audio/"
 R2_INDEX_PREFIX = "index/"
 MASTER_INDEX_KEY = f"{R2_INDEX_PREFIX}stories.json"
 
-# Supported xAI TTS voices
-VOICES = ["eve", "ara", "rex", "sal", "leo"]
+# Supported Gemini TTS voices
+VOICES = [
+    "Zephyr", "Puck", "Charon", "Kore", "Fenrir", "Leda", "Orus", "Aoede",
+    "Callirrhoe", "Autonoe", "Enceladus", "Iapetus", "Umbriel", "Algieba",
+    "Despina", "Erinome", "Algenib", "Rasalgethi", "Laomedeia", "Achernar",
+    "Alnilam", "Schedar", "Gacrux", "Pulcherrima", "Achird", "Zubenelgenubi",
+    "Vindemiatrix", "Sadachbia", "Sadaltager", "Sulafat"
+]
 
 # Supported languages
 LANGUAGES = [

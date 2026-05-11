@@ -141,7 +141,7 @@ export default function Home() {
     const res = await fetch(`${API_URL}/api/draft-sales`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, website_url: websiteUrl, title: 'Dialfyne Pitch', author: 'Dennis Kaczmarowski', voice_id: 'rex' }),
+      body: JSON.stringify({ text, website_url: websiteUrl, title: 'Dialfyne Pitch', author: 'Dennis Kaczmarowski', voice_id: 'Puck' }),
     });
 
     if (!res.ok) {

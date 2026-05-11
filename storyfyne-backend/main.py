@@ -14,6 +14,7 @@ from config import (
     TTS_COST_PER_MILLION_CHARS,
     TTS_MAX_CHARS,
     STORIES_CACHE_TTL_SECONDS,
+    VOICES,
 )
 from scraper import scrape_reddit_post, scrape_website
 from tagger import tag_text_with_claude
@@ -59,7 +60,7 @@ class SalesRequest(BaseModel):
     title: str = "Dialfyne Pitch"
     author: str = "Dennis Kaczmarowski"
     website_url: str = ""
-    voice_id: str = "rex"
+    voice_id: str = "Puck"
     tagged_text: str = ""
 
 
@@ -195,7 +196,7 @@ async def process_story(request: ProcessRequest):
         invalidate_cache()
         raise HTTPException(status_code=500, detail=f"Tagging failed: {str(e)}")
 
-    update_job_progress(story_id, "generating", "Synthesizing speech with xAI TTS...")
+    update_job_progress(story_id, "generating", "Synthesizing speech with Gemini TTS...")
 
     # Step 3: Parse segments and assign voices
     segments = parse_speaker_segments(tagged_text)
@@ -349,7 +350,7 @@ async def process_text(request: ProcessTextRequest):
         invalidate_cache()
         raise HTTPException(status_code=500, detail=f"Tagging failed: {str(e)}")
 
-    update_job_progress(story_id, "generating", f"Synthesizing speech with xAI TTS... (est. ${estimated_cost:.4f})")
+    update_job_progress(story_id, "generating", f"Synthesizing speech with Gemini TTS... (est. ${estimated_cost:.4f})")
 
     # Step 2: Parse segments and assign voices
     segments = parse_speaker_segments(tagged_text)
@@ -512,7 +513,7 @@ async def process_sales(request: SalesRequest):
     # If pre-tagged text is provided, skip Claude
     if request.tagged_text.strip():
         tagged_text = request.tagged_text.strip()
-        update_job_progress(story_id, "generating", "Synthesizing speech with xAI TTS...")
+        update_job_progress(story_id, "generating", "Synthesizing speech with Gemini TTS...")
     else:
         update_job_progress(story_id, "tagging", "Crafting sales pitch with Claude...")
 
@@ -563,14 +564,14 @@ async def process_sales(request: SalesRequest):
             invalidate_cache()
             raise HTTPException(status_code=500, detail=f"Tagging failed: {str(e)}")
 
-    update_job_progress(story_id, "generating", "Synthesizing speech with xAI TTS...")
+    update_job_progress(story_id, "generating", "Synthesizing speech with Gemini TTS...")
 
     # Parse segments and assign voices
     segments = parse_speaker_segments(tagged_text)
     voice_assignments = build_voice_assignments(segments)
 
     # Override voice if user selected one
-    if request.voice_id and request.voice_id in ["eve", "ara", "rex", "sal", "leo"]:
+    if request.voice_id and request.voice_id in VOICES:
         for speaker in voice_assignments:
             voice_assignments[speaker] = request.voice_id
 

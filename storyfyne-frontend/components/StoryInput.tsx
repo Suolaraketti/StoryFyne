@@ -11,11 +11,11 @@ interface StoryInputProps {
 }
 
 const VOICES = [
-  { id: 'rex', label: 'Rex — Confident, Clear (Male)', desc: 'Best for authoritative pitches' },
-  { id: 'leo', label: 'Leo — Authoritative, Strong (Male)', desc: 'Best for commanding presence' },
-  { id: 'ara', label: 'Ara — Warm, Friendly (Female)', desc: 'Best for approachable tone' },
-  { id: 'eve', label: 'Eve — Energetic, Upbeat (Female)', desc: 'Best for enthusiastic delivery' },
-  { id: 'sal', label: 'Sal — Smooth, Balanced (Neutral)', desc: 'Best for calm narration' },
+  { id: 'Puck', label: 'Puck — Smooth, Balanced (Male)', desc: 'Best for calm narration and pitches' },
+  { id: 'Fenrir', label: 'Fenrir — Deep, Confident (Male)', desc: 'Best for authoritative presence' },
+  { id: 'Kore', label: 'Kore — Warm, Friendly (Female)', desc: 'Best for approachable tone' },
+  { id: 'Leda', label: 'Leda — Energetic, Bright (Female)', desc: 'Best for enthusiastic delivery' },
+  { id: 'Zephyr', label: 'Zephyr — Soft, Calm (Female)', desc: 'Best for gentle, soothing delivery' },
 ];
 
 export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onPreviewSales, isLoading }: StoryInputProps) {
@@ -28,7 +28,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
 
   // Sales mode state
   const [websiteUrl, setWebsiteUrl] = useState('');
-  const [voiceId, setVoiceId] = useState('rex');
+  const [voiceId, setVoiceId] = useState('Puck');
   const [previewText, setPreviewText] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
