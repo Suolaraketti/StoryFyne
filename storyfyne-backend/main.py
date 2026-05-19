@@ -988,6 +988,35 @@ async def process_influencer(request: InfluencerRequest):
     voice_id = request.voice_id if request.voice_id in VOICES else "Kore"
     avatar_id = request.avatar_id or "7e95996"
 
+    # Save a placeholder immediately so the frontend doesn't 404 while processing
+    placeholder = {
+        "id": story_id,
+        "reddit_url": "",
+        "title": request.title or "AI Influencer",
+        "author": request.author or "Unknown",
+        "subreddit": "influencer",
+        "status": "processing",
+        "audio_url": "",
+        "video_url": "",
+        "duration_seconds": 0,
+        "file_size_bytes": 0,
+        "voice_assignments": {},
+        "tagged_text_preview": raw_text[:200],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "processing_time_seconds": 0,
+    }
+    await upload_story_metadata(story_id, placeholder)
+    await add_story_to_index({
+        "id": story_id,
+        "title": request.title or "AI Influencer",
+        "subreddit": "influencer",
+        "status": "processing",
+        "audio_url": "",
+        "duration_seconds": 0,
+        "created_at": placeholder["created_at"],
+    })
+    invalidate_cache()
+
     # Kick off background task so the request returns immediately
     async def _wrapped_task():
         try:
