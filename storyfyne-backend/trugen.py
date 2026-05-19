@@ -56,9 +56,13 @@ async def create_video(
         response = await client.post(url, headers=_headers(), json=payload)
 
     if response.status_code != 200:
-        raise RuntimeError(f"TruGen create video error: {response.status_code} - {response.text[:200]}")
+        raise RuntimeError(f"TruGen create video error: {response.status_code} - {response.text[:500]}")
 
-    return response.json()
+    data = response.json()
+    if data.get("status") == -1 or data.get("error"):
+        raise RuntimeError(f"TruGen create video rejected: {data.get('error', data)}")
+
+    return data
 
 
 async def get_generation_status(generation_id: str) -> Dict:
