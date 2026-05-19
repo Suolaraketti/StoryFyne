@@ -79,6 +79,11 @@ export default function StoryCard({ story, apiUrl, onDelete }: StoryCardProps) {
           textTransform: 'capitalize',
         }}>
           Status: {story.status.replace('_', ' ')}
+          {(story as any).error && (
+            <div style={{ marginTop: '8px', color: '#f87171', fontSize: '12px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              {(story as any).error}
+            </div>
+          )}
         </div>
       )}
 
