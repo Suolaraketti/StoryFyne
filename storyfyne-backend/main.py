@@ -884,7 +884,7 @@ async def _process_influencer(
     video_url = ""
     video_bytes = b""
     polling_error = ""
-    for _ in range(120):  # poll for up to 6 minutes
+    for _ in range(300):  # poll for up to 15 minutes
         await asyncio.sleep(3)
         try:
             status_result = await trugen_client.get_generation_status(generation_id)
