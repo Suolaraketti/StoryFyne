@@ -9,6 +9,7 @@ interface Story {
   duration_seconds: number;
   created_at: string;
   audio_url: string;
+  video_url?: string;
   status: string;
 }
 

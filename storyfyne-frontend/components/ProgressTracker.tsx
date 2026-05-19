@@ -1,9 +1,16 @@
 'use client';
 
-const STEPS = [
+const STEPS_STANDARD = [
   { key: 'scraping', label: 'Scraping' },
   { key: 'tagging', label: 'Tagging' },
   { key: 'generating', label: 'Generating' },
+  { key: 'uploading', label: 'Uploading' },
+  { key: 'complete', label: 'Complete' },
+];
+
+const STEPS_INFLUENCER = [
+  { key: 'generating', label: 'Audio' },
+  { key: 'rendering', label: 'Avatar' },
   { key: 'uploading', label: 'Uploading' },
   { key: 'complete', label: 'Complete' },
 ];
@@ -12,9 +19,11 @@ interface ProgressTrackerProps {
   step: string;
   detail?: string;
   charCount?: number;
+  mode?: 'standard' | 'influencer';
 }
 
-export default function ProgressTracker({ step, detail, charCount }: ProgressTrackerProps) {
+export default function ProgressTracker({ step, detail, charCount, mode = 'standard' }: ProgressTrackerProps) {
+  const STEPS = mode === 'influencer' ? STEPS_INFLUENCER : STEPS_STANDARD;
   const currentIndex = STEPS.findIndex((s) => s.key === step);
   const isComplete = step === 'complete';
   const estimatedCost = charCount ? ((charCount * 4.20) / 1_000_000).toFixed(4) : null;

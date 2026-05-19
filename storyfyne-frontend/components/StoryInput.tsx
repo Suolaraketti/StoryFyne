@@ -6,6 +6,7 @@ interface StoryInputProps {
   onSubmitUrl: (url: string) => void;
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
+  onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string) => void;
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
   isLoading: boolean;
 }
@@ -18,8 +19,8 @@ const VOICES = [
   { id: 'Zephyr', label: 'Zephyr — Soft, Calm (Female)', desc: 'Best for gentle, soothing delivery' },
 ];
 
-export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onPreviewSales, isLoading }: StoryInputProps) {
-  const [mode, setMode] = useState<'text' | 'url' | 'sales'>('text');
+export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onPreviewSales, isLoading }: StoryInputProps) {
+  const [mode, setMode] = useState<'text' | 'url' | 'sales' | 'influencer'>('text');
   const [url, setUrl] = useState('');
   const [text, setText] = useState('');
   const [title, setTitle] = useState('');
@@ -34,6 +35,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [isPreviewing, setIsPreviewing] = useState(false);
 
   const isSales = mode === 'sales';
+  const isInfluencer = mode === 'influencer';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +45,8 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       onSubmitText(text.trim(), title.trim() || 'Untitled Story', author.trim() || 'Unknown', subreddit.trim() || 'pasted');
     } else if (mode === 'sales' && text.trim()) {
       onSubmitSales(text.trim(), title.trim() || 'Dialfyne Pitch', author.trim() || 'Dennis Kaczmarowski', voiceId, websiteUrl.trim(), previewText.trim());
+    } else if (mode === 'influencer' && text.trim()) {
+      onSubmitInfluencer(text.trim(), title.trim() || 'AI Influencer', author.trim() || 'Unknown', voiceId);
     }
   };
 
@@ -75,11 +79,20 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
           style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #333', backgroundColor: mode === 'sales' ? '#F5A623' : '#141414', color: '#fff', cursor: 'pointer', fontSize: '14px' }}>
           Sales Mode
         </button>
+        <button type="button" onClick={() => { setMode('influencer'); setShowPreview(false); }}
+          style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #333', backgroundColor: mode === 'influencer' ? '#ec4899' : '#141414', color: '#fff', cursor: 'pointer', fontSize: '14px' }}>
+          Influencer
+        </button>
       </div>
 
       {isSales && (
         <div style={{ backgroundColor: '#1a1205', border: '1px solid #F5A623', borderRadius: '10px', padding: '14px 18px', marginBottom: '16px', fontSize: '14px', color: '#F5A623' }}>
           Sales Mode: Paste a story or idea, optionally add a prospect website, preview the pitch, then generate audio.
+        </div>
+      )}
+      {isInfluencer && (
+        <div style={{ backgroundColor: '#1a0512', border: '1px solid #ec4899', borderRadius: '10px', padding: '14px 18px', marginBottom: '16px', fontSize: '14px', color: '#ec4899' }}>
+          Influencer Mode: Generate a 9:16 vertical video (TikTok / Reels) with Gemini voice + TruGen avatar (Clara).
         </div>
       )}
 
@@ -89,20 +102,22 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <input type="text" placeholder={isSales ? "Pitch title (optional)" : "Title (optional)"} value={title} onChange={(e) => setTitle(e.target.value)} disabled={isLoading}
+            <input type="text" placeholder={isSales ? "Pitch title (optional)" : isInfluencer ? "Video title (optional)" : "Title (optional)"} value={title} onChange={(e) => setTitle(e.target.value)} disabled={isLoading}
               style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }} />
-            <input type="text" placeholder={isSales ? "Your name (optional)" : "Author (optional)"} value={author} onChange={(e) => setAuthor(e.target.value)} disabled={isLoading}
+            <input type="text" placeholder={isSales ? "Your name (optional)" : isInfluencer ? "Influencer name (optional)" : "Author (optional)"} value={author} onChange={(e) => setAuthor(e.target.value)} disabled={isLoading}
               style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }} />
-            {!isSales && (
+            {!isSales && !isInfluencer && (
               <input type="text" placeholder="Subreddit (optional)" value={subreddit} onChange={(e) => setSubreddit(e.target.value)} disabled={isLoading}
                 style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }} />
             )}
           </div>
 
-          {isSales && (
+          {(isSales || isInfluencer) && (
             <>
-              <input type="url" placeholder="Prospect website URL (optional, e.g. https://example.com)" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} disabled={isLoading}
-                style={{ width: '100%', padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', boxSizing: 'border-box' }} />
+              {isSales && (
+                <input type="url" placeholder="Prospect website URL (optional, e.g. https://example.com)" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} disabled={isLoading}
+                  style={{ width: '100%', padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', boxSizing: 'border-box' }} />
+              )}
 
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <label style={{ color: '#888', fontSize: '14px', whiteSpace: 'nowrap' }}>Voice:</label>
@@ -121,8 +136,8 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
           )}
 
           <textarea
-            placeholder={isSales ? "Paste a cold email, story, idea, or bullet points (optional if you provided a website above)..." : "Paste story text here..."}
-            value={text} onChange={(e) => setText(e.target.value)} disabled={isLoading} required={!isSales || !websiteUrl.trim()} rows={8}
+            placeholder={isSales ? "Paste a cold email, story, idea, or bullet points (optional if you provided a website above)..." : isInfluencer ? "Write your influencer script here..." : "Paste story text here..."}
+            value={text} onChange={(e) => setText(e.target.value)} disabled={isLoading} required={!isSales || !websiteUrl.trim()} rows={isInfluencer ? 10 : 8}
             style={{ width: '100%', padding: '14px 18px', fontSize: '16px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
           />
 
@@ -154,10 +169,16 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
         </div>
       )}
 
-      {!isSales && (
+      {!isSales && !isInfluencer && (
         <button type="submit" disabled={isLoading}
           style={{ marginTop: '16px', width: '100%', padding: '14px 28px', fontSize: '16px', fontWeight: 600, borderRadius: '10px', border: 'none', backgroundColor: isLoading ? '#333' : '#2563eb', color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
           {isLoading ? 'Generating...' : 'Generate Audio'}
+        </button>
+      )}
+      {isInfluencer && (
+        <button type="submit" disabled={isLoading}
+          style={{ marginTop: '16px', width: '100%', padding: '14px 28px', fontSize: '16px', fontWeight: 600, borderRadius: '10px', border: 'none', backgroundColor: isLoading ? '#333' : '#ec4899', color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
+          {isLoading ? 'Generating Avatar Video...' : 'Generate Influencer Video'}
         </button>
       )}
     </form>

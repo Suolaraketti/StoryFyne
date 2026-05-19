@@ -24,6 +24,7 @@ export default function Home() {
   const [progressStep, setProgressStep] = useState('');
   const [progressDetail, setProgressDetail] = useState('');
   const [charCount, setCharCount] = useState<number | undefined>();
+  const [progressMode, setProgressMode] = useState<'standard' | 'influencer'>('standard');
 
   const fetchStories = useCallback(async () => {
     try {
@@ -73,6 +74,7 @@ export default function Home() {
 
   const handleSubmitUrl = async (url: string) => {
     setIsLoading(true);
+    setProgressMode('standard');
     setProgressStep('scraping');
     setProgressDetail('Fetching Reddit post...');
     setCharCount(undefined);
@@ -106,6 +108,7 @@ export default function Home() {
 
   const handleSubmitText = async (text: string, title: string, author: string, subreddit: string) => {
     setIsLoading(true);
+    setProgressMode('standard');
     setProgressStep('tagging');
     setProgressDetail('Analyzing with Claude...');
     setCharCount(text.length);
@@ -154,6 +157,7 @@ export default function Home() {
 
   const handleSubmitSales = async (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => {
     setIsLoading(true);
+    setProgressMode('standard');
     setProgressStep('generating');
     setProgressDetail('Synthesizing speech with xAI TTS...');
     setCharCount(text.length);
@@ -177,6 +181,40 @@ export default function Home() {
       setActiveStoryId(data.story_id);
       setProgressStep('uploading');
       setProgressDetail('Saving to Cloudflare R2...');
+      fetchStories();
+    } catch (e) {
+      alert('Network error. Is the backend running?');
+      setIsLoading(false);
+      setProgressStep('');
+    }
+  };
+
+  const handleSubmitInfluencer = async (text: string, title: string, author: string, voiceId: string) => {
+    setIsLoading(true);
+    setProgressMode('influencer');
+    setProgressStep('generating');
+    setProgressDetail('Synthesizing Gemini audio...');
+    setCharCount(text.length);
+
+    try {
+      const res = await fetch(`${API_URL}/api/process-influencer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, title, author, voice_id: voiceId }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || 'Failed to process influencer video');
+        setIsLoading(false);
+        setProgressStep('');
+        return;
+      }
+
+      const data = await res.json();
+      setActiveStoryId(data.story_id);
+      setProgressStep('rendering');
+      setProgressDetail('Rendering TruGen avatar video...');
       fetchStories();
     } catch (e) {
       alert('Network error. Is the backend running?');
@@ -223,12 +261,13 @@ export default function Home() {
         </p>
       </div>
 
-      <StoryInput onSubmitUrl={handleSubmitUrl} onSubmitText={handleSubmitText} onSubmitSales={handleSubmitSales} onPreviewSales={handlePreviewSales} isLoading={isLoading} />
+      <StoryInput onSubmitUrl={handleSubmitUrl} onSubmitText={handleSubmitText} onSubmitSales={handleSubmitSales} onSubmitInfluencer={handleSubmitInfluencer} onPreviewSales={handlePreviewSales} isLoading={isLoading} />
 
       <ProgressTracker
         step={progressStep}
         detail={progressDetail}
         charCount={charCount}
+        mode={progressMode}
       />
 
       <div style={{ marginBottom: '16px' }}>

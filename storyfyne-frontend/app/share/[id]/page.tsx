@@ -10,6 +10,7 @@ interface Story {
   subreddit: string;
   duration_seconds: number;
   audio_url: string;
+  video_url?: string;
   created_at: string;
   voice_assignments: Record<string, string>;
 }
@@ -180,8 +181,9 @@ export default function SharePage() {
   }
 
   const isSales = story.subreddit === 'sales';
-  const tagLabel = isSales ? 'Sales Pitch' : 'Audio Story';
-  const tagColor = isSales ? CYAN : '#8B5CF6';
+  const isInfluencer = story.subreddit === 'influencer';
+  const tagLabel = isInfluencer ? 'AI Influencer' : isSales ? 'Sales Pitch' : 'Audio Story';
+  const tagColor = isInfluencer ? '#ec4899' : isSales ? CYAN : '#8B5CF6';
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
@@ -215,79 +217,90 @@ export default function SharePage() {
             {story.author || 'Unknown'} · {formatDuration(story.duration_seconds)} · {formatDate(story.created_at)}
           </p>
 
-          {/* Waveform */}
-          <div style={{ margin: '8px 0' }}>
-            <Waveform isPlaying={isPlaying} progress={progressPercent / 100} />
-          </div>
-
-          {/* Player controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
-            {/* Play/Pause */}
-            <button
-              onClick={togglePlay}
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                border: 'none',
-                backgroundColor: CYAN,
-                color: '#fff',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                transition: 'all 0.2s ease',
-                boxShadow: `0 4px 20px ${CYAN}50`,
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.06)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 6px 28px ${CYAN}60`; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 4px 20px ${CYAN}50`; }}
-              onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.96)'; }}
-              onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.06)'; }}
-            >
-              {isPlaying ? <PauseIcon /> : <PlayIcon />}
-            </button>
-
-            {/* Progress area */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {/* Progress bar */}
-              <div style={{ position: 'relative', width: '100%', height: '6px', backgroundColor: '#1a2744', borderRadius: '3px', overflow: 'hidden', cursor: 'pointer' }}>
-                <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', backgroundColor: CYAN, borderRadius: '3px', width: `${progressPercent}%`, transition: 'width 0.08s linear' }} />
-                <input
-                  type="range"
-                  min={0}
-                  max={duration || 1}
-                  step={0.1}
-                  value={currentTime}
-                  onChange={seek}
-                  style={{ position: 'absolute', top: '-6px', left: 0, width: '100%', height: '18px', margin: 0, padding: 0, opacity: 0, cursor: 'pointer' }}
-                />
+          {story.video_url ? (
+            <video
+              src={story.video_url}
+              controls
+              style={{ width: '100%', borderRadius: '12px', border: `1px solid ${BORDER}` }}
+              playsInline
+            />
+          ) : (
+            <>
+              {/* Waveform */}
+              <div style={{ margin: '8px 0' }}>
+                <Waveform isPlaying={isPlaying} progress={progressPercent / 100} />
               </div>
-              {/* Times */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: TEXT_DIM, fontSize: '12px', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{formatDuration(Math.floor(currentTime))}</span>
-                <span style={{ color: TEXT_DIM, fontSize: '12px', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{formatDuration(Math.floor(duration))}</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Audio element */}
-          <audio
-            ref={audioRef}
-            src={story?.audio_url || ''}
-            onPlay={() => { setIsPlaying(true); setAudioError(''); }}
-            onPause={() => setIsPlaying(false)}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={handleLoadedMetadata}
-            onEnded={handleEnded}
-            onError={(e) => {
-              const el = e.currentTarget as HTMLAudioElement;
-              console.error('Audio error:', el.error?.code, el.error?.message);
-              setAudioError('Unable to play this audio file.');
-            }}
-            preload="auto"
-            playsInline
-          />
+              {/* Player controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '4px' }}>
+                {/* Play/Pause */}
+                <button
+                  onClick={togglePlay}
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    border: 'none',
+                    backgroundColor: CYAN,
+                    color: '#fff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    transition: 'all 0.2s ease',
+                    boxShadow: `0 4px 20px ${CYAN}50`,
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.06)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 6px 28px ${CYAN}60`; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 4px 20px ${CYAN}50`; }}
+                  onMouseDown={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.96)'; }}
+                  onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.06)'; }}
+                >
+                  {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                </button>
+
+                {/* Progress area */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {/* Progress bar */}
+                  <div style={{ position: 'relative', width: '100%', height: '6px', backgroundColor: '#1a2744', borderRadius: '3px', overflow: 'hidden', cursor: 'pointer' }}>
+                    <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', backgroundColor: CYAN, borderRadius: '3px', width: `${progressPercent}%`, transition: 'width 0.08s linear' }} />
+                    <input
+                      type="range"
+                      min={0}
+                      max={duration || 1}
+                      step={0.1}
+                      value={currentTime}
+                      onChange={seek}
+                      style={{ position: 'absolute', top: '-6px', left: 0, width: '100%', height: '18px', margin: 0, padding: 0, opacity: 0, cursor: 'pointer' }}
+                    />
+                  </div>
+                  {/* Times */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: TEXT_DIM, fontSize: '12px', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{formatDuration(Math.floor(currentTime))}</span>
+                    <span style={{ color: TEXT_DIM, fontSize: '12px', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>{formatDuration(Math.floor(duration))}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Audio element */}
+              <audio
+                ref={audioRef}
+                src={story?.audio_url || ''}
+                onPlay={() => { setIsPlaying(true); setAudioError(''); }}
+                onPause={() => setIsPlaying(false)}
+                onTimeUpdate={handleTimeUpdate}
+                onLoadedMetadata={handleLoadedMetadata}
+                onEnded={handleEnded}
+                onError={(e) => {
+                  const el = e.currentTarget as HTMLAudioElement;
+                  console.error('Audio error:', el.error?.code, el.error?.message);
+                  setAudioError('Unable to play this audio file.');
+                }}
+                preload="auto"
+                playsInline
+              />
+            </>
+          )}
 
           {/* Error */}
           {audioError && (
@@ -324,7 +337,7 @@ export default function SharePage() {
               onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.opacity = '1'; (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(0)'; }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download MP3
+              {story.video_url ? 'Download Video' : 'Download MP3'}
             </a>
             <button
               onClick={copyLink}

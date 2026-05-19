@@ -22,9 +22,11 @@ from generator import (
     parse_speaker_segments,
     build_voice_assignments,
     assemble_story_audio,
+    generate_segment_audio,
 )
 from storage import (
     upload_story_audio,
+    upload_story_video,
     upload_story_metadata,
     get_master_index,
     get_story_metadata,
@@ -33,8 +35,12 @@ from storage import (
     delete_story,
     get_audio_url,
     get_audio_key,
+    get_video_url,
+    get_video_key,
     slugify,
 )
+import trugen as trugen_client
+from video_muxer import replace_audio_in_video
 
 # In-memory cache for stories index
 _stories_cache: Optional[Dict] = None
@@ -62,6 +68,14 @@ class SalesRequest(BaseModel):
     website_url: str = ""
     voice_id: str = "Puck"
     tagged_text: str = ""
+
+
+class InfluencerRequest(BaseModel):
+    text: str
+    title: str = "AI Influencer"
+    author: str = "Unknown"
+    voice_id: str = "Kore"
+    avatar_id: str = "7e95996"
 
 
 class DraftSalesResponse(BaseModel):
@@ -697,11 +711,15 @@ async def get_story(story_id: int):
 
 @app.get("/api/download/{story_id}")
 async def download_story(story_id: int):
-    """Redirect to the R2 audio URL."""
+    """Redirect to the R2 audio or video URL."""
     metadata = await get_story_metadata(story_id)
-    if metadata is None or not metadata.get("audio_url"):
-        raise HTTPException(status_code=404, detail="Audio not found")
-    return RedirectResponse(url=metadata["audio_url"])
+    if metadata is None:
+        raise HTTPException(status_code=404, detail="Story not found")
+    # Prefer video for influencer content, fallback to audio
+    url = metadata.get("video_url") or metadata.get("audio_url")
+    if not url:
+        raise HTTPException(status_code=404, detail="Media not found")
+    return RedirectResponse(url=url)
 
 
 @app.delete("/api/stories/{story_id}")
@@ -720,6 +738,273 @@ async def delete_story_endpoint(story_id: int):
 async def root():
     """Root endpoint for Railway health checks."""
     return {"status": "ok", "service": "storyfyne"}
+
+
+async def _process_influencer(
+    story_id: int,
+    text: str,
+    title: str,
+    author: str,
+    voice_id: str,
+    avatar_id: str,
+):
+    """Background task: generate Gemini audio + TruGen avatar video."""
+    start_time = time.time()
+    char_count = len(text)
+    estimated_cost = estimate_cost(char_count)
+    slug = slugify(title)
+
+    # Step 1: Generate Gemini TTS audio
+    update_job_progress(story_id, "generating", f"Synthesizing Gemini audio... (est. ${estimated_cost:.4f})")
+    try:
+        audio_bytes = await generate_segment_audio(text, voice_id)
+        audio_duration_ms = len(audio_bytes) * 8  # rough estimate, will calculate properly below
+    except Exception as e:
+        metadata = {
+            "id": story_id,
+            "reddit_url": "",
+            "title": title,
+            "author": author,
+            "subreddit": "influencer",
+            "status": "generate_failed",
+            "audio_url": "",
+            "video_url": "",
+            "duration_seconds": 0,
+            "file_size_bytes": 0,
+            "voice_assignments": {},
+            "tagged_text_preview": text[:200],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "processing_time_seconds": 0,
+            "error": str(e),
+        }
+        await upload_story_metadata(story_id, metadata)
+        await add_story_to_index({
+            "id": story_id,
+            "title": title,
+            "subreddit": "influencer",
+            "status": "generate_failed",
+            "audio_url": "",
+            "duration_seconds": 0,
+            "created_at": metadata["created_at"],
+        })
+        invalidate_cache()
+        update_job_progress(story_id, "generate_failed", f"Gemini audio failed: {str(e)}")
+        return
+
+    # Step 2: Upload audio
+    update_job_progress(story_id, "uploading", "Saving audio to R2...")
+    try:
+        audio_url = await upload_story_audio(story_id, audio_bytes, slug=slug)
+    except Exception as e:
+        temp_path = f"/tmp/story_{story_id}_final.mp3"
+        os.makedirs("/tmp", exist_ok=True)
+        with open(temp_path, "wb") as f:
+            f.write(audio_bytes)
+        for attempt in range(10):
+            await asyncio.sleep(30)
+            try:
+                audio_url = await upload_story_audio(story_id, audio_bytes, slug=slug)
+                os.remove(temp_path)
+                break
+            except Exception:
+                continue
+        else:
+            update_job_progress(story_id, "generate_failed", f"Audio upload failed: {str(e)}")
+            return
+
+    # Calculate audio duration using pydub
+    try:
+        import io
+        from pydub import AudioSegment
+        audio_seg = AudioSegment.from_mp3(io.BytesIO(audio_bytes))
+        audio_duration_seconds = len(audio_seg) // 1000
+    except Exception:
+        audio_duration_seconds = 0
+
+    # Step 3: Submit TruGen video job
+    update_job_progress(story_id, "rendering", "Rendering TruGen avatar video...")
+    try:
+        gen_result = await trugen_client.create_video(
+            script=text,
+            avatar_id=avatar_id,
+        )
+        generation_id = gen_result["generation_id"]
+    except Exception as e:
+        # Save audio-only metadata since audio succeeded
+        metadata = {
+            "id": story_id,
+            "reddit_url": "",
+            "title": title,
+            "author": author,
+            "subreddit": "influencer",
+            "status": "audio_only",
+            "audio_url": audio_url,
+            "audio_key": get_audio_key(story_id, slug=slug),
+            "video_url": "",
+            "duration_seconds": audio_duration_seconds,
+            "file_size_bytes": len(audio_bytes),
+            "voice_assignments": {"NARRATOR": voice_id},
+            "tagged_text_preview": text[:200],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "processing_time_seconds": int(time.time() - start_time),
+            "char_count": char_count,
+            "estimated_cost_usd": round(estimate_cost(char_count), 6),
+            "error": f"TruGen video failed: {str(e)}",
+        }
+        await upload_story_metadata(story_id, metadata)
+        await add_story_to_index({
+            "id": story_id,
+            "title": title,
+            "subreddit": "influencer",
+            "status": "audio_only",
+            "audio_url": audio_url,
+            "duration_seconds": audio_duration_seconds,
+            "created_at": metadata["created_at"],
+        })
+        invalidate_cache()
+        update_job_progress(story_id, "complete", "Audio ready. Video generation failed.")
+        return
+
+    # Step 4: Poll TruGen status
+    update_job_progress(story_id, "rendering", f"Rendering TruGen avatar video... (job {generation_id[:8]})")
+    video_url = ""
+    video_bytes = b""
+    for _ in range(120):  # poll for up to 6 minutes
+        await asyncio.sleep(3)
+        try:
+            status_result = await trugen_client.get_generation_status(generation_id)
+            status = status_result.get("status", "")
+            if status == "completed":
+                video_url = status_result.get("video_url", "")
+                if video_url:
+                    try:
+                        video_bytes = await trugen_client.download_video(video_url)
+                    except Exception as dl_err:
+                        update_job_progress(story_id, "rendering", f"Video ready but download failed: {dl_err}")
+                        # fall through to save audio-only
+                break
+            elif status == "failed":
+                error_msg = status_result.get("error", "Unknown TruGen error")
+                update_job_progress(story_id, "rendering", f"TruGen video failed: {error_msg}")
+                break
+            else:
+                # still processing
+                pass
+        except Exception as poll_err:
+            # continue polling
+            continue
+    else:
+        # timed out
+        update_job_progress(story_id, "rendering", "TruGen video timed out. Saving audio only.")
+
+    # Step 5: Mux Gemini audio into TruGen video
+    muxed_video_bytes = b""
+    if video_bytes and audio_bytes:
+        update_job_progress(story_id, "rendering", "Muxing Gemini audio into avatar video...")
+        try:
+            # Run moviepy in a thread pool since it's CPU-bound and blocking
+            loop = asyncio.get_event_loop()
+            muxed_video_bytes = await loop.run_in_executor(
+                None, replace_audio_in_video, video_bytes, audio_bytes
+            )
+        except Exception as e:
+            update_job_progress(story_id, "rendering", f"Audio muxing failed: {str(e)}. Using raw video.")
+            # Fall back to raw TruGen video
+            muxed_video_bytes = video_bytes
+    elif video_bytes:
+        muxed_video_bytes = video_bytes
+
+    # Step 6: Upload final video
+    video_upload_url = ""
+    if muxed_video_bytes:
+        update_job_progress(story_id, "uploading", "Saving video to R2...")
+        try:
+            video_upload_url = await upload_story_video(story_id, muxed_video_bytes, slug=slug)
+        except Exception as e:
+            update_job_progress(story_id, "uploading", f"Video upload failed: {str(e)}")
+
+    processing_time = int(time.time() - start_time)
+    final_status = "complete" if video_upload_url else ("audio_only" if video_url else "audio_only")
+
+    metadata = {
+        "id": story_id,
+        "reddit_url": "",
+        "title": title,
+        "author": author,
+        "subreddit": "influencer",
+        "status": final_status,
+        "audio_url": audio_url,
+        "audio_key": get_audio_key(story_id, slug=slug),
+        "video_url": video_upload_url,
+        "video_key": get_video_key(story_id, slug=slug) if video_upload_url else "",
+        "trugen_generation_id": generation_id,
+        "duration_seconds": audio_duration_seconds,
+        "file_size_bytes": len(audio_bytes),
+        "video_size_bytes": len(muxed_video_bytes) if muxed_video_bytes else 0,
+        "voice_assignments": {"NARRATOR": voice_id},
+        "tagged_text_preview": text[:200],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "processing_time_seconds": processing_time,
+        "char_count": char_count,
+        "estimated_cost_usd": round(estimate_cost(char_count), 6),
+    }
+
+    await upload_story_metadata(story_id, metadata)
+    await add_story_to_index({
+        "id": story_id,
+        "title": title,
+        "subreddit": "influencer",
+        "status": final_status,
+        "audio_url": audio_url,
+        "duration_seconds": audio_duration_seconds,
+        "created_at": metadata["created_at"],
+    })
+    invalidate_cache()
+    update_job_progress(story_id, "complete", "Done!" if video_upload_url else "Audio ready. Video unavailable.")
+
+
+@app.post("/api/process-influencer", response_model=ProcessResponse)
+async def process_influencer(request: InfluencerRequest):
+    """Generate an AI influencer video: Gemini audio + TruGen avatar."""
+    raw_text = request.text.strip()
+    if not raw_text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    story_id = await get_next_story_id()
+    update_job_progress(story_id, "generating", "Starting influencer generation...")
+
+    # Validate voice
+    voice_id = request.voice_id if request.voice_id in VOICES else "Kore"
+    avatar_id = request.avatar_id or "7e95996"
+
+    # Kick off background task so the request returns immediately
+    asyncio.create_task(
+        _process_influencer(
+            story_id=story_id,
+            text=raw_text,
+            title=request.title or "AI Influencer",
+            author=request.author or "Unknown",
+            voice_id=voice_id,
+            avatar_id=avatar_id,
+        )
+    )
+
+    return ProcessResponse(
+        story_id=story_id,
+        audio_url="",
+        duration_seconds=0,
+        status="processing",
+    )
+
+
+@app.get("/api/trugen/avatars")
+async def list_trugen_avatars():
+    """Fetch available TruGen stock avatars."""
+    try:
+        avatars = await trugen_client.list_avatars()
+        return {"avatars": avatars}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch avatars: {str(e)}")
 
 
 @app.get("/health")

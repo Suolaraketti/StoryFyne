@@ -9,6 +9,7 @@ interface Story {
   duration_seconds: number;
   created_at: string;
   audio_url: string;
+  video_url?: string;
   status: string;
 }
 
@@ -56,7 +57,15 @@ export default function StoryCard({ story, apiUrl, onDelete }: StoryCardProps) {
         </div>
       </div>
 
-      {isComplete && story.audio_url && (
+      {isComplete && story.video_url && (
+        <video
+          src={story.video_url}
+          controls
+          style={{ width: '100%', borderRadius: '8px', border: '1px solid #333' }}
+        />
+      )}
+
+      {isComplete && story.audio_url && !story.video_url && (
         <AudioPlayer src={story.audio_url} title={story.title} />
       )}
 
@@ -77,9 +86,10 @@ export default function StoryCard({ story, apiUrl, onDelete }: StoryCardProps) {
         {isComplete && (
           <>
             <a
-              href={`${apiUrl}/api/download/${story.id}`}
+              href={story.video_url || `${apiUrl}/api/download/${story.id}`}
               target="_blank"
               rel="noopener noreferrer"
+              download
               style={{
                 flex: 1,
                 padding: '10px',
@@ -93,7 +103,7 @@ export default function StoryCard({ story, apiUrl, onDelete }: StoryCardProps) {
                 border: '1px solid #333',
               }}
             >
-              Download
+              {story.video_url ? 'Download Video' : 'Download Audio'}
             </a>
             <button
               onClick={async () => {

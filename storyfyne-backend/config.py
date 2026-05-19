@@ -65,5 +65,16 @@ LANGUAGES = [
     "id", "it", "ja", "ko", "pt-BR", "pt-PT", "ru", "es-MX", "es-ES", "tr", "vi"
 ]
 
+# TruGen AI
+TRUGEN_API_KEY = os.getenv("TRUGEN_API_KEY", "")
+TRUGEN_BASE_URL = os.getenv("TRUGEN_BASE_URL", "https://api.trugen.ai/v1")
+TRUGEN_DEFAULT_AVATAR_ID = os.getenv("TRUGEN_DEFAULT_AVATAR_ID", "7e95996")
+TRUGEN_DEFAULT_VOICE_ID = os.getenv("TRUGEN_DEFAULT_VOICE_ID", "ZUrEGyu8GFMwnHbvLhv2")
+TRUGEN_DEFAULT_PROVIDER = os.getenv("TRUGEN_DEFAULT_PROVIDER", "elevenlabs")
+TRUGEN_DEFAULT_MODEL = os.getenv("TRUGEN_DEFAULT_MODEL", "eleven_multilingual_v2")
+
+# Video
+R2_VIDEO_PREFIX = "video/"
+
 # Cache
 STORIES_CACHE_TTL_SECONDS = 60

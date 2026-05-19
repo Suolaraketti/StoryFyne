@@ -9,6 +9,7 @@ from config import (
     R2_BUCKET_NAME,
     R2_PUBLIC_URL,
     R2_AUDIO_PREFIX,
+    R2_VIDEO_PREFIX,
     R2_INDEX_PREFIX,
     MASTER_INDEX_KEY,
 )
@@ -177,8 +178,29 @@ async def get_next_story_id() -> int:
     return max(s.get("id", 0) for s in stories) + 1
 
 
+def get_video_key(story_id: int, slug: str = "") -> str:
+    """Get R2 key for a story's video file."""
+    suffix = f"-{slug}" if slug else ""
+    return f"{R2_VIDEO_PREFIX}story_{story_id}{suffix}_video.mp4"
+
+
+def get_video_url(story_id: int, slug: str = "") -> str:
+    """Get public URL for a story's video file."""
+    if not R2_PUBLIC_URL:
+        raise ValueError("R2_PUBLIC_URL not configured")
+    suffix = f"-{slug}" if slug else ""
+    return f"{R2_PUBLIC_URL}/{R2_VIDEO_PREFIX}story_{story_id}{suffix}_video.mp4"
+
+
+async def upload_story_video(story_id: int, video_bytes: bytes, slug: str = "") -> str:
+    """Upload story video to R2 and return its public URL."""
+    key = get_video_key(story_id, slug)
+    await upload_file(key, video_bytes, content_type="video/mp4")
+    return get_video_url(story_id, slug)
+
+
 async def delete_story(story_id: int) -> bool:
-    """Delete a story's audio and metadata from R2 and update index."""
+    """Delete a story's audio, video, and metadata from R2 and update index."""
     metadata = await get_story_metadata(story_id)
     if metadata is None:
         return False
@@ -189,6 +211,14 @@ async def delete_story(story_id: int) -> bool:
         await delete_file(audio_key)
     except RuntimeError:
         pass
+
+    # Delete video
+    video_key = metadata.get("video_key")
+    if video_key:
+        try:
+            await delete_file(video_key)
+        except RuntimeError:
+            pass
 
     # Delete metadata
     try:
