@@ -740,6 +740,16 @@ async def root():
     return {"status": "ok", "service": "storyfyne"}
 
 
+import re as _re
+
+
+def _strip_stage_directions(text: str) -> str:
+    """Remove bracketed stage directions like [Clara on camera...] from scripts."""
+    text = _re.sub(r'\[.*?\]', '', text, flags=_re.DOTALL)
+    text = _re.sub(r'\n+', ' ', text)
+    return text.strip()
+
+
 async def _process_influencer(
     story_id: int,
     text: str,
@@ -750,6 +760,7 @@ async def _process_influencer(
 ):
     """Background task: generate Gemini audio + TruGen avatar video."""
     start_time = time.time()
+    text = _strip_stage_directions(text)
     char_count = len(text)
     estimated_cost = estimate_cost(char_count)
     slug = slugify(title)
@@ -978,16 +989,54 @@ async def process_influencer(request: InfluencerRequest):
     avatar_id = request.avatar_id or "7e95996"
 
     # Kick off background task so the request returns immediately
-    asyncio.create_task(
-        _process_influencer(
-            story_id=story_id,
-            text=raw_text,
-            title=request.title or "AI Influencer",
-            author=request.author or "Unknown",
-            voice_id=voice_id,
-            avatar_id=avatar_id,
-        )
-    )
+    async def _wrapped_task():
+        try:
+            await _process_influencer(
+                story_id=story_id,
+                text=raw_text,
+                title=request.title or "AI Influencer",
+                author=request.author or "Unknown",
+                voice_id=voice_id,
+                avatar_id=avatar_id,
+            )
+        except Exception as e:
+            # Catch anything that slipped through and save error metadata
+            import traceback
+            error_msg = f"{str(e)}\n{traceback.format_exc()}"
+            metadata = {
+                "id": story_id,
+                "reddit_url": "",
+                "title": request.title or "AI Influencer",
+                "author": request.author or "Unknown",
+                "subreddit": "influencer",
+                "status": "generate_failed",
+                "audio_url": "",
+                "video_url": "",
+                "duration_seconds": 0,
+                "file_size_bytes": 0,
+                "voice_assignments": {},
+                "tagged_text_preview": raw_text[:200],
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "processing_time_seconds": 0,
+                "error": error_msg,
+            }
+            try:
+                await upload_story_metadata(story_id, metadata)
+                await add_story_to_index({
+                    "id": story_id,
+                    "title": request.title or "AI Influencer",
+                    "subreddit": "influencer",
+                    "status": "generate_failed",
+                    "audio_url": "",
+                    "duration_seconds": 0,
+                    "created_at": metadata["created_at"],
+                })
+                invalidate_cache()
+            except Exception:
+                pass
+            update_job_progress(story_id, "generate_failed", f"Unhandled error: {str(e)}")
+
+    asyncio.create_task(_wrapped_task())
 
     return ProcessResponse(
         story_id=story_id,
