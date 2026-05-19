@@ -880,6 +880,7 @@ async def _process_influencer(
     update_job_progress(story_id, "rendering", f"Rendering TruGen avatar video... (job {generation_id[:8]})")
     video_url = ""
     video_bytes = b""
+    polling_error = ""
     for _ in range(120):  # poll for up to 6 minutes
         await asyncio.sleep(3)
         try:
@@ -891,12 +892,13 @@ async def _process_influencer(
                     try:
                         video_bytes = await trugen_client.download_video(video_url)
                     except Exception as dl_err:
-                        update_job_progress(story_id, "rendering", f"Video ready but download failed: {dl_err}")
+                        polling_error = f"Video ready but download failed: {dl_err}"
+                        update_job_progress(story_id, "rendering", polling_error)
                         # fall through to save audio-only
                 break
             elif status == "failed":
-                error_msg = status_result.get("error", "Unknown TruGen error")
-                update_job_progress(story_id, "rendering", f"TruGen video failed: {error_msg}")
+                polling_error = status_result.get("error", "Unknown TruGen error")
+                update_job_progress(story_id, "rendering", f"TruGen video failed: {polling_error}")
                 break
             else:
                 # still processing
@@ -906,7 +908,8 @@ async def _process_influencer(
             continue
     else:
         # timed out
-        update_job_progress(story_id, "rendering", "TruGen video timed out. Saving audio only.")
+        polling_error = "TruGen video timed out."
+        update_job_progress(story_id, "rendering", f"{polling_error} Saving audio only.")
 
     # Step 5: Mux Gemini audio into TruGen video
     muxed_video_bytes = b""
@@ -958,6 +961,7 @@ async def _process_influencer(
         "processing_time_seconds": processing_time,
         "char_count": char_count,
         "estimated_cost_usd": round(estimate_cost(char_count), 6),
+        "error": polling_error or "",
     }
 
     await upload_story_metadata(story_id, metadata)
