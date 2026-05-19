@@ -5,7 +5,7 @@ from typing import Optional, Dict
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
@@ -15,6 +15,7 @@ from config import (
     TTS_MAX_CHARS,
     STORIES_CACHE_TTL_SECONDS,
     VOICES,
+    PUBLIC_URL,
 )
 from scraper import scrape_reddit_post, scrape_website
 from tagger import tag_text_with_claude
@@ -834,10 +835,12 @@ async def _process_influencer(
 
     # Step 3: Submit TruGen video job
     update_job_progress(story_id, "rendering", "Rendering TruGen avatar video...")
+    callback_url = f"{PUBLIC_URL}/api/webhooks/trugen" if PUBLIC_URL else ""
     try:
         gen_result = await trugen_client.create_video(
             script=text,
             avatar_id=avatar_id,
+            callback_url=callback_url,
         )
         generation_id = gen_result["generation_id"]
     except Exception as e:
@@ -1087,6 +1090,18 @@ async def list_trugen_avatars():
         return {"avatars": avatars}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch avatars: {str(e)}")
+
+
+@app.post("/api/webhooks/trugen")
+async def trugen_webhook(request: Request):
+    """Receive TruGen video completion callbacks."""
+    try:
+        body = await request.json()
+        # Log for debugging; in production this could update a DB or notify the client
+        print(f"TruGen webhook: {body}")
+        return {"received": True}
+    except Exception:
+        return {"received": False}
 
 
 @app.get("/health")

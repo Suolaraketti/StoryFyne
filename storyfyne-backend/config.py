@@ -73,6 +73,9 @@ TRUGEN_DEFAULT_VOICE_ID = os.getenv("TRUGEN_DEFAULT_VOICE_ID", "ZUrEGyu8GFMwnHbv
 TRUGEN_DEFAULT_PROVIDER = os.getenv("TRUGEN_DEFAULT_PROVIDER", "elevenlabs")
 TRUGEN_DEFAULT_MODEL = os.getenv("TRUGEN_DEFAULT_MODEL", "eleven_turbo_v2_5")
 
+# App
+PUBLIC_URL = os.getenv("PUBLIC_URL", "")
+
 # Video
 R2_VIDEO_PREFIX = "video/"
 
