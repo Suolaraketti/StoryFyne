@@ -41,6 +41,7 @@ async def create_video(
     audio_url: Optional[str] = None,
     avatar_id: Optional[str] = None,
     voice_id: Optional[str] = None,
+    aspect_ratio: str = "9:16",
 ) -> Dict:
     """Submit a video generation job to HeyGen v3.
 
@@ -54,7 +55,7 @@ async def create_video(
     payload: Dict = {
         "type": "avatar",
         "avatar_id": selected_avatar_id,
-        "aspect_ratio": "9:16",
+        "aspect_ratio": aspect_ratio,
         "resolution": "1080p",
     }
 

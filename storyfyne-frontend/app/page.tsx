@@ -212,7 +212,7 @@ export default function Home() {
     }
   };
 
-  const handleSubmitInfluencer = async (text: string, title: string, author: string, voiceId: string, avatarId: string) => {
+  const handleSubmitInfluencer = async (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string) => {
     setIsLoading(true);
     setProgressMode('influencer');
     setProgressStep('generating');
@@ -223,7 +223,7 @@ export default function Home() {
       const res = await fetch(`${API_URL}/api/process-influencer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, title, author, voice_id: voiceId, avatar_id: avatarId }),
+        body: JSON.stringify({ text, title, author, voice_id: voiceId, avatar_id: avatarId, aspect_ratio: aspectRatio }),
       });
 
       if (!res.ok) {

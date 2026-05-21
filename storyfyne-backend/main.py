@@ -78,6 +78,7 @@ class InfluencerRequest(BaseModel):
     author: str = "Unknown"
     voice_id: str = "Kore"
     avatar_id: str = ""
+    aspect_ratio: str = "9:16"
 
 
 class AvatarCreateRequest(BaseModel):
@@ -765,6 +766,7 @@ async def _process_heygen(
     author: str,
     voice_id: str,
     avatar_id: str,
+    aspect_ratio: str = "9:16",
 ):
     """Background task: generate Gemini audio + HeyGen avatar video with custom voice."""
     start_time = time.time()
@@ -847,6 +849,7 @@ async def _process_heygen(
             script=text,
             audio_url=audio_url,
             avatar_id=avatar_id,
+            aspect_ratio=aspect_ratio,
         )
         video_id = gen_result.get("video_id")
         if not video_id:
@@ -858,6 +861,7 @@ async def _process_heygen(
             gen_result = await heygen_client.create_video(
                 script=text,
                 avatar_id=avatar_id,
+                aspect_ratio=aspect_ratio,
             )
             video_id = gen_result.get("video_id")
             if not video_id:
@@ -1053,6 +1057,7 @@ async def process_influencer(request: InfluencerRequest):
                 author=request.author or "Unknown",
                 voice_id=voice_id,
                 avatar_id=avatar_id,
+                aspect_ratio=request.aspect_ratio,
             )
         except Exception as e:
             # Catch anything that slipped through and save error metadata

@@ -15,7 +15,7 @@ interface StoryInputProps {
   onSubmitUrl: (url: string) => void;
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
-  onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string) => void;
+  onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string) => void;
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
   onCreateAvatar: (name: string, avatarType: string, fileUrl: string) => Promise<{ avatar_item?: any; avatar_group?: any }>;
   onUploadAsset: (file: File) => Promise<{ url: string }>;
@@ -38,6 +38,14 @@ const AVATAR_TYPES = [
   { id: 'prompt', label: 'AI Prompt', desc: 'Text description' },
 ];
 
+const ASPECT_RATIOS = [
+  { id: '9:16', label: '9:16 — Vertical (TikTok / Reels / Shorts)', desc: 'Portrait, mobile-first' },
+  { id: '16:9', label: '16:9 — Horizontal (YouTube / Desktop)', desc: 'Landscape, widescreen' },
+  { id: '1:1', label: '1:1 — Square (Instagram / Feed)', desc: 'Equal width and height' },
+  { id: '4:5', label: '4:5 — Portrait Social (Instagram)', desc: 'Slightly taller than wide' },
+  { id: 'auto', label: 'Auto — Match avatar source', desc: 'Preserve original aspect ratio' },
+];
+
 export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onPreviewSales, onCreateAvatar, onUploadAsset, avatars, isLoading }: StoryInputProps) {
   const [mode, setMode] = useState<'text' | 'url' | 'sales' | 'influencer'>('text');
   const [url, setUrl] = useState('');
@@ -55,6 +63,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
 
   // Influencer mode state
   const [avatarId, setAvatarId] = useState('');
+  const [aspectRatio, setAspectRatio] = useState('9:16');
 
   // Avatar creation state
   const [showCreateAvatar, setShowCreateAvatar] = useState(false);
@@ -84,7 +93,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
     } else if (mode === 'sales' && text.trim()) {
       onSubmitSales(text.trim(), title.trim() || 'Dialfyne Pitch', author.trim() || 'Dennis Kaczmarowski', voiceId, websiteUrl.trim(), previewText.trim());
     } else if (mode === 'influencer' && text.trim()) {
-      onSubmitInfluencer(text.trim(), title.trim() || 'AI Influencer', author.trim() || 'Unknown', voiceId, avatarId);
+      onSubmitInfluencer(text.trim(), title.trim() || 'AI Influencer', author.trim() || 'Unknown', voiceId, avatarId, aspectRatio);
     }
   };
 
@@ -202,26 +211,41 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
               )}
 
               {isInfluencer && (
-                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  <label style={{ color: '#888', fontSize: '14px', whiteSpace: 'nowrap' }}>Avatar:</label>
-                  <select value={avatarId} onChange={(e) => setAvatarId(e.target.value)} disabled={isLoading || avatars.length === 0}
-                    style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }}>
-                    {avatars.length === 0 && (
-                      <option value="">Loading avatars...</option>
-                    )}
-                    {avatars.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.name || a.id}
-                        {a.gender ? ` (${a.gender})` : ''}
-                        {a.status && a.status !== 'completed' ? ` [${a.status}]` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="button" onClick={() => setShowCreateAvatar(!showCreateAvatar)}
-                    style={{ padding: '8px 14px', fontSize: '13px', borderRadius: '8px', border: '1px solid #ec4899', backgroundColor: '#1a0512', color: '#ec4899', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                    {showCreateAvatar ? 'Cancel' : 'Create New'}
-                  </button>
-                </div>
+                <>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <label style={{ color: '#888', fontSize: '14px', whiteSpace: 'nowrap' }}>Avatar:</label>
+                    <select value={avatarId} onChange={(e) => setAvatarId(e.target.value)} disabled={isLoading || avatars.length === 0}
+                      style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }}>
+                      {avatars.length === 0 && (
+                        <option value="">Loading avatars...</option>
+                      )}
+                      {avatars.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name || a.id}
+                          {a.gender ? ` (${a.gender})` : ''}
+                          {a.status && a.status !== 'completed' ? ` [${a.status}]` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="button" onClick={() => setShowCreateAvatar(!showCreateAvatar)}
+                      style={{ padding: '8px 14px', fontSize: '13px', borderRadius: '8px', border: '1px solid #ec4899', backgroundColor: '#1a0512', color: '#ec4899', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      {showCreateAvatar ? 'Cancel' : 'Create New'}
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <label style={{ color: '#888', fontSize: '14px', whiteSpace: 'nowrap' }}>Ratio:</label>
+                    <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)} disabled={isLoading}
+                      style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }}>
+                      {ASPECT_RATIOS.map((r) => (
+                        <option key={r.id} value={r.id}>{r.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ color: '#666', fontSize: '13px', marginTop: '-8px' }}>
+                    {ASPECT_RATIOS.find(r => r.id === aspectRatio)?.desc}
+                  </div>
+                </>
               )}
 
               {isInfluencer && showCreateAvatar && (
