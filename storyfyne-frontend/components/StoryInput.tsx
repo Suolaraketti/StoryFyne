@@ -15,8 +15,9 @@ interface StoryInputProps {
   onSubmitUrl: (url: string) => void;
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
-  onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string) => void;
+  onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string, taggedText: string, context: string) => void;
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
+  onPreviewInfluencer: (text: string, context: string) => Promise<{ tagged_text: string }>;
   onCreateAvatar: (name: string, avatarType: string, fileUrl: string) => Promise<{ avatar_item?: any; avatar_group?: any }>;
   onUploadAsset: (file: File) => Promise<{ url: string }>;
   avatars: Avatar[];
@@ -46,7 +47,7 @@ const ASPECT_RATIOS = [
   { id: 'auto', label: 'Auto — Match avatar source', desc: 'Preserve original aspect ratio' },
 ];
 
-export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onPreviewSales, onCreateAvatar, onUploadAsset, avatars, isLoading }: StoryInputProps) {
+export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onPreviewSales, onPreviewInfluencer, onCreateAvatar, onUploadAsset, avatars, isLoading }: StoryInputProps) {
   const [mode, setMode] = useState<'text' | 'url' | 'sales' | 'influencer'>('text');
   const [url, setUrl] = useState('');
   const [text, setText] = useState('');
@@ -64,6 +65,10 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   // Influencer mode state
   const [avatarId, setAvatarId] = useState('');
   const [aspectRatio, setAspectRatio] = useState('9:16');
+  const [influencerContext, setInfluencerContext] = useState('');
+  const [influencerTaggedText, setInfluencerTaggedText] = useState('');
+  const [showInfluencerPreview, setShowInfluencerPreview] = useState(false);
+  const [isPreviewingInfluencer, setIsPreviewingInfluencer] = useState(false);
 
   // Avatar creation state
   const [showCreateAvatar, setShowCreateAvatar] = useState(false);
@@ -93,7 +98,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
     } else if (mode === 'sales' && text.trim()) {
       onSubmitSales(text.trim(), title.trim() || 'Dialfyne Pitch', author.trim() || 'Dennis Kaczmarowski', voiceId, websiteUrl.trim(), previewText.trim());
     } else if (mode === 'influencer' && text.trim()) {
-      onSubmitInfluencer(text.trim(), title.trim() || 'AI Influencer', author.trim() || 'Unknown', voiceId, avatarId, aspectRatio);
+      onSubmitInfluencer(text.trim(), title.trim() || 'AI Influencer', author.trim() || 'Unknown', voiceId, avatarId, aspectRatio, influencerTaggedText.trim(), influencerContext.trim());
     }
   };
 
@@ -121,6 +126,20 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       setCreateAvatarStatus('File uploaded. Ready to create avatar.');
     } catch (e: any) {
       setCreateAvatarStatus(`Upload failed: ${e.message || 'Unknown error'}`);
+    }
+  };
+
+  const handlePreviewInfluencer = async () => {
+    if (!text.trim()) return;
+    setIsPreviewingInfluencer(true);
+    try {
+      const result = await onPreviewInfluencer(text.trim(), influencerContext.trim());
+      setInfluencerTaggedText(result.tagged_text);
+      setShowInfluencerPreview(true);
+    } catch (e: any) {
+      alert(e.message || 'Failed to generate preview');
+    } finally {
+      setIsPreviewingInfluencer(false);
     }
   };
 
@@ -314,6 +333,13 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
               <div style={{ color: '#666', fontSize: '13px', marginTop: '-8px' }}>
                 {VOICES.find(v => v.id === voiceId)?.desc}
               </div>
+
+              {isInfluencer && (
+                <>
+                  <input type="text" placeholder="What is this ad for? (e.g. roofing company, fitness app, SaaS demo) — helps Claude tag it better" value={influencerContext} onChange={(e) => setInfluencerContext(e.target.value)} disabled={isLoading}
+                    style={{ width: '100%', padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', boxSizing: 'border-box' }} />
+                </>
+              )}
             </>
           )}
 
@@ -344,6 +370,32 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                 <button type="submit" disabled={isLoading || !previewText.trim()}
                   style={{ padding: '10px 24px', fontSize: '14px', fontWeight: 600, borderRadius: '8px', border: 'none', backgroundColor: '#F5A623', color: '#0a0a0a', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
                   {isLoading ? 'Generating...' : 'Generate Audio'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isInfluencer && !showInfluencerPreview && (
+            <button type="button" onClick={handlePreviewInfluencer} disabled={isPreviewingInfluencer || !text.trim()}
+              style={{ padding: '12px 24px', fontSize: '15px', fontWeight: 600, borderRadius: '10px', border: '1px solid #ec4899', backgroundColor: '#1a0512', color: '#ec4899', cursor: isPreviewingInfluencer ? 'not-allowed' : 'pointer', alignSelf: 'flex-start' }}>
+              {isPreviewingInfluencer ? 'Writing delivery...' : 'Preview Delivery'}
+            </button>
+          )}
+
+          {isInfluencer && showInfluencerPreview && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <label style={{ color: '#888', fontSize: '14px' }}>Review and edit the tagged delivery below, then click Generate:</label>
+              <textarea value={influencerTaggedText} onChange={(e) => setInfluencerTaggedText(e.target.value)} disabled={isLoading} rows={10}
+                style={{ width: '100%', padding: '14px 18px', fontSize: '15px', borderRadius: '10px', border: '1px solid #ec4899', backgroundColor: '#1a0512', color: '#e0e0e0', outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
+              />
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button type="button" onClick={handlePreviewInfluencer} disabled={isPreviewingInfluencer}
+                  style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', cursor: 'pointer' }}>
+                  Regenerate
+                </button>
+                <button type="submit" disabled={isLoading || !influencerTaggedText.trim()}
+                  style={{ padding: '10px 24px', fontSize: '14px', fontWeight: 600, borderRadius: '8px', border: 'none', backgroundColor: '#ec4899', color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
+                  {isLoading ? 'Generating...' : 'Generate Video'}
                 </button>
               </div>
             </div>

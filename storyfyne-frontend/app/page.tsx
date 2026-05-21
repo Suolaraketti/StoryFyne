@@ -212,7 +212,7 @@ export default function Home() {
     }
   };
 
-  const handleSubmitInfluencer = async (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string) => {
+  const handleSubmitInfluencer = async (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string, taggedText: string, context: string) => {
     setIsLoading(true);
     setProgressMode('influencer');
     setProgressStep('generating');
@@ -223,7 +223,7 @@ export default function Home() {
       const res = await fetch(`${API_URL}/api/process-influencer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, title, author, voice_id: voiceId, avatar_id: avatarId, aspect_ratio: aspectRatio }),
+        body: JSON.stringify({ text, title, author, voice_id: voiceId, avatar_id: avatarId, aspect_ratio: aspectRatio, tagged_text: taggedText, context }),
       });
 
       if (!res.ok) {
@@ -244,6 +244,21 @@ export default function Home() {
       setIsLoading(false);
       setProgressStep('');
     }
+  };
+
+  const handlePreviewInfluencer = async (text: string, context: string) => {
+    const res = await fetch(`${API_URL}/api/preview-influencer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, context }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to generate preview');
+    }
+
+    return res.json();
   };
 
   const handleCreateAvatar = async (name: string, avatarType: string, fileUrl: string) => {
@@ -326,6 +341,7 @@ export default function Home() {
         onSubmitSales={handleSubmitSales}
         onSubmitInfluencer={handleSubmitInfluencer}
         onPreviewSales={handlePreviewSales}
+        onPreviewInfluencer={handlePreviewInfluencer}
         onCreateAvatar={handleCreateAvatar}
         onUploadAsset={handleUploadAsset}
         avatars={avatars}

@@ -79,6 +79,12 @@ class InfluencerRequest(BaseModel):
     voice_id: str = "Kore"
     avatar_id: str = ""
     aspect_ratio: str = "9:16"
+    tagged_text: str = ""
+    context: str = ""
+
+
+class PreviewInfluencerResponse(BaseModel):
+    tagged_text: str
 
 
 class AvatarCreateRequest(BaseModel):
@@ -520,6 +526,21 @@ async def draft_sales(request: SalesRequest):
     )
 
 
+@app.post("/api/preview-influencer", response_model=PreviewInfluencerResponse)
+async def preview_influencer(request: InfluencerRequest):
+    """Generate an expressive tagged script for an influencer video without creating audio."""
+    raw_text = request.text.strip()
+    if not raw_text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    try:
+        tagged_text = await tag_text_with_claude(raw_text, influencer_mode=True, context=request.context)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Tagging failed: {str(e)}")
+
+    return PreviewInfluencerResponse(tagged_text=tagged_text)
+
+
 @app.post("/api/process-sales", response_model=ProcessResponse)
 async def process_sales(request: SalesRequest):
     """Convert pasted text (or pre-tagged text) into a Dialfyne sales pitch audio."""
@@ -767,18 +788,34 @@ async def _process_heygen(
     voice_id: str,
     avatar_id: str,
     aspect_ratio: str = "9:16",
+    tagged_text: str = "",
+    context: str = "",
 ):
     """Background task: generate Gemini audio + HeyGen avatar video with custom voice."""
     start_time = time.time()
-    text = _strip_stage_directions(text)
-    char_count = len(text)
+    raw_text = text.strip()
+    char_count = len(raw_text)
     estimated_cost = estimate_cost(char_count)
     slug = slugify(title)
 
-    # Step 1: Generate Gemini TTS audio (Dialfyne voice)
-    update_job_progress(story_id, "generating", f"Synthesizing Dialfyne audio... (est. ${estimated_cost:.4f})")
+    # Step 1: Tag with Claude for expressive delivery (skip if pre-tagged)
+    if tagged_text.strip():
+        tagged_text_for_audio = tagged_text.strip()
+        update_job_progress(story_id, "generating", f"Synthesizing expressive Dialfyne audio... (est. ${estimated_cost:.4f})")
+    else:
+        update_job_progress(story_id, "tagging", "Crafting expressive delivery with Claude...")
+        try:
+            tagged_text_for_audio = await tag_text_with_claude(raw_text, influencer_mode=True, context=context)
+        except Exception as e:
+            tagged_text_for_audio = raw_text
+            update_job_progress(story_id, "generating", f"Tagging failed, using raw text. Generating audio...")
+
+    # Strip tags for HeyGen text fallback (HeyGen doesn't understand our tags)
+    clean_text_for_heygen = _strip_stage_directions(tagged_text_for_audio)
+
+    # Step 2: Generate Gemini TTS audio using tagged text for expressive delivery
     try:
-        audio_bytes = await generate_segment_audio(text, voice_id)
+        audio_bytes = await generate_segment_audio(tagged_text_for_audio, voice_id)
     except Exception as e:
         metadata = {
             "id": story_id,
@@ -792,7 +829,7 @@ async def _process_heygen(
             "duration_seconds": 0,
             "file_size_bytes": 0,
             "voice_assignments": {},
-            "tagged_text_preview": text[:200],
+            "tagged_text_preview": tagged_text_for_audio[:200],
             "created_at": datetime.now(timezone.utc).isoformat(),
             "processing_time_seconds": 0,
             "error": str(e),
@@ -1058,6 +1095,8 @@ async def process_influencer(request: InfluencerRequest):
                 voice_id=voice_id,
                 avatar_id=avatar_id,
                 aspect_ratio=request.aspect_ratio,
+                tagged_text=request.tagged_text,
+                context=request.context,
             )
         except Exception as e:
             # Catch anything that slipped through and save error metadata

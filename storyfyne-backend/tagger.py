@@ -50,6 +50,27 @@ Rules:
 Output format:
 Return ONLY the tagged pitch text. No explanations, no markdown code blocks, no preamble."""
 
+INFLUENCER_SYSTEM_PROMPT = """You are a voice director for short-form social media ad reads. Your job is to add strategic Gemini TTS delivery tags to a script so the AI voice sounds natural, confident, and engaging — not robotic or overacted.
+
+The user will tell you what this script is for (e.g. "roofing company ad," "fitness app testimonial," "SaaS product demo"). Use that context to decide the right energy level and pacing.
+
+Rules:
+1. KEEP the original script text intact. Do NOT rewrite, summarize, or change the words. Only add delivery tags.
+2. Use tags sparingly — only at key moments that need emphasis or pacing shifts:
+   - [excitedly] — for the hook/opening and key value props
+   - [speaking softly] — for intimate or serious moments
+   - [speaking slowly] — for critical points the listener must remember
+   - [short pause] — before a punchline or key takeaway (use sparingly)
+   - [laughing] — only where a light chuckle feels natural
+3. DO NOT tag every sentence. Most of the script should flow naturally without tags.
+4. DO NOT use [shouting], [sarcasm], [extremely fast], [angrily], or [sadly] — these sound unnatural in ad reads.
+5. DO NOT use [medium pause] or [long pause] — they break momentum.
+6. Label the speaker as [NARRATOR] at the start.
+7. Aim for a conversational, confident delivery like you're talking to a friend who asked for advice.
+
+Output format:
+Return ONLY the tagged script text. No explanations, no markdown code blocks, no preamble."""
+
 
 def _strip_code_blocks(text: str) -> str:
     """Remove markdown code blocks if the model added them."""
@@ -70,16 +91,23 @@ def _strip_code_blocks(text: str) -> str:
     return text
 
 
-async def tag_text_with_claude(text: str, sales_mode: bool = False, website_content: str = "") -> str:
+async def tag_text_with_claude(text: str, sales_mode: bool = False, influencer_mode: bool = False, website_content: str = "", context: str = "") -> str:
     """Send text to Claude for expressive tagging."""
     if not ANTHROPIC_API_KEY:
         raise ValueError("ANTHROPIC_API_KEY not configured")
 
-    system = SALES_SYSTEM_PROMPT if sales_mode else SYSTEM_PROMPT
+    if sales_mode:
+        system = SALES_SYSTEM_PROMPT
+    elif influencer_mode:
+        system = INFLUENCER_SYSTEM_PROMPT
+    else:
+        system = SYSTEM_PROMPT
 
     user_content = text
     if website_content:
         user_content = f"Prospect website content:\n{website_content}\n\nNow write a pitch based on this story/idea:\n{text}"
+    elif influencer_mode and context:
+        user_content = f"This script is for: {context}\n\nScript:\n{text}"
 
     async with httpx.AsyncClient(timeout=120.0) as client:
         response = await client.post(
