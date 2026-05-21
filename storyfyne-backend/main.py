@@ -29,6 +29,7 @@ from storage import (
     upload_story_audio,
     upload_story_video,
     upload_story_metadata,
+    upload_asset,
     get_master_index,
     get_story_metadata,
     get_next_story_id,
@@ -40,7 +41,7 @@ from storage import (
     get_video_key,
     slugify,
 )
-import trugen as trugen_client
+import heygen as heygen_client
 from video_muxer import replace_audio_in_video
 
 # In-memory cache for stories index
@@ -76,7 +77,13 @@ class InfluencerRequest(BaseModel):
     title: str = "AI Influencer"
     author: str = "Unknown"
     voice_id: str = "Kore"
-    avatar_id: str = "7e95996"
+    avatar_id: str = ""
+
+
+class AvatarCreateRequest(BaseModel):
+    name: str
+    avatar_type: str = "photo"
+    file_url: str = ""
 
 
 class DraftSalesResponse(BaseModel):
@@ -751,7 +758,7 @@ def _strip_stage_directions(text: str) -> str:
     return text.strip()
 
 
-async def _process_influencer(
+async def _process_heygen(
     story_id: int,
     text: str,
     title: str,
@@ -759,18 +766,17 @@ async def _process_influencer(
     voice_id: str,
     avatar_id: str,
 ):
-    """Background task: generate Gemini audio + TruGen avatar video."""
+    """Background task: generate Gemini audio + HeyGen avatar video with custom voice."""
     start_time = time.time()
     text = _strip_stage_directions(text)
     char_count = len(text)
     estimated_cost = estimate_cost(char_count)
     slug = slugify(title)
 
-    # Step 1: Generate Gemini TTS audio
-    update_job_progress(story_id, "generating", f"Synthesizing Gemini audio... (est. ${estimated_cost:.4f})")
+    # Step 1: Generate Gemini TTS audio (Dialfyne voice)
+    update_job_progress(story_id, "generating", f"Synthesizing Dialfyne audio... (est. ${estimated_cost:.4f})")
     try:
         audio_bytes = await generate_segment_audio(text, voice_id)
-        audio_duration_ms = len(audio_bytes) * 8  # rough estimate, will calculate properly below
     except Exception as e:
         metadata = {
             "id": story_id,
@@ -800,10 +806,10 @@ async def _process_influencer(
             "created_at": metadata["created_at"],
         })
         invalidate_cache()
-        update_job_progress(story_id, "generate_failed", f"Gemini audio failed: {str(e)}")
+        update_job_progress(story_id, "generate_failed", f"Dialfyne audio failed: {str(e)}")
         return
 
-    # Step 2: Upload audio
+    # Step 2: Upload audio to R2
     update_job_progress(story_id, "uploading", "Saving audio to R2...")
     try:
         audio_url = await upload_story_audio(story_id, audio_bytes, slug=slug)
@@ -833,115 +839,128 @@ async def _process_influencer(
     except Exception:
         audio_duration_seconds = 0
 
-    # Step 3: Submit TruGen video job
-    update_job_progress(story_id, "rendering", "Rendering TruGen avatar video...")
-    callback_url = f"{PUBLIC_URL}/api/webhooks/trugen" if PUBLIC_URL else ""
+    # Step 3: Submit HeyGen video job with custom audio URL
+    update_job_progress(story_id, "rendering", "Rendering HeyGen avatar video with Dialfyne voice...")
+    use_custom_audio = True
     try:
-        gen_result = await trugen_client.create_video(
+        gen_result = await heygen_client.create_video(
             script=text,
+            audio_url=audio_url,
             avatar_id=avatar_id,
-            callback_url=callback_url,
         )
-        generation_id = gen_result["generation_id"]
+        video_id = gen_result.get("video_id")
+        if not video_id:
+            raise RuntimeError("No video_id in HeyGen response")
     except Exception as e:
-        # Save audio-only metadata since audio succeeded
-        metadata = {
-            "id": story_id,
-            "reddit_url": "",
-            "title": title,
-            "author": author,
-            "subreddit": "influencer",
-            "status": "audio_only",
-            "audio_url": audio_url,
-            "audio_key": get_audio_key(story_id, slug=slug),
-            "video_url": "",
-            "duration_seconds": audio_duration_seconds,
-            "file_size_bytes": len(audio_bytes),
-            "voice_assignments": {"NARRATOR": voice_id},
-            "tagged_text_preview": text[:200],
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "processing_time_seconds": int(time.time() - start_time),
-            "char_count": char_count,
-            "estimated_cost_usd": round(estimate_cost(char_count), 6),
-            "error": f"TruGen video failed: {str(e)}",
-        }
-        await upload_story_metadata(story_id, metadata)
-        await add_story_to_index({
-            "id": story_id,
-            "title": title,
-            "subreddit": "influencer",
-            "status": "audio_only",
-            "audio_url": audio_url,
-            "duration_seconds": audio_duration_seconds,
-            "created_at": metadata["created_at"],
-        })
-        invalidate_cache()
-        update_job_progress(story_id, "complete", "Audio ready. Video generation failed.")
-        return
+        # Fallback: generate with text and mux audio later
+        update_job_progress(story_id, "rendering", f"Custom audio lip-sync failed ({str(e)}). Falling back to text generation...")
+        try:
+            gen_result = await heygen_client.create_video(
+                script=text,
+                avatar_id=avatar_id,
+            )
+            video_id = gen_result.get("video_id")
+            if not video_id:
+                raise RuntimeError("No video_id in HeyGen fallback response")
+            use_custom_audio = False
+        except Exception as e2:
+            # Save audio-only metadata since audio succeeded
+            metadata = {
+                "id": story_id,
+                "reddit_url": "",
+                "title": title,
+                "author": author,
+                "subreddit": "influencer",
+                "status": "audio_only",
+                "audio_url": audio_url,
+                "audio_key": get_audio_key(story_id, slug=slug),
+                "video_url": "",
+                "duration_seconds": audio_duration_seconds,
+                "file_size_bytes": len(audio_bytes),
+                "voice_assignments": {"NARRATOR": voice_id},
+                "tagged_text_preview": text[:200],
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "processing_time_seconds": int(time.time() - start_time),
+                "char_count": char_count,
+                "estimated_cost_usd": round(estimate_cost(char_count), 6),
+                "error": f"HeyGen video failed: {str(e2)}",
+            }
+            await upload_story_metadata(story_id, metadata)
+            await add_story_to_index({
+                "id": story_id,
+                "title": title,
+                "subreddit": "influencer",
+                "status": "audio_only",
+                "audio_url": audio_url,
+                "duration_seconds": audio_duration_seconds,
+                "created_at": metadata["created_at"],
+            })
+            invalidate_cache()
+            update_job_progress(story_id, "complete", "Audio ready. Video generation failed.")
+            return
 
-    # Step 4: Poll TruGen status
-    update_job_progress(story_id, "rendering", f"Rendering TruGen avatar video... (job {generation_id[:8]})")
+    # Step 4: Poll HeyGen status
+    update_job_progress(story_id, "rendering", f"Rendering HeyGen avatar video... (job {str(video_id)[:8]})")
     video_url = ""
     video_bytes = b""
     polling_error = ""
     for _ in range(300):  # poll for up to 15 minutes
         await asyncio.sleep(3)
         try:
-            status_result = await trugen_client.get_generation_status(generation_id)
+            status_result = await heygen_client.get_video_status(video_id)
             status = status_result.get("status", "")
             if status == "completed":
                 video_url = status_result.get("video_url", "")
                 if video_url:
                     try:
-                        video_bytes = await trugen_client.download_video(video_url)
+                        video_bytes = await heygen_client.download_video(video_url)
                     except Exception as dl_err:
                         polling_error = f"Video ready but download failed: {dl_err}"
                         update_job_progress(story_id, "rendering", polling_error)
-                        # fall through to save audio-only
                 break
             elif status == "failed":
-                polling_error = status_result.get("error", "Unknown TruGen error")
-                update_job_progress(story_id, "rendering", f"TruGen video failed: {polling_error}")
+                failure_code = status_result.get("failure_code", "")
+                failure_message = status_result.get("failure_message", "Unknown HeyGen error")
+                polling_error = f"{failure_code}: {failure_message}" if failure_code else failure_message
+                update_job_progress(story_id, "rendering", f"HeyGen video failed: {polling_error}")
                 break
             else:
-                # still processing
+                # still processing (pending / processing)
                 pass
         except Exception as poll_err:
             # continue polling
             continue
     else:
         # timed out
-        polling_error = "TruGen video timed out."
+        polling_error = "HeyGen video timed out."
         update_job_progress(story_id, "rendering", f"{polling_error} Saving audio only.")
 
-    # Step 5: Mux Gemini audio into TruGen video
-    muxed_video_bytes = b""
-    if video_bytes and audio_bytes:
-        update_job_progress(story_id, "rendering", "Muxing Gemini audio into avatar video...")
+    # Step 5: If we fell back to text generation, mux Gemini audio into HeyGen video
+    final_video_bytes = b""
+    if not use_custom_audio and video_bytes and audio_bytes:
+        update_job_progress(story_id, "rendering", "Muxing Dialfyne audio into avatar video...")
         try:
-            # Run moviepy in a thread pool since it's CPU-bound and blocking
             loop = asyncio.get_event_loop()
-            muxed_video_bytes = await loop.run_in_executor(
+            final_video_bytes = await loop.run_in_executor(
                 None, replace_audio_in_video, video_bytes, audio_bytes
             )
         except Exception as e:
             update_job_progress(story_id, "rendering", f"Audio muxing failed: {str(e)}. Using raw video.")
-            # Fall back to raw TruGen video
-            muxed_video_bytes = video_bytes
+            final_video_bytes = video_bytes
     elif video_bytes:
-        muxed_video_bytes = video_bytes
+        final_video_bytes = video_bytes
 
     # Step 6: Upload final video
     video_upload_url = ""
-    if muxed_video_bytes:
+    if final_video_bytes:
         update_job_progress(story_id, "uploading", "Saving video to R2...")
         try:
-            video_upload_url = await upload_story_video(story_id, muxed_video_bytes, slug=slug)
+            video_upload_url = await upload_story_video(story_id, final_video_bytes, slug=slug)
         except Exception as e:
             update_job_progress(story_id, "uploading", f"Video upload failed: {str(e)}")
 
     processing_time = int(time.time() - start_time)
-    final_status = "complete" if video_upload_url else ("audio_only" if video_url else "audio_only")
+    final_status = "complete" if video_upload_url else "audio_only"
 
     metadata = {
         "id": story_id,
@@ -954,10 +973,10 @@ async def _process_influencer(
         "audio_key": get_audio_key(story_id, slug=slug),
         "video_url": video_upload_url,
         "video_key": get_video_key(story_id, slug=slug) if video_upload_url else "",
-        "trugen_generation_id": generation_id,
+        "heygen_video_id": video_id,
         "duration_seconds": audio_duration_seconds,
         "file_size_bytes": len(audio_bytes),
-        "video_size_bytes": len(muxed_video_bytes) if muxed_video_bytes else 0,
+        "video_size_bytes": len(final_video_bytes) if final_video_bytes else 0,
         "voice_assignments": {"NARRATOR": voice_id},
         "tagged_text_preview": text[:200],
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -983,7 +1002,7 @@ async def _process_influencer(
 
 @app.post("/api/process-influencer", response_model=ProcessResponse)
 async def process_influencer(request: InfluencerRequest):
-    """Generate an AI influencer video: Gemini audio + TruGen avatar."""
+    """Generate an AI influencer video: Dialfyne audio + HeyGen avatar."""
     raw_text = request.text.strip()
     if not raw_text:
         raise HTTPException(status_code=400, detail="Text is required")
@@ -993,7 +1012,7 @@ async def process_influencer(request: InfluencerRequest):
 
     # Validate voice
     voice_id = request.voice_id if request.voice_id in VOICES else "Kore"
-    avatar_id = request.avatar_id or "7e95996"
+    avatar_id = request.avatar_id or ""
 
     # Save a placeholder immediately so the frontend doesn't 404 while processing
     placeholder = {
@@ -1027,7 +1046,7 @@ async def process_influencer(request: InfluencerRequest):
     # Kick off background task so the request returns immediately
     async def _wrapped_task():
         try:
-            await _process_influencer(
+            await _process_heygen(
                 story_id=story_id,
                 text=raw_text,
                 title=request.title or "AI Influencer",
@@ -1082,26 +1101,63 @@ async def process_influencer(request: InfluencerRequest):
     )
 
 
-@app.get("/api/trugen/avatars")
-async def list_trugen_avatars():
-    """Fetch available TruGen stock avatars."""
+@app.get("/api/heygen/avatars")
+async def list_heygen_avatars():
+    """Fetch available HeyGen avatars (public + private)."""
     try:
-        avatars = await trugen_client.list_avatars()
+        avatars = await heygen_client.list_avatars()
         return {"avatars": avatars}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch avatars: {str(e)}")
 
 
-@app.post("/api/webhooks/trugen")
-async def trugen_webhook(request: Request):
-    """Receive TruGen video completion callbacks."""
+@app.post("/api/avatars")
+async def create_avatar_endpoint(request: AvatarCreateRequest):
+    """Create a new HeyGen avatar (photo, digital_twin, or prompt)."""
+    name = request.name.strip()
+    avatar_type = request.avatar_type.strip()
+    file_url = request.file_url.strip()
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Avatar name is required")
+    if avatar_type not in ("photo", "digital_twin", "prompt"):
+        raise HTTPException(status_code=400, detail="avatar_type must be 'photo', 'digital_twin', or 'prompt'")
+    if not file_url:
+        raise HTTPException(status_code=400, detail="file_url is required")
+
     try:
-        body = await request.json()
-        # Log for debugging; in production this could update a DB or notify the client
-        print(f"TruGen webhook: {body}")
-        return {"received": True}
-    except Exception:
-        return {"received": False}
+        result = await heygen_client.create_avatar(
+            name=name,
+            avatar_type=avatar_type,
+            file_url=file_url,
+        )
+        return {
+            "avatar_item": result.get("avatar_item"),
+            "avatar_group": result.get("avatar_group"),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create avatar: {str(e)}")
+
+
+@app.post("/api/upload-asset")
+async def upload_asset_endpoint(request: Request):
+    """Upload a file to R2 and return its public URL."""
+    content_type = request.headers.get("content-type", "application/octet-stream")
+    filename = request.headers.get("x-filename", "upload")
+
+    body = await request.body()
+    if not body:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    try:
+        public_url = await upload_asset(
+            data=body,
+            filename=filename,
+            content_type=content_type,
+        )
+        return {"url": public_url, "filename": filename}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
 @app.get("/health")

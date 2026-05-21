@@ -17,6 +17,15 @@ interface Story {
   status: string;
 }
 
+interface Avatar {
+  id: string;
+  name?: string;
+  preview_image_url?: string;
+  gender?: string;
+  status?: string;
+  avatar_type?: string;
+}
+
 export default function Home() {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +34,7 @@ export default function Home() {
   const [progressDetail, setProgressDetail] = useState('');
   const [charCount, setCharCount] = useState<number | undefined>();
   const [progressMode, setProgressMode] = useState<'standard' | 'influencer'>('standard');
+  const [avatars, setAvatars] = useState<Avatar[]>([]);
 
   const fetchStories = useCallback(async () => {
     try {
@@ -38,11 +48,24 @@ export default function Home() {
     }
   }, []);
 
+  const fetchAvatars = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/heygen/avatars`);
+      if (res.ok) {
+        const data = await res.json();
+        setAvatars(data.avatars || []);
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
   useEffect(() => {
     fetchStories();
+    fetchAvatars();
     const interval = setInterval(fetchStories, 5000);
     return () => clearInterval(interval);
-  }, [fetchStories]);
+  }, [fetchStories, fetchAvatars]);
 
   // Poll active story progress
   useEffect(() => {
@@ -131,7 +154,7 @@ export default function Home() {
       const data = await res.json();
       setActiveStoryId(data.story_id);
       setProgressStep('generating');
-      setProgressDetail('Synthesizing speech with xAI TTS...');
+      setProgressDetail('Synthesizing speech with Gemini TTS...');
       fetchStories();
     } catch (e) {
       alert('Network error. Is the backend running?');
@@ -159,7 +182,7 @@ export default function Home() {
     setIsLoading(true);
     setProgressMode('standard');
     setProgressStep('generating');
-    setProgressDetail('Synthesizing speech with xAI TTS...');
+    setProgressDetail('Synthesizing speech with Gemini TTS...');
     setCharCount(text.length);
 
     try {
@@ -189,18 +212,18 @@ export default function Home() {
     }
   };
 
-  const handleSubmitInfluencer = async (text: string, title: string, author: string, voiceId: string) => {
+  const handleSubmitInfluencer = async (text: string, title: string, author: string, voiceId: string, avatarId: string) => {
     setIsLoading(true);
     setProgressMode('influencer');
     setProgressStep('generating');
-    setProgressDetail('Synthesizing Gemini audio...');
+    setProgressDetail('Synthesizing Dialfyne audio...');
     setCharCount(text.length);
 
     try {
       const res = await fetch(`${API_URL}/api/process-influencer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, title, author, voice_id: voiceId }),
+        body: JSON.stringify({ text, title, author, voice_id: voiceId, avatar_id: avatarId }),
       });
 
       if (!res.ok) {
@@ -214,13 +237,49 @@ export default function Home() {
       const data = await res.json();
       setActiveStoryId(data.story_id);
       setProgressStep('rendering');
-      setProgressDetail('Rendering TruGen avatar video...');
+      setProgressDetail('Rendering HeyGen avatar video...');
       fetchStories();
     } catch (e) {
       alert('Network error. Is the backend running?');
       setIsLoading(false);
       setProgressStep('');
     }
+  };
+
+  const handleCreateAvatar = async (name: string, avatarType: string, fileUrl: string) => {
+    const res = await fetch(`${API_URL}/api/avatars`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, avatar_type: avatarType, file_url: fileUrl }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to create avatar');
+    }
+
+    const data = await res.json();
+    // Refresh avatars so the new one shows up
+    fetchAvatars();
+    return data;
+  };
+
+  const handleUploadAsset = async (file: File) => {
+    const res = await fetch(`${API_URL}/api/upload-asset`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+        'X-Filename': file.name,
+      },
+      body: file,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to upload file');
+    }
+
+    return res.json();
   };
 
   const handleDelete = async (id: number) => {
@@ -261,7 +320,17 @@ export default function Home() {
         </p>
       </div>
 
-      <StoryInput onSubmitUrl={handleSubmitUrl} onSubmitText={handleSubmitText} onSubmitSales={handleSubmitSales} onSubmitInfluencer={handleSubmitInfluencer} onPreviewSales={handlePreviewSales} isLoading={isLoading} />
+      <StoryInput
+        onSubmitUrl={handleSubmitUrl}
+        onSubmitText={handleSubmitText}
+        onSubmitSales={handleSubmitSales}
+        onSubmitInfluencer={handleSubmitInfluencer}
+        onPreviewSales={handlePreviewSales}
+        onCreateAvatar={handleCreateAvatar}
+        onUploadAsset={handleUploadAsset}
+        avatars={avatars}
+        isLoading={isLoading}
+      />
 
       <ProgressTracker
         step={progressStep}
@@ -286,6 +355,75 @@ export default function Home() {
         apiUrl={API_URL}
         onDelete={handleDelete}
       />
+
+      <div style={{ marginTop: '48px', marginBottom: '16px' }}>
+        <h2 style={{
+          margin: 0,
+          fontSize: '18px',
+          fontWeight: 600,
+          color: '#e0e0e0',
+        }}>
+          My Avatars
+        </h2>
+        <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#888' }}>
+          Your HeyGen avatars and their training status. Use the ID in the Influencer tab.
+        </p>
+      </div>
+
+      {avatars.length === 0 ? (
+        <p style={{ color: '#666', fontSize: '14px' }}>No avatars loaded yet.</p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
+          {avatars.map((avatar) => (
+            <div key={avatar.id} style={{
+              backgroundColor: '#141414',
+              border: '1px solid #333',
+              borderRadius: '12px',
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}>
+              {avatar.preview_image_url && (
+                <img
+                  src={avatar.preview_image_url}
+                  alt={avatar.name || avatar.id}
+                  style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', backgroundColor: '#222' }}
+                />
+              )}
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#e0e0e0' }}>
+                {avatar.name || 'Unnamed'}
+              </div>
+              <div style={{ fontSize: '12px', color: '#888', fontFamily: 'monospace' }}>
+                ID: {avatar.id}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {avatar.gender && (
+                  <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#222', color: '#aaa' }}>
+                    {avatar.gender}
+                  </span>
+                )}
+                {avatar.avatar_type && (
+                  <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#222', color: '#aaa' }}>
+                    {avatar.avatar_type.replace('_', ' ')}
+                  </span>
+                )}
+                {avatar.status && (
+                  <span style={{
+                    fontSize: '11px',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: avatar.status === 'completed' ? '#064e3b' : avatar.status === 'failed' ? '#450a0a' : '#1e3a5f',
+                    color: avatar.status === 'completed' ? '#4ade80' : avatar.status === 'failed' ? '#f87171' : '#60a5fa',
+                  }}>
+                    {avatar.status}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </main>
   );
 }

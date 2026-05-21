@@ -11,6 +11,7 @@ from config import (
     R2_AUDIO_PREFIX,
     R2_VIDEO_PREFIX,
     R2_INDEX_PREFIX,
+    R2_ASSET_PREFIX,
     MASTER_INDEX_KEY,
 )
 
@@ -197,6 +198,25 @@ async def upload_story_video(story_id: int, video_bytes: bytes, slug: str = "") 
     key = get_video_key(story_id, slug)
     await upload_file(key, video_bytes, content_type="video/mp4")
     return get_video_url(story_id, slug)
+
+
+def get_asset_key(filename: str) -> str:
+    """Get R2 key for a generic asset file."""
+    return f"{R2_ASSET_PREFIX}{filename}"
+
+
+def get_asset_url(filename: str) -> str:
+    """Get public URL for a generic asset file."""
+    if not R2_PUBLIC_URL:
+        raise ValueError("R2_PUBLIC_URL not configured")
+    return f"{R2_PUBLIC_URL}/{R2_ASSET_PREFIX}{filename}"
+
+
+async def upload_asset(data: bytes, filename: str, content_type: str = "application/octet-stream") -> str:
+    """Upload a generic asset to R2 and return its public URL."""
+    key = get_asset_key(filename)
+    await upload_file(key, data, content_type=content_type)
+    return get_asset_url(filename)
 
 
 async def delete_story(story_id: int) -> bool:

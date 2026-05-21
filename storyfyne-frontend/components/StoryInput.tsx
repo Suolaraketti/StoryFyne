@@ -1,13 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+interface Avatar {
+  id: string;
+  name?: string;
+  preview_image_url?: string;
+  gender?: string;
+  status?: string;
+  avatar_type?: string;
+}
 
 interface StoryInputProps {
   onSubmitUrl: (url: string) => void;
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
-  onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string) => void;
+  onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string) => void;
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
+  onCreateAvatar: (name: string, avatarType: string, fileUrl: string) => Promise<{ avatar_item?: any; avatar_group?: any }>;
+  onUploadAsset: (file: File) => Promise<{ url: string }>;
+  avatars: Avatar[];
   isLoading: boolean;
 }
 
@@ -17,9 +29,16 @@ const VOICES = [
   { id: 'Kore', label: 'Kore — Warm, Friendly (Female)', desc: 'Best for approachable tone' },
   { id: 'Leda', label: 'Leda — Energetic, Bright (Female)', desc: 'Best for enthusiastic delivery' },
   { id: 'Zephyr', label: 'Zephyr — Soft, Calm (Female)', desc: 'Best for gentle, soothing delivery' },
+  { id: 'Achernar', label: 'Achernar — Soft, Higher pitch', desc: 'Best for gentle, higher-pitched delivery' },
 ];
 
-export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onPreviewSales, isLoading }: StoryInputProps) {
+const AVATAR_TYPES = [
+  { id: 'photo', label: 'Photo Avatar', desc: 'Single headshot image' },
+  { id: 'digital_twin', label: 'Digital Twin', desc: 'Video footage (15-600s)' },
+  { id: 'prompt', label: 'AI Prompt', desc: 'Text description' },
+];
+
+export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onPreviewSales, onCreateAvatar, onUploadAsset, avatars, isLoading }: StoryInputProps) {
   const [mode, setMode] = useState<'text' | 'url' | 'sales' | 'influencer'>('text');
   const [url, setUrl] = useState('');
   const [text, setText] = useState('');
@@ -34,8 +53,27 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [showPreview, setShowPreview] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
 
+  // Influencer mode state
+  const [avatarId, setAvatarId] = useState('');
+
+  // Avatar creation state
+  const [showCreateAvatar, setShowCreateAvatar] = useState(false);
+  const [newAvatarName, setNewAvatarName] = useState('');
+  const [newAvatarType, setNewAvatarType] = useState('photo');
+  const [newAvatarUrl, setNewAvatarUrl] = useState('');
+  const [isCreatingAvatar, setIsCreatingAvatar] = useState(false);
+  const [createAvatarStatus, setCreateAvatarStatus] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const isSales = mode === 'sales';
   const isInfluencer = mode === 'influencer';
+
+  // Default to first avatar when avatars load
+  useEffect(() => {
+    if (avatars.length > 0 && !avatarId) {
+      setAvatarId(avatars[0].id);
+    }
+  }, [avatars, avatarId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +84,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
     } else if (mode === 'sales' && text.trim()) {
       onSubmitSales(text.trim(), title.trim() || 'Dialfyne Pitch', author.trim() || 'Dennis Kaczmarowski', voiceId, websiteUrl.trim(), previewText.trim());
     } else if (mode === 'influencer' && text.trim()) {
-      onSubmitInfluencer(text.trim(), title.trim() || 'AI Influencer', author.trim() || 'Unknown', voiceId);
+      onSubmitInfluencer(text.trim(), title.trim() || 'AI Influencer', author.trim() || 'Unknown', voiceId, avatarId);
     }
   };
 
@@ -61,6 +99,50 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       alert(e.message || 'Failed to generate preview');
     } finally {
       setIsPreviewing(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCreateAvatarStatus('Uploading file...');
+    try {
+      const result = await onUploadAsset(file);
+      setNewAvatarUrl(result.url);
+      setCreateAvatarStatus('File uploaded. Ready to create avatar.');
+    } catch (e: any) {
+      setCreateAvatarStatus(`Upload failed: ${e.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleCreateAvatar = async () => {
+    const name = newAvatarName.trim();
+    const fileUrl = newAvatarUrl.trim();
+    if (!name) {
+      setCreateAvatarStatus('Please enter an avatar name.');
+      return;
+    }
+    if (!fileUrl) {
+      setCreateAvatarStatus('Please provide an image URL or upload a file.');
+      return;
+    }
+    setIsCreatingAvatar(true);
+    setCreateAvatarStatus('Creating avatar on HeyGen...');
+    try {
+      const result = await onCreateAvatar(name, newAvatarType, fileUrl);
+      const lookId = result.avatar_item?.id;
+      setCreateAvatarStatus(
+        lookId
+          ? `Avatar "${name}" created! ID: ${lookId}. It may take a few minutes to train. Refresh avatars to see it.`
+          : `Avatar "${name}" submitted for training. Refresh avatars to check status.`
+      );
+      setNewAvatarName('');
+      setNewAvatarUrl('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (e: any) {
+      setCreateAvatarStatus(`Failed: ${e.message || 'Unknown error'}`);
+    } finally {
+      setIsCreatingAvatar(false);
     }
   };
 
@@ -92,7 +174,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       )}
       {isInfluencer && (
         <div style={{ backgroundColor: '#1a0512', border: '1px solid #ec4899', borderRadius: '10px', padding: '14px 18px', marginBottom: '16px', fontSize: '14px', color: '#ec4899' }}>
-          Influencer Mode: Generate a 9:16 vertical video (TikTok / Reels) with Gemini voice + TruGen avatar (Clara).
+          Influencer Mode: Generate a 9:16 vertical video (TikTok / Reels) with your Dialfyne voice + HeyGen AI avatar.
         </div>
       )}
 
@@ -117,6 +199,82 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
               {isSales && (
                 <input type="url" placeholder="Prospect website URL (optional, e.g. https://example.com)" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} disabled={isLoading}
                   style={{ width: '100%', padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', boxSizing: 'border-box' }} />
+              )}
+
+              {isInfluencer && (
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <label style={{ color: '#888', fontSize: '14px', whiteSpace: 'nowrap' }}>Avatar:</label>
+                  <select value={avatarId} onChange={(e) => setAvatarId(e.target.value)} disabled={isLoading || avatars.length === 0}
+                    style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }}>
+                    {avatars.length === 0 && (
+                      <option value="">Loading avatars...</option>
+                    )}
+                    {avatars.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name || a.id}
+                        {a.gender ? ` (${a.gender})` : ''}
+                        {a.status && a.status !== 'completed' ? ` [${a.status}]` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => setShowCreateAvatar(!showCreateAvatar)}
+                    style={{ padding: '8px 14px', fontSize: '13px', borderRadius: '8px', border: '1px solid #ec4899', backgroundColor: '#1a0512', color: '#ec4899', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    {showCreateAvatar ? 'Cancel' : 'Create New'}
+                  </button>
+                </div>
+              )}
+
+              {isInfluencer && showCreateAvatar && (
+                <div style={{ backgroundColor: '#1a0512', border: '1px solid #ec4899', borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#ec4899' }}>Create Custom Avatar</div>
+
+                  <input type="text" placeholder="Avatar name (e.g. Dennis AI)" value={newAvatarName} onChange={(e) => setNewAvatarName(e.target.value)} disabled={isCreatingAvatar}
+                    style={{ width: '100%', padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', boxSizing: 'border-box' }} />
+
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <label style={{ color: '#888', fontSize: '14px', whiteSpace: 'nowrap' }}>Type:</label>
+                    <select value={newAvatarType} onChange={(e) => setNewAvatarType(e.target.value)} disabled={isCreatingAvatar}
+                      style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }}>
+                      {AVATAR_TYPES.map((t) => (
+                        <option key={t.id} value={t.id}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ color: '#666', fontSize: '13px', marginTop: '-8px' }}>
+                    {AVATAR_TYPES.find(t => t.id === newAvatarType)?.desc}
+                  </div>
+
+                  {newAvatarType !== 'prompt' ? (
+                    <>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <input type="url" placeholder="Public image/video URL (optional if uploading)" value={newAvatarUrl} onChange={(e) => setNewAvatarUrl(e.target.value)} disabled={isCreatingAvatar}
+                          style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }} />
+                        <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*,video/*" style={{ display: 'none' }} />
+                        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isCreatingAvatar}
+                          style={{ padding: '10px 16px', fontSize: '13px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                          Upload File
+                        </button>
+                      </div>
+                      {newAvatarUrl && (
+                        <div style={{ color: '#888', fontSize: '12px' }}>Source: {newAvatarUrl}</div>
+                      )}
+                    </>
+                  ) : (
+                    <textarea placeholder="Describe your avatar in detail... (e.g. Professional male in his 30s, clean-shaven, wearing a navy blazer)" value={newAvatarUrl} onChange={(e) => setNewAvatarUrl(e.target.value)} disabled={isCreatingAvatar} rows={4}
+                      style={{ width: '100%', padding: '14px 18px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                  )}
+
+                  <button type="button" onClick={handleCreateAvatar} disabled={isCreatingAvatar}
+                    style={{ padding: '12px 24px', fontSize: '14px', fontWeight: 600, borderRadius: '10px', border: 'none', backgroundColor: isCreatingAvatar ? '#333' : '#ec4899', color: '#fff', cursor: isCreatingAvatar ? 'not-allowed' : 'pointer', alignSelf: 'flex-start' }}>
+                    {isCreatingAvatar ? 'Creating...' : 'Create Avatar'}
+                  </button>
+
+                  {createAvatarStatus && (
+                    <div style={{ fontSize: '13px', color: createAvatarStatus.startsWith('Failed') || createAvatarStatus.startsWith('Please') ? '#ef4444' : '#22c55e' }}>
+                      {createAvatarStatus}
+                    </div>
+                  )}
+                </div>
               )}
 
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>

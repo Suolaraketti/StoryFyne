@@ -65,19 +65,19 @@ LANGUAGES = [
     "id", "it", "ja", "ko", "pt-BR", "pt-PT", "ru", "es-MX", "es-ES", "tr", "vi"
 ]
 
-# TruGen AI
-TRUGEN_API_KEY = os.getenv("TRUGEN_API_KEY", "")
-TRUGEN_BASE_URL = os.getenv("TRUGEN_BASE_URL", "https://api.trugen.ai/v1")
-TRUGEN_DEFAULT_AVATAR_ID = os.getenv("TRUGEN_DEFAULT_AVATAR_ID", "7e95996")
-TRUGEN_DEFAULT_VOICE_ID = os.getenv("TRUGEN_DEFAULT_VOICE_ID", "ZUrEGyu8GFMwnHbvLhv2")
-TRUGEN_DEFAULT_PROVIDER = os.getenv("TRUGEN_DEFAULT_PROVIDER", "elevenlabs")
-TRUGEN_DEFAULT_MODEL = os.getenv("TRUGEN_DEFAULT_MODEL", "eleven_turbo_v2_5")
+# HeyGen AI
+HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY", "")
+HEYGEN_BASE_URL = os.getenv("HEYGEN_BASE_URL", "https://api.heygen.com")
+HEYGEN_DEFAULT_AVATAR_ID = os.getenv("HEYGEN_DEFAULT_AVATAR_ID", "")
 
 # App
 PUBLIC_URL = os.getenv("PUBLIC_URL", "")
 
 # Video
 R2_VIDEO_PREFIX = "video/"
+
+# Assets
+R2_ASSET_PREFIX = "assets/"
 
 # Cache
 STORIES_CACHE_TTL_SECONDS = 60

@@ -35,8 +35,8 @@ def replace_audio_in_video(
     Returns the muxed MP4 as bytes.
     """
     tmp_dir = tempfile.gettempdir()
-    video_path = os.path.join(tmp_dir, "trugen_video.mp4")
-    audio_path = os.path.join(tmp_dir, "gemini_audio.mp3")
+    video_path = os.path.join(tmp_dir, "avatar_video.mp4")
+    audio_path = os.path.join(tmp_dir, "custom_audio.mp3")
     output_path = os.path.join(tmp_dir, "muxed_output.mp4")
 
     try:
