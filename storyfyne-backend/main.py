@@ -1665,6 +1665,127 @@ async def process_explainer(request: ExplainerRequest):
     )
 
 
+@app.post("/api/diagnostic-render")
+async def diagnostic_render():
+    """Zero-cost diagnostic: render a 2-second dummy video through the full pipeline.
+    Tests: backend→gateway→AWS Lambda→Remotion site→S3 output.
+    Returns full step-by-step diagnostics. No Gemini/Claude calls.
+    """
+    from fastapi.responses import JSONResponse
+    diagnostics: list[dict] = []
+    start = time.time()
+
+    def log(step: str, detail: str, data: dict = None):
+        entry = {"step": step, "detail": detail, "elapsed": round(time.time() - start, 2)}
+        if data:
+            entry["data"] = data
+        diagnostics.append(entry)
+        logger.info(f"[DIAGNOSTIC] {step} | {detail}")
+
+    # Step 1: Gateway health
+    log("1_gateway_health", f"Checking {RENDER_GATEWAY_URL}/health")
+    try:
+        r = await httpx.AsyncClient(timeout=10.0).get(f"{RENDER_GATEWAY_URL}/health")
+        log("1_gateway_health", f"HTTP {r.status_code}", {"response": r.json()})
+        if r.status_code != 200:
+            return JSONResponse({"success": False, "diagnostics": diagnostics}, status_code=200)
+    except Exception as e:
+        log("1_gateway_health", f"FAILED: {e}")
+        return JSONResponse({"success": False, "diagnostics": diagnostics}, status_code=200)
+
+    # Step 2: Submit minimal render
+    composition_id = REMOTION_COMPOSITION_ID
+    input_props = {
+        "scenes": [{"type": "title", "text": "Test", "subtext": "", "visualDirection": "Test", "audioUrl": "", "durationInFrames": 60}],
+        "aspectRatio": "16:9",
+        "logoUrl": "",
+        "primaryColor": "#4f46e5",
+        "secondaryColor": "#0ea5e9",
+        "bgColor": "#0f172a",
+        "textColor": "#f8fafc",
+        "accentColor": "#6366f1",
+    }
+    log("2_render_submit", f"Submitting to gateway | composition={composition_id} | serveUrl={REMOTION_SERVE_URL[:60]}...")
+    render_id = ""
+    bucket_name = ""
+    try:
+        r = await httpx.AsyncClient(timeout=60.0).post(
+            f"{RENDER_GATEWAY_URL}/render",
+            json={
+                "serveUrl": REMOTION_SERVE_URL,
+                "compositionId": composition_id,
+                "inputProps": input_props,
+                "outName": f"diagnostic_{int(start)}.mp4",
+            },
+        )
+        body = r.json()
+        log("2_render_submit", f"HTTP {r.status_code}", {"response": body})
+        if r.status_code != 200:
+            return JSONResponse({"success": False, "diagnostics": diagnostics}, status_code=200)
+        render_id = body.get("renderId", "")
+        bucket_name = body.get("bucketName", "")
+        if not render_id:
+            log("2_render_submit", "No renderId in response")
+            return JSONResponse({"success": False, "diagnostics": diagnostics}, status_code=200)
+    except Exception as e:
+        log("2_render_submit", f"FAILED: {e}")
+        return JSONResponse({"success": False, "diagnostics": diagnostics}, status_code=200)
+
+    # Step 3: Poll status
+    log("3_poll", f"Polling status | renderId={render_id} | bucket={bucket_name}")
+    final_status = ""
+    output_file = ""
+    for i in range(40):  # 3.5 min max
+        await asyncio.sleep(5)
+        try:
+            r = await httpx.AsyncClient(timeout=30.0).get(
+                f"{RENDER_GATEWAY_URL}/status",
+                params={"renderId": render_id, "bucketName": bucket_name},
+            )
+            if r.status_code != 200:
+                log("3_poll", f"Poll {i+1}: HTTP {r.status_code}")
+                continue
+            data = r.json()
+            status = data.get("status", "")
+            progress = data.get("progressPercent", 0)
+            if status in ("completed", "failed"):
+                final_status = status
+                output_file = data.get("outputFile", "")
+                log("3_poll", f"Poll {i+1}: {status.upper()}", {"data": data})
+                break
+            else:
+                if i % 3 == 0:  # log every 15s to avoid spam
+                    log("3_poll", f"Poll {i+1}: {progress}%", {"data": data})
+        except Exception as e:
+            log("3_poll", f"Poll {i+1} exception: {e}")
+
+    if final_status != "completed":
+        log("4_result", "Render did not complete successfully")
+        return JSONResponse({"success": False, "diagnostics": diagnostics}, status_code=200)
+
+    # Step 4: Try downloading the video
+    log("4_download", f"Downloading from {output_file[:80]}...")
+    video_bytes = b""
+    try:
+        r = await httpx.AsyncClient(timeout=60.0, follow_redirects=True).get(output_file)
+        video_bytes = r.content
+        log("4_download", f"HTTP {r.status_code} | {len(video_bytes)} bytes")
+        if r.status_code != 200:
+            return JSONResponse({"success": False, "diagnostics": diagnostics}, status_code=200)
+    except Exception as e:
+        log("4_download", f"FAILED: {e}")
+        return JSONResponse({"success": False, "diagnostics": diagnostics}, status_code=200)
+
+    log("5_done", "Full pipeline succeeded")
+    return JSONResponse({
+        "success": True,
+        "video_size_bytes": len(video_bytes),
+        "video_url": output_file,
+        "elapsed_seconds": round(time.time() - start, 2),
+        "diagnostics": diagnostics,
+    }, status_code=200)
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
