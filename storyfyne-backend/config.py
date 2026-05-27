@@ -42,7 +42,7 @@ VOICE_ASSIGNMENTS: Dict[str, str] = {
 VOICE_CYCLE: List[str] = ["Kore", "Fenrir"]
 
 # Claude
-CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-3-5-sonnet-latest")
+CLAUDE_MODEL = "claude-haiku-4-5-20251001"
 CLAUDE_MAX_TOKENS = 4096
 
 # R2 Paths
