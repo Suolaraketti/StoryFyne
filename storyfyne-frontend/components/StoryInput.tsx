@@ -16,8 +16,10 @@ interface StoryInputProps {
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
   onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string, taggedText: string, context: string) => void;
+  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string) => void;
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
   onPreviewInfluencer: (text: string, context: string) => Promise<{ tagged_text: string }>;
+  onPreviewExplainer: (text: string) => Promise<{ scenes: any[] }>;
   onCreateAvatar: (name: string, avatarType: string, fileUrl: string) => Promise<{ avatar_item?: any; avatar_group?: any }>;
   onUploadAsset: (file: File) => Promise<{ url: string }>;
   avatars: Avatar[];
@@ -47,8 +49,8 @@ const ASPECT_RATIOS = [
   { id: 'auto', label: 'Auto — Match avatar source', desc: 'Preserve original aspect ratio' },
 ];
 
-export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onPreviewSales, onPreviewInfluencer, onCreateAvatar, onUploadAsset, avatars, isLoading }: StoryInputProps) {
-  const [mode, setMode] = useState<'text' | 'url' | 'sales' | 'influencer'>('text');
+export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onSubmitExplainer, onPreviewSales, onPreviewInfluencer, onPreviewExplainer, onCreateAvatar, onUploadAsset, avatars, isLoading }: StoryInputProps) {
+  const [mode, setMode] = useState<'text' | 'url' | 'sales' | 'influencer' | 'explainer'>('text');
   const [url, setUrl] = useState('');
   const [text, setText] = useState('');
   const [title, setTitle] = useState('');
@@ -70,6 +72,11 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [showInfluencerPreview, setShowInfluencerPreview] = useState(false);
   const [isPreviewingInfluencer, setIsPreviewingInfluencer] = useState(false);
 
+  // Explainer mode state
+  const [explainerScenes, setExplainerScenes] = useState<any[]>([]);
+  const [showExplainerPreview, setShowExplainerPreview] = useState(false);
+  const [isPreviewingExplainer, setIsPreviewingExplainer] = useState(false);
+
   // Avatar creation state
   const [showCreateAvatar, setShowCreateAvatar] = useState(false);
   const [newAvatarName, setNewAvatarName] = useState('');
@@ -81,6 +88,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
 
   const isSales = mode === 'sales';
   const isInfluencer = mode === 'influencer';
+  const isExplainer = mode === 'explainer';
 
   // Default to first avatar when avatars load
   useEffect(() => {
@@ -99,6 +107,8 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       onSubmitSales(text.trim(), title.trim() || 'Dialfyne Pitch', author.trim() || 'Dennis Kaczmarowski', voiceId, websiteUrl.trim(), previewText.trim());
     } else if (mode === 'influencer' && text.trim()) {
       onSubmitInfluencer(text.trim(), title.trim() || 'AI Influencer', author.trim() || 'Unknown', voiceId, avatarId, aspectRatio, influencerTaggedText.trim(), influencerContext.trim());
+    } else if (mode === 'explainer' && text.trim()) {
+      onSubmitExplainer(text.trim(), title.trim() || 'Explainer Video', author.trim() || 'Unknown', voiceId, aspectRatio, JSON.stringify(explainerScenes));
     }
   };
 
@@ -140,6 +150,20 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       alert(e.message || 'Failed to generate preview');
     } finally {
       setIsPreviewingInfluencer(false);
+    }
+  };
+
+  const handlePreviewExplainer = async () => {
+    if (!text.trim()) return;
+    setIsPreviewingExplainer(true);
+    try {
+      const result = await onPreviewExplainer(text.trim());
+      setExplainerScenes(result.scenes || []);
+      setShowExplainerPreview(true);
+    } catch (e: any) {
+      alert(e.message || 'Failed to generate scene preview');
+    } finally {
+      setIsPreviewingExplainer(false);
     }
   };
 
@@ -193,6 +217,10 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
           style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #333', backgroundColor: mode === 'influencer' ? '#ec4899' : '#141414', color: '#fff', cursor: 'pointer', fontSize: '14px' }}>
           Influencer
         </button>
+        <button type="button" onClick={() => { setMode('explainer'); setShowPreview(false); }}
+          style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #333', backgroundColor: mode === 'explainer' ? '#6366f1' : '#141414', color: '#fff', cursor: 'pointer', fontSize: '14px' }}>
+          Explainer
+        </button>
       </div>
 
       {isSales && (
@@ -203,6 +231,11 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       {isInfluencer && (
         <div style={{ backgroundColor: '#1a0512', border: '1px solid #ec4899', borderRadius: '10px', padding: '14px 18px', marginBottom: '16px', fontSize: '14px', color: '#ec4899' }}>
           Influencer Mode: Generate a 9:16 vertical video (TikTok / Reels) with your Dialfyne voice + HeyGen AI avatar.
+        </div>
+      )}
+      {isExplainer && (
+        <div style={{ backgroundColor: '#0f172a', border: '1px solid #6366f1', borderRadius: '10px', padding: '14px 18px', marginBottom: '16px', fontSize: '14px', color: '#6366f1' }}>
+          Explainer Mode: Turn your script into a motion-graphics explainer video with per-scene voiceover and animated visuals.
         </div>
       )}
 
@@ -216,13 +249,13 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
               style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }} />
             <input type="text" placeholder={isSales ? "Your name (optional)" : isInfluencer ? "Influencer name (optional)" : "Author (optional)"} value={author} onChange={(e) => setAuthor(e.target.value)} disabled={isLoading}
               style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }} />
-            {!isSales && !isInfluencer && (
+            {!isSales && !isInfluencer && !isExplainer && (
               <input type="text" placeholder="Subreddit (optional)" value={subreddit} onChange={(e) => setSubreddit(e.target.value)} disabled={isLoading}
                 style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }} />
             )}
           </div>
 
-          {(isSales || isInfluencer) && (
+          {(isSales || isInfluencer || isExplainer) && (
             <>
               {isSales && (
                 <input type="url" placeholder="Prospect website URL (optional, e.g. https://example.com)" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} disabled={isLoading}
@@ -252,6 +285,23 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                     </button>
                   </div>
 
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <label style={{ color: '#888', fontSize: '14px', whiteSpace: 'nowrap' }}>Ratio:</label>
+                    <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)} disabled={isLoading}
+                      style={{ flex: 1, padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none' }}>
+                      {ASPECT_RATIOS.map((r) => (
+                        <option key={r.id} value={r.id}>{r.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ color: '#666', fontSize: '13px', marginTop: '-8px' }}>
+                    {ASPECT_RATIOS.find(r => r.id === aspectRatio)?.desc}
+                  </div>
+                </>
+              )}
+
+              {isExplainer && (
+                <>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                     <label style={{ color: '#888', fontSize: '14px', whiteSpace: 'nowrap' }}>Ratio:</label>
                     <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)} disabled={isLoading}
@@ -344,8 +394,8 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
           )}
 
           <textarea
-            placeholder={isSales ? "Paste a cold email, story, idea, or bullet points (optional if you provided a website above)..." : isInfluencer ? "Write your influencer script here..." : "Paste story text here..."}
-            value={text} onChange={(e) => setText(e.target.value)} disabled={isLoading} required={!isSales || !websiteUrl.trim()} rows={isInfluencer ? 10 : 8}
+            placeholder={isSales ? "Paste a cold email, story, idea, or bullet points (optional if you provided a website above)..." : isInfluencer ? "Write your influencer script here..." : isExplainer ? "Paste your explainer script here... (e.g. 'Most small businesses lose 30% of leads to missed calls. Here is how AI fixes that...')" : "Paste story text here..."}
+            value={text} onChange={(e) => setText(e.target.value)} disabled={isLoading} required={!isSales || !websiteUrl.trim()} rows={isInfluencer || isExplainer ? 10 : 8}
             style={{ width: '100%', padding: '14px 18px', fontSize: '16px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit' }}
           />
 
@@ -400,10 +450,42 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
               </div>
             </div>
           )}
+
+          {isExplainer && !showExplainerPreview && (
+            <button type="button" onClick={handlePreviewExplainer} disabled={isPreviewingExplainer || !text.trim()}
+              style={{ padding: '12px 24px', fontSize: '15px', fontWeight: 600, borderRadius: '10px', border: '1px solid #6366f1', backgroundColor: '#0f172a', color: '#6366f1', cursor: isPreviewingExplainer ? 'not-allowed' : 'pointer', alignSelf: 'flex-start' }}>
+              {isPreviewingExplainer ? 'Breaking into scenes...' : 'Preview Scenes'}
+            </button>
+          )}
+
+          {isExplainer && showExplainerPreview && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <label style={{ color: '#888', fontSize: '14px' }}>Review scenes below, then click Generate:</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto', padding: '4px' }}>
+                {explainerScenes.map((scene, idx) => (
+                  <div key={idx} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '12px' }}>
+                    <div style={{ fontSize: '12px', color: '#6366f1', fontWeight: 600, marginBottom: '6px' }}>Scene {idx + 1}</div>
+                    <div style={{ fontSize: '14px', color: '#e0e0e0', marginBottom: '6px' }}>{scene.scene_text}</div>
+                    <div style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>{scene.visual_direction}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button type="button" onClick={handlePreviewExplainer} disabled={isPreviewingExplainer}
+                  style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', cursor: 'pointer' }}>
+                  Regenerate
+                </button>
+                <button type="submit" disabled={isLoading || explainerScenes.length === 0}
+                  style={{ padding: '10px 24px', fontSize: '14px', fontWeight: 600, borderRadius: '8px', border: 'none', backgroundColor: '#6366f1', color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
+                  {isLoading ? 'Generating...' : 'Generate Explainer Video'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {!isSales && !isInfluencer && (
+      {!isSales && !isInfluencer && !isExplainer && (
         <button type="submit" disabled={isLoading}
           style={{ marginTop: '16px', width: '100%', padding: '14px 28px', fontSize: '16px', fontWeight: 600, borderRadius: '10px', border: 'none', backgroundColor: isLoading ? '#333' : '#2563eb', color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
           {isLoading ? 'Generating...' : 'Generate Audio'}
@@ -413,6 +495,12 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
         <button type="submit" disabled={isLoading}
           style={{ marginTop: '16px', width: '100%', padding: '14px 28px', fontSize: '16px', fontWeight: 600, borderRadius: '10px', border: 'none', backgroundColor: isLoading ? '#333' : '#ec4899', color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
           {isLoading ? 'Generating Avatar Video...' : 'Generate Influencer Video'}
+        </button>
+      )}
+      {isExplainer && !showExplainerPreview && (
+        <button type="submit" disabled={isLoading}
+          style={{ marginTop: '16px', width: '100%', padding: '14px 28px', fontSize: '16px', fontWeight: 600, borderRadius: '10px', border: 'none', backgroundColor: isLoading ? '#333' : '#6366f1', color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
+          {isLoading ? 'Generating Explainer Video...' : 'Generate Explainer Video'}
         </button>
       )}
     </form>

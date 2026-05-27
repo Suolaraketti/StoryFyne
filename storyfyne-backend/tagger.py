@@ -71,6 +71,27 @@ Rules:
 Output format:
 Return ONLY the tagged script text. No explanations, no markdown code blocks, no preamble."""
 
+EXPLAINER_SYSTEM_PROMPT = """You are a video script director. Your job is to break a user's explanation or story into short, self-contained scenes suitable for a motion-graphics explainer video.
+
+Rules:
+1. Break the text into 3–8 scenes. Each scene should be 1–3 sentences (roughly 5–15 seconds when spoken).
+2. For each scene, provide:
+   - scene_text: The exact narration text for this scene. Keep it verbatim from the source where possible; lightly condense only if needed for pacing.
+   - visual_direction: A one-line description of what should appear on screen (e.g. "Title card with bold headline", "Bullet points fade in", "Statistic counter animation", "Split screen comparison").
+3. Do NOT add TTS tags like [excitedly] or [pause]. The explainer audio uses a single clean voice.
+4. Ensure scenes flow logically: Hook → Problem → Solution → Proof → Call to Action.
+5. If the input is very short (<100 words), use 2–3 scenes max.
+
+Output format:
+Return ONLY a valid JSON object. No markdown code blocks, no preamble. Format:
+{
+  "scenes": [
+    {"scene_text": "...", "visual_direction": "..."},
+    ...
+  ]
+}
+"""
+
 
 def _strip_code_blocks(text: str) -> str:
     """Remove markdown code blocks if the model added them."""
@@ -91,8 +112,8 @@ def _strip_code_blocks(text: str) -> str:
     return text
 
 
-async def tag_text_with_claude(text: str, sales_mode: bool = False, influencer_mode: bool = False, website_content: str = "", context: str = "") -> str:
-    """Send text to Claude for expressive tagging."""
+async def tag_text_with_claude(text: str, sales_mode: bool = False, influencer_mode: bool = False, explainer_mode: bool = False, website_content: str = "", context: str = "") -> str:
+    """Send text to Claude for expressive tagging or scene breakdown."""
     if not ANTHROPIC_API_KEY:
         raise ValueError("ANTHROPIC_API_KEY not configured")
 
@@ -100,6 +121,8 @@ async def tag_text_with_claude(text: str, sales_mode: bool = False, influencer_m
         system = SALES_SYSTEM_PROMPT
     elif influencer_mode:
         system = INFLUENCER_SYSTEM_PROMPT
+    elif explainer_mode:
+        system = EXPLAINER_SYSTEM_PROMPT
     else:
         system = SYSTEM_PROMPT
 

@@ -1,6 +1,7 @@
 import os
 import time
 import asyncio
+import json
 from typing import Optional, Dict
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
@@ -16,6 +17,10 @@ from config import (
     STORIES_CACHE_TTL_SECONDS,
     VOICES,
     PUBLIC_URL,
+    RENDER_GATEWAY_URL,
+    REMOTION_SERVE_URL,
+    REMOTION_FPS,
+    REMOTION_COMPOSITION_ID,
 )
 from scraper import scrape_reddit_post, scrape_website
 from tagger import tag_text_with_claude
@@ -81,6 +86,18 @@ class InfluencerRequest(BaseModel):
     aspect_ratio: str = "9:16"
     tagged_text: str = ""
     context: str = ""
+
+
+class ExplainerRequest(BaseModel):
+    text: str
+    title: str = "Explainer Video"
+    author: str = "Unknown"
+    voice_id: str = "Puck"
+    aspect_ratio: str = "16:9"
+
+
+class PreviewExplainerResponse(BaseModel):
+    scenes: list
 
 
 class PreviewInfluencerResponse(BaseModel):
@@ -1202,6 +1219,402 @@ async def upload_asset_endpoint(request: Request):
         return {"url": public_url, "filename": filename}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+@app.post("/api/preview-explainer", response_model=PreviewExplainerResponse)
+async def preview_explainer(request: ExplainerRequest):
+    """Break text into explainer scenes without generating audio."""
+    raw_text = request.text.strip()
+    if not raw_text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    try:
+        tagged_text = await tag_text_with_claude(raw_text, explainer_mode=True)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Scene breakdown failed: {str(e)}")
+
+    # Parse JSON response
+    try:
+        data = json.loads(tagged_text)
+        scenes = data.get("scenes", [])
+        if not scenes:
+            raise ValueError("No scenes returned")
+    except Exception as e:
+        # Fallback: treat entire text as single scene
+        scenes = [{"scene_text": raw_text, "visual_direction": "Full text narration"}]
+
+    return PreviewExplainerResponse(scenes=scenes)
+
+
+async def _process_explainer(
+    story_id: int,
+    text: str,
+    title: str,
+    author: str,
+    voice_id: str,
+    aspect_ratio: str,
+):
+    """Background task: break text into scenes, generate audio, render via Remotion Lambda."""
+    start_time = time.time()
+    slug = slugify(title)
+
+    # Step 1: Scene breakdown
+    update_job_progress(story_id, "tagging", "Breaking script into scenes with Claude...")
+    try:
+        scene_json_text = await tag_text_with_claude(text, explainer_mode=True)
+        scene_data = json.loads(scene_json_text)
+        scenes = scene_data.get("scenes", [])
+        if not scenes:
+            raise ValueError("No scenes returned by Claude")
+    except Exception as e:
+        # Fallback: single scene
+        scenes = [{"scene_text": text, "visual_direction": "Full text narration"}]
+        update_job_progress(story_id, "tagging", f"Scene breakdown failed, using single scene. {str(e)}")
+
+    # Step 2: Generate per-scene audio
+    update_job_progress(story_id, "generating", f"Synthesizing audio for {len(scenes)} scenes...")
+    scene_audios: list[dict] = []
+    total_duration_seconds = 0
+
+    for idx, scene in enumerate(scenes):
+        scene_text = scene.get("scene_text", "").strip()
+        if not scene_text:
+            continue
+
+        try:
+            audio_bytes = await generate_segment_audio(scene_text, voice_id)
+        except Exception as e:
+            update_job_progress(story_id, "generating", f"Audio failed for scene {idx + 1}: {str(e)}")
+            continue
+
+        # Upload scene audio to R2
+        filename = f"scene_{story_id}_{idx}.mp3"
+        try:
+            audio_url = await upload_asset(audio_bytes, filename, content_type="audio/mpeg")
+        except Exception as e:
+            update_job_progress(story_id, "generating", f"Upload failed for scene {idx + 1}: {str(e)}")
+            continue
+
+        # Measure duration
+        try:
+            import io
+            from pydub import AudioSegment
+            seg = AudioSegment.from_mp3(io.BytesIO(audio_bytes))
+            duration_ms = len(seg)
+        except Exception:
+            duration_ms = 0
+
+        duration_seconds = duration_ms / 1000
+        total_duration_seconds += duration_seconds
+
+        scene_audios.append({
+            "text": scene_text,
+            "visualDirection": scene.get("visual_direction", ""),
+            "audioUrl": audio_url,
+            "durationInFrames": max(int(duration_seconds * REMOTION_FPS), 1),
+        })
+
+    if not scene_audios:
+        metadata = {
+            "id": story_id,
+            "reddit_url": "",
+            "title": title,
+            "author": author,
+            "subreddit": "explainer",
+            "mode": "explainer",
+            "status": "generate_failed",
+            "audio_url": "",
+            "video_url": "",
+            "duration_seconds": 0,
+            "file_size_bytes": 0,
+            "voice_assignments": {"NARRATOR": voice_id},
+            "tagged_text_preview": text[:200],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "processing_time_seconds": 0,
+            "error": "All scene audio generation failed",
+        }
+        await upload_story_metadata(story_id, metadata)
+        await add_story_to_index({
+            "id": story_id,
+            "title": title,
+            "subreddit": "explainer",
+            "mode": "explainer",
+            "status": "generate_failed",
+            "audio_url": "",
+            "duration_seconds": 0,
+            "created_at": metadata["created_at"],
+        })
+        invalidate_cache()
+        update_job_progress(story_id, "generate_failed", "All scene audio generation failed")
+        return
+
+    # Step 3: Submit to Render Gateway
+    update_job_progress(story_id, "rendering", "Submitting video render to Remotion Lambda...")
+
+    composition_id = "ExplainerVideoMobile" if aspect_ratio == "9:16" else REMOTION_COMPOSITION_ID
+    input_props = {
+        "scenes": scene_audios,
+        "aspectRatio": aspect_ratio,
+    }
+
+    render_id = ""
+    bucket_name = ""
+    try:
+        if not RENDER_GATEWAY_URL:
+            raise RuntimeError("RENDER_GATEWAY_URL not configured")
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                f"{RENDER_GATEWAY_URL}/render",
+                json={
+                    "serveUrl": REMOTION_SERVE_URL,
+                    "compositionId": composition_id,
+                    "inputProps": input_props,
+                    "outName": f"explainer_{story_id}.mp4",
+                },
+            )
+
+        if response.status_code != 200:
+            raise RuntimeError(f"Gateway error: {response.status_code} - {response.text}")
+
+        render_result = response.json()
+        render_id = render_result.get("renderId", "")
+        bucket_name = render_result.get("bucketName", "")
+        if not render_id:
+            raise RuntimeError("No renderId from gateway")
+    except Exception as e:
+        # Save audio-only metadata
+        metadata = {
+            "id": story_id,
+            "reddit_url": "",
+            "title": title,
+            "author": author,
+            "subreddit": "explainer",
+            "mode": "explainer",
+            "status": "audio_only",
+            "audio_url": scene_audios[0]["audioUrl"] if scene_audios else "",
+            "video_url": "",
+            "duration_seconds": int(total_duration_seconds),
+            "file_size_bytes": 0,
+            "voice_assignments": {"NARRATOR": voice_id},
+            "tagged_text_preview": text[:200],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "processing_time_seconds": int(time.time() - start_time),
+            "error": f"Render submission failed: {str(e)}",
+        }
+        await upload_story_metadata(story_id, metadata)
+        await add_story_to_index({
+            "id": story_id,
+            "title": title,
+            "subreddit": "explainer",
+            "mode": "explainer",
+            "status": "audio_only",
+            "audio_url": metadata["audio_url"],
+            "duration_seconds": metadata["duration_seconds"],
+            "created_at": metadata["created_at"],
+        })
+        invalidate_cache()
+        update_job_progress(story_id, "complete", "Audio ready. Video render failed.")
+        return
+
+    # Step 4: Poll render gateway
+    update_job_progress(story_id, "rendering", f"Rendering video via Remotion Lambda... ({render_id[:8]})")
+    video_url = ""
+    video_bytes = b""
+    polling_error = ""
+
+    for _ in range(360):  # poll for up to 30 minutes
+        await asyncio.sleep(5)
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                status_response = await client.get(
+                    f"{RENDER_GATEWAY_URL}/status",
+                    params={"renderId": render_id, "bucketName": bucket_name},
+                )
+
+            if status_response.status_code != 200:
+                continue
+
+            status_data = status_response.json()
+            status = status_data.get("status", "")
+
+            if status == "completed":
+                video_url = status_data.get("outputFile", "")
+                if video_url:
+                    try:
+                        async with httpx.AsyncClient(timeout=120.0) as client:
+                            dl = await client.get(video_url)
+                            if dl.status_code == 200:
+                                video_bytes = dl.content
+                    except Exception as dl_err:
+                        polling_error = f"Video ready but download failed: {dl_err}"
+                        update_job_progress(story_id, "rendering", polling_error)
+                break
+            elif status == "failed":
+                errors = status_data.get("errors", ["Unknown render error"])
+                polling_error = errors[0] if errors else "Unknown render error"
+                update_job_progress(story_id, "rendering", f"Render failed: {polling_error}")
+                break
+            else:
+                progress = status_data.get("progressPercent", 0)
+                update_job_progress(story_id, "rendering", f"Rendering video... {progress}%")
+        except Exception:
+            continue
+    else:
+        polling_error = "Video render timed out."
+        update_job_progress(story_id, "rendering", f"{polling_error} Saving audio only.")
+
+    # Step 5: Upload final video
+    video_upload_url = ""
+    if video_bytes:
+        update_job_progress(story_id, "uploading", "Saving video to R2...")
+        try:
+            video_upload_url = await upload_story_video(story_id, video_bytes, slug=slug)
+        except Exception as e:
+            update_job_progress(story_id, "uploading", f"Video upload failed: {str(e)}")
+
+    processing_time = int(time.time() - start_time)
+    final_status = "complete" if video_upload_url else "audio_only"
+
+    metadata = {
+        "id": story_id,
+        "reddit_url": "",
+        "title": title,
+        "author": author,
+        "subreddit": "explainer",
+        "mode": "explainer",
+        "status": final_status,
+        "audio_url": scene_audios[0]["audioUrl"] if scene_audios else "",
+        "video_url": video_upload_url,
+        "video_key": get_video_key(story_id, slug=slug) if video_upload_url else "",
+        "duration_seconds": int(total_duration_seconds),
+        "file_size_bytes": 0,
+        "video_size_bytes": len(video_bytes) if video_bytes else 0,
+        "voice_assignments": {"NARRATOR": voice_id},
+        "tagged_text_preview": text[:200],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "processing_time_seconds": processing_time,
+        "char_count": len(text),
+        "estimated_cost_usd": round(estimate_cost(len(text)), 6),
+        "error": polling_error or "",
+        "scenes": scene_audios,
+    }
+
+    await upload_story_metadata(story_id, metadata)
+    await add_story_to_index({
+        "id": story_id,
+        "title": title,
+        "subreddit": "explainer",
+        "mode": "explainer",
+        "status": final_status,
+        "audio_url": metadata["audio_url"],
+        "duration_seconds": metadata["duration_seconds"],
+        "created_at": metadata["created_at"],
+    })
+    invalidate_cache()
+    update_job_progress(story_id, "complete", "Done!" if video_upload_url else "Audio ready. Video unavailable.")
+
+
+@app.post("/api/process-explainer", response_model=ProcessResponse)
+async def process_explainer(request: ExplainerRequest):
+    """Generate an explainer video: scenes + audio + Remotion Lambda render."""
+    raw_text = request.text.strip()
+    if not raw_text:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    story_id = await get_next_story_id()
+    update_job_progress(story_id, "tagging", "Starting explainer generation...")
+
+    voice_id = request.voice_id if request.voice_id in VOICES else "Puck"
+
+    # Save placeholder immediately
+    placeholder = {
+        "id": story_id,
+        "reddit_url": "",
+        "title": request.title or "Explainer Video",
+        "author": request.author or "Unknown",
+        "subreddit": "explainer",
+        "mode": "explainer",
+        "status": "processing",
+        "audio_url": "",
+        "video_url": "",
+        "duration_seconds": 0,
+        "file_size_bytes": 0,
+        "voice_assignments": {},
+        "tagged_text_preview": raw_text[:200],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "processing_time_seconds": 0,
+    }
+    await upload_story_metadata(story_id, placeholder)
+    await add_story_to_index({
+        "id": story_id,
+        "title": request.title or "Explainer Video",
+        "subreddit": "explainer",
+        "mode": "explainer",
+        "status": "processing",
+        "audio_url": "",
+        "duration_seconds": 0,
+        "created_at": placeholder["created_at"],
+    })
+    invalidate_cache()
+
+    # Kick off background task
+    async def _wrapped_task():
+        try:
+            await _process_explainer(
+                story_id=story_id,
+                text=raw_text,
+                title=request.title or "Explainer Video",
+                author=request.author or "Unknown",
+                voice_id=voice_id,
+                aspect_ratio=request.aspect_ratio,
+            )
+        except Exception as e:
+            import traceback
+            error_msg = f"{str(e)}\n{traceback.format_exc()}"
+            metadata = {
+                "id": story_id,
+                "reddit_url": "",
+                "title": request.title or "Explainer Video",
+                "author": request.author or "Unknown",
+                "subreddit": "explainer",
+                "mode": "explainer",
+                "status": "generate_failed",
+                "audio_url": "",
+                "video_url": "",
+                "duration_seconds": 0,
+                "file_size_bytes": 0,
+                "voice_assignments": {},
+                "tagged_text_preview": raw_text[:200],
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "processing_time_seconds": 0,
+                "error": error_msg,
+            }
+            try:
+                await upload_story_metadata(story_id, metadata)
+                await add_story_to_index({
+                    "id": story_id,
+                    "title": request.title or "Explainer Video",
+                    "subreddit": "explainer",
+                    "mode": "explainer",
+                    "status": "generate_failed",
+                    "audio_url": "",
+                    "duration_seconds": 0,
+                    "created_at": metadata["created_at"],
+                })
+                invalidate_cache()
+            except Exception:
+                pass
+            update_job_progress(story_id, "generate_failed", f"Unhandled error: {str(e)}")
+
+    asyncio.create_task(_wrapped_task())
+
+    return ProcessResponse(
+        story_id=story_id,
+        audio_url="",
+        duration_seconds=0,
+        status="processing",
+    )
 
 
 @app.get("/health")

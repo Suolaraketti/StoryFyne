@@ -182,8 +182,9 @@ export default function SharePage() {
 
   const isSales = story.subreddit === 'sales';
   const isInfluencer = story.subreddit === 'influencer';
-  const tagLabel = isInfluencer ? 'AI Influencer' : isSales ? 'Sales Pitch' : 'Audio Story';
-  const tagColor = isInfluencer ? '#ec4899' : isSales ? CYAN : '#8B5CF6';
+  const isExplainer = story.subreddit === 'explainer' || (story as any).mode === 'explainer';
+  const tagLabel = isExplainer ? 'Explainer Video' : isInfluencer ? 'AI Influencer' : isSales ? 'Sales Pitch' : 'Audio Story';
+  const tagColor = isExplainer ? '#6366f1' : isInfluencer ? '#ec4899' : isSales ? CYAN : '#8B5CF6';
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (

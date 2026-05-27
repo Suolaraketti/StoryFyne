@@ -33,7 +33,7 @@ export default function Home() {
   const [progressStep, setProgressStep] = useState('');
   const [progressDetail, setProgressDetail] = useState('');
   const [charCount, setCharCount] = useState<number | undefined>();
-  const [progressMode, setProgressMode] = useState<'standard' | 'influencer'>('standard');
+  const [progressMode, setProgressMode] = useState<'standard' | 'influencer' | 'explainer'>('standard');
   const [avatars, setAvatars] = useState<Avatar[]>([]);
 
   const fetchStories = useCallback(async () => {
@@ -246,6 +246,55 @@ export default function Home() {
     }
   };
 
+  const handlePreviewExplainer = async (text: string) => {
+    const res = await fetch(`${API_URL}/api/preview-explainer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to generate scene preview');
+    }
+
+    return res.json();
+  };
+
+  const handleSubmitExplainer = async (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string) => {
+    setIsLoading(true);
+    setProgressMode('explainer');
+    setProgressStep('tagging');
+    setProgressDetail('Breaking script into scenes...');
+    setCharCount(text.length);
+
+    try {
+      const res = await fetch(`${API_URL}/api/process-explainer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, title, author, voice_id: voiceId, aspect_ratio: aspectRatio }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.detail || 'Failed to process explainer video');
+        setIsLoading(false);
+        setProgressStep('');
+        return;
+      }
+
+      const data = await res.json();
+      setActiveStoryId(data.story_id);
+      setProgressStep('generating');
+      setProgressDetail('Synthesizing scene audio...');
+      fetchStories();
+    } catch (e) {
+      alert('Network error. Is the backend running?');
+      setIsLoading(false);
+      setProgressStep('');
+    }
+  };
+
   const handlePreviewInfluencer = async (text: string, context: string) => {
     const res = await fetch(`${API_URL}/api/preview-influencer`, {
       method: 'POST',
@@ -340,8 +389,10 @@ export default function Home() {
         onSubmitText={handleSubmitText}
         onSubmitSales={handleSubmitSales}
         onSubmitInfluencer={handleSubmitInfluencer}
+        onSubmitExplainer={handleSubmitExplainer}
         onPreviewSales={handlePreviewSales}
         onPreviewInfluencer={handlePreviewInfluencer}
+        onPreviewExplainer={handlePreviewExplainer}
         onCreateAvatar={handleCreateAvatar}
         onUploadAsset={handleUploadAsset}
         avatars={avatars}

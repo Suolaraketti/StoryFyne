@@ -15,15 +15,23 @@ const STEPS_INFLUENCER = [
   { key: 'complete', label: 'Complete' },
 ];
 
+const STEPS_EXPLAINER = [
+  { key: 'tagging', label: 'Scripting' },
+  { key: 'generating', label: 'Audio' },
+  { key: 'rendering', label: 'Video' },
+  { key: 'uploading', label: 'Uploading' },
+  { key: 'complete', label: 'Complete' },
+];
+
 interface ProgressTrackerProps {
   step: string;
   detail?: string;
   charCount?: number;
-  mode?: 'standard' | 'influencer';
+  mode?: 'standard' | 'influencer' | 'explainer';
 }
 
 export default function ProgressTracker({ step, detail, charCount, mode = 'standard' }: ProgressTrackerProps) {
-  const STEPS = mode === 'influencer' ? STEPS_INFLUENCER : STEPS_STANDARD;
+  const STEPS = mode === 'influencer' ? STEPS_INFLUENCER : mode === 'explainer' ? STEPS_EXPLAINER : STEPS_STANDARD;
   const currentIndex = STEPS.findIndex((s) => s.key === step);
   const isComplete = step === 'complete';
   const estimatedCost = charCount ? ((charCount * 4.20) / 1_000_000).toFixed(4) : null;

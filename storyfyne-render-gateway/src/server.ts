@@ -1,0 +1,155 @@
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import {
+  renderMediaOnLambda,
+  getRenderProgress,
+} from "@remotion/lambda";
+import { speculateFunctionName } from "@remotion/lambda-client";
+import { z } from "zod";
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: "10mb" }));
+
+const PORT = process.env.PORT || 8001;
+
+// Validation schemas
+const renderRequestSchema = z.object({
+  serveUrl: z.string().url(),
+  compositionId: z.string(),
+  inputProps: z.record(z.any()),
+  outName: z.string().optional(),
+  codec: z.enum(["h264", "h265", "vp8", "vp9", "prores", "gif"]).optional().default("h264"),
+  imageFormat: z.enum(["jpeg", "png", "none"]).optional().default("jpeg"),
+  maxRetries: z.number().optional().default(1),
+  privacy: z.enum(["public", "private", "no-acl"]).optional().default("public"),
+});
+
+const statusRequestSchema = z.object({
+  renderId: z.string(),
+  bucketName: z.string(),
+});
+
+// Health check
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", service: "storyfyne-render-gateway" });
+});
+
+// Start a render
+app.post("/render", async (req, res) => {
+  const parseResult = renderRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({ error: "Invalid request", details: parseResult.error.flatten() });
+    return;
+  }
+
+  const {
+    serveUrl,
+    compositionId,
+    inputProps,
+    outName,
+    codec,
+    imageFormat,
+    maxRetries,
+    privacy,
+  } = parseResult.data;
+
+  try {
+    const functionName = speculateFunctionName({
+      diskSizeInMb: 2048,
+      memorySizeInMb: 2048,
+      timeoutInSeconds: 240,
+    });
+
+    const result = await renderMediaOnLambda({
+      region: (process.env.REMOTION_AWS_REGION as any) || "us-east-1",
+      functionName,
+      serveUrl,
+      composition: compositionId,
+      inputProps,
+      codec,
+      imageFormat,
+      maxRetries,
+      privacy,
+      outName: outName || undefined,
+      downloadBehavior: { type: "download", fileName: outName || "video.mp4" },
+    });
+
+    res.json({
+      renderId: result.renderId,
+      bucketName: result.bucketName,
+      cloudWatchMainLogs: result.cloudWatchMainLogs,
+    });
+  } catch (error: any) {
+    console.error("Render start error:", error);
+    res.status(500).json({
+      error: "Failed to start render",
+      message: error.message || String(error),
+    });
+  }
+});
+
+// Check render status
+app.get("/status", async (req, res) => {
+  const parseResult = statusRequestSchema.safeParse({
+    renderId: req.query.renderId,
+    bucketName: req.query.bucketName,
+  });
+  if (!parseResult.success) {
+    res.status(400).json({ error: "Invalid query params", details: parseResult.error.flatten() });
+    return;
+  }
+
+  const { renderId, bucketName } = parseResult.data;
+
+  try {
+    const progress = await getRenderProgress({
+      region: (process.env.REMOTION_AWS_REGION as any) || "us-east-1",
+      renderId,
+      bucketName,
+      functionName: speculateFunctionName({
+        diskSizeInMb: 2048,
+        memorySizeInMb: 2048,
+        timeoutInSeconds: 240,
+      }),
+    });
+
+    let status: string;
+    let progressPercent = 0;
+    let outputFile: string | undefined;
+    let errors: string[] | undefined;
+
+    if (progress.fatalErrorEncountered || progress.errors.length > 0) {
+      status = "failed";
+      errors = progress.errors.map((e) => e.message || "Unknown error");
+    } else if (progress.done && progress.outputFile) {
+      status = "completed";
+      outputFile = progress.outputFile;
+      progressPercent = 100;
+    } else {
+      status = "rendering";
+      progressPercent = Math.round(progress.overallProgress * 100);
+    }
+
+    res.json({
+      status,
+      progressPercent,
+      outputFile,
+      errors,
+      renderSize: progress.renderSize,
+      framesRendered: progress.framesRendered,
+    });
+  } catch (error: any) {
+    console.error("Status check error:", error);
+    res.status(500).json({
+      error: "Failed to check render status",
+      message: error.message || String(error),
+    });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Storyfyne Render Gateway listening on port ${PORT}`);
+  console.log(`Remotion AWS Region: ${process.env.REMOTION_AWS_REGION || "us-east-1"}`);
+});

@@ -79,5 +79,11 @@ R2_VIDEO_PREFIX = "video/"
 # Assets
 R2_ASSET_PREFIX = "assets/"
 
+# Remotion Lambda / Render Gateway
+RENDER_GATEWAY_URL = os.getenv("RENDER_GATEWAY_URL", "")
+REMOTION_SERVE_URL = os.getenv("REMOTION_SERVE_URL", "")
+REMOTION_FPS = int(os.getenv("REMOTION_FPS", "30"))
+REMOTION_COMPOSITION_ID = os.getenv("REMOTION_COMPOSITION_ID", "ExplainerVideo")
+
 # Cache
 STORIES_CACHE_TTL_SECONDS = 60
