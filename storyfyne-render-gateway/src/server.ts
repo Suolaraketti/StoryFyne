@@ -74,12 +74,12 @@ app.post("/render", async (req, res) => {
       inputProps,
       codec,
       imageFormat,
-      maxRetries,
+      maxRetries: 3,
       privacy,
       outName: outName || undefined,
       downloadBehavior: { type: "download", fileName: outName || "video.mp4" },
       concurrencyPerLambda: 1,
-      framesPerLambda: 60,
+      framesPerLambda: 600,
     });
 
     console.log(`[RENDER] SUCCESS | renderId=${result.renderId} | bucket=${result.bucketName}`);
