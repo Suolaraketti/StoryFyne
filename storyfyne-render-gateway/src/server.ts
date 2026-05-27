@@ -62,7 +62,7 @@ app.post("/render", async (req, res) => {
     const functionName = speculateFunctionName({
       diskSizeInMb: 2048,
       memorySizeInMb: 2048,
-      timeoutInSeconds: 240,
+      timeoutInSeconds: 120,
     });
     console.log(`[RENDER] Speculated functionName=${functionName} | region=${process.env.REMOTION_AWS_REGION || "us-east-1"}`);
 
@@ -114,7 +114,7 @@ app.get("/status", async (req, res) => {
     const functionName = speculateFunctionName({
       diskSizeInMb: 2048,
       memorySizeInMb: 2048,
-      timeoutInSeconds: 240,
+      timeoutInSeconds: 120,
     });
 
     const progress = await getRenderProgress({
