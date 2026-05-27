@@ -3,6 +3,7 @@ import time
 import asyncio
 import json
 import logging
+import httpx
 from typing import Optional, Dict
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
