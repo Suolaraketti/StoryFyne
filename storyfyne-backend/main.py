@@ -1477,13 +1477,20 @@ async def _process_explainer(
                 video_url = status_data.get("outputFile", "")
                 if video_url:
                     try:
-                        async with httpx.AsyncClient(timeout=120.0) as client:
+                        async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
                             dl = await client.get(video_url)
                             if dl.status_code == 200:
                                 video_bytes = dl.content
+                                update_job_progress(story_id, "rendering", f"Video rendered ({len(video_bytes) // 1024} KB). Downloading...")
+                            else:
+                                polling_error = f"Video ready but S3 returned {dl.status_code}. URL: {video_url[:120]}"
+                                update_job_progress(story_id, "rendering", polling_error)
                     except Exception as dl_err:
                         polling_error = f"Video ready but download failed: {dl_err}"
                         update_job_progress(story_id, "rendering", polling_error)
+                else:
+                    polling_error = "Render completed but no outputFile URL returned."
+                    update_job_progress(story_id, "rendering", polling_error)
                 break
             elif status == "failed":
                 errors = status_data.get("errors", ["Unknown render error"])
@@ -1499,7 +1506,7 @@ async def _process_explainer(
         polling_error = "Video render timed out."
         update_job_progress(story_id, "rendering", f"{polling_error} Saving audio only.")
 
-    # Step 5: Upload final video
+    # Step 5: Upload final video (or keep S3 URL if download failed)
     video_upload_url = ""
     if video_bytes:
         update_job_progress(story_id, "uploading", "Saving video to R2...")
@@ -1507,9 +1514,14 @@ async def _process_explainer(
             video_upload_url = await upload_story_video(story_id, video_bytes, slug=slug)
         except Exception as e:
             update_job_progress(story_id, "uploading", f"Video upload failed: {str(e)}")
+            polling_error = f"Video download OK but R2 upload failed: {e}"
+    elif video_url and not polling_error:
+        # Fallback: if we couldn't download but have the S3 URL, use it directly
+        video_upload_url = video_url
+        update_job_progress(story_id, "uploading", "Using S3 video URL directly...")
 
     processing_time = int(time.time() - start_time)
-    final_status = "complete" if video_upload_url else "audio_only"
+    final_status = "complete" if (video_upload_url or video_url) else "audio_only"
 
     metadata = {
         "id": story_id,
@@ -1521,7 +1533,7 @@ async def _process_explainer(
         "status": final_status,
         "audio_url": scene_audios[0]["audioUrl"] if scene_audios else "",
         "video_url": video_upload_url,
-        "video_key": get_video_key(story_id, slug=slug) if video_upload_url else "",
+        "video_key": get_video_key(story_id, slug=slug) if video_upload_url and not video_url else "",
         "duration_seconds": int(total_duration_seconds),
         "file_size_bytes": 0,
         "video_size_bytes": len(video_bytes) if video_bytes else 0,
@@ -1533,6 +1545,8 @@ async def _process_explainer(
         "estimated_cost_usd": round(estimate_cost(len(text)), 6),
         "error": polling_error or "",
         "scenes": scene_audios,
+        "render_id": render_id,
+        "render_bucket": bucket_name,
     }
 
     await upload_story_metadata(story_id, metadata)
