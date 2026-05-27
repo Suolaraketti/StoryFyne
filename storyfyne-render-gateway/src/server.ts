@@ -38,8 +38,11 @@ app.get("/health", (_req, res) => {
 
 // Start a render
 app.post("/render", async (req, res) => {
+  console.log(`[RENDER] Incoming request | composition=${req.body?.compositionId} | outName=${req.body?.outName}`);
+  
   const parseResult = renderRequestSchema.safeParse(req.body);
   if (!parseResult.success) {
+    console.error("[RENDER] Validation failed", parseResult.error.flatten());
     res.status(400).json({ error: "Invalid request", details: parseResult.error.flatten() });
     return;
   }
@@ -61,6 +64,7 @@ app.post("/render", async (req, res) => {
       memorySizeInMb: 2048,
       timeoutInSeconds: 240,
     });
+    console.log(`[RENDER] Speculated functionName=${functionName} | region=${process.env.REMOTION_AWS_REGION || "us-east-1"}`);
 
     const result = await renderMediaOnLambda({
       region: (process.env.REMOTION_AWS_REGION as any) || "us-east-1",
@@ -76,16 +80,18 @@ app.post("/render", async (req, res) => {
       downloadBehavior: { type: "download", fileName: outName || "video.mp4" },
     });
 
+    console.log(`[RENDER] SUCCESS | renderId=${result.renderId} | bucket=${result.bucketName}`);
     res.json({
       renderId: result.renderId,
       bucketName: result.bucketName,
       cloudWatchMainLogs: result.cloudWatchMainLogs,
     });
   } catch (error: any) {
-    console.error("Render start error:", error);
+    console.error("[RENDER] FAILED", error.message || String(error));
     res.status(500).json({
       error: "Failed to start render",
       message: error.message || String(error),
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 });
@@ -97,6 +103,7 @@ app.get("/status", async (req, res) => {
     bucketName: req.query.bucketName,
   });
   if (!parseResult.success) {
+    console.error("[STATUS] Validation failed", parseResult.error.flatten());
     res.status(400).json({ error: "Invalid query params", details: parseResult.error.flatten() });
     return;
   }
@@ -104,15 +111,17 @@ app.get("/status", async (req, res) => {
   const { renderId, bucketName } = parseResult.data;
 
   try {
+    const functionName = speculateFunctionName({
+      diskSizeInMb: 2048,
+      memorySizeInMb: 2048,
+      timeoutInSeconds: 240,
+    });
+
     const progress = await getRenderProgress({
       region: (process.env.REMOTION_AWS_REGION as any) || "us-east-1",
       renderId,
       bucketName,
-      functionName: speculateFunctionName({
-        diskSizeInMb: 2048,
-        memorySizeInMb: 2048,
-        timeoutInSeconds: 240,
-      }),
+      functionName,
     });
 
     let status: string;
@@ -123,13 +132,18 @@ app.get("/status", async (req, res) => {
     if (progress.fatalErrorEncountered || progress.errors.length > 0) {
       status = "failed";
       errors = progress.errors.map((e) => e.message || "Unknown error");
+      console.error(`[STATUS] renderId=${renderId} FAILED | errors=${JSON.stringify(errors)}`);
     } else if (progress.done && progress.outputFile) {
       status = "completed";
       outputFile = progress.outputFile;
       progressPercent = 100;
+      console.log(`[STATUS] renderId=${renderId} COMPLETED | outputFile=${outputFile?.substring(0, 100)}`);
     } else {
       status = "rendering";
       progressPercent = Math.round(progress.overallProgress * 100);
+      if (progressPercent % 10 === 0) {
+        console.log(`[STATUS] renderId=${renderId} RENDERING | ${progressPercent}% | frames=${progress.framesRendered}`);
+      }
     }
 
     res.json({
@@ -141,7 +155,7 @@ app.get("/status", async (req, res) => {
       framesRendered: progress.framesRendered,
     });
   } catch (error: any) {
-    console.error("Status check error:", error);
+    console.error(`[STATUS] renderId=${renderId} EXCEPTION | ${error.message || String(error)}`);
     res.status(500).json({
       error: "Failed to check render status",
       message: error.message || String(error),
