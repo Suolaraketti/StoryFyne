@@ -95,6 +95,8 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [isCreatingAvatar, setIsCreatingAvatar] = useState(false);
   const [createAvatarStatus, setCreateAvatarStatus] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const sceneFileRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
   const isSales = mode === 'sales';
   const isInfluencer = mode === 'influencer';
@@ -179,6 +181,15 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       setCreateAvatarStatus('File uploaded. Ready to create avatar.');
     } catch (e: any) {
       setCreateAvatarStatus(`Upload failed: ${e.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleImageUpload = async (file: File, setter: (url: string) => void) => {
+    try {
+      const result = await onUploadAsset(file);
+      setter(result.url);
+    } catch (e: any) {
+      alert(`Upload failed: ${e.message || 'Unknown error'}`);
     }
   };
 
@@ -485,8 +496,17 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                   </div>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Logo</label>
-                    <input type="url" placeholder="Logo URL (transparent PNG)" value={explainerLogoUrl} onChange={e => setExplainerLogoUrl(e.target.value)} disabled={isLoading}
-                      style={inputStyle} onFocus={e => Object.assign(e.target.style, focusGlow('#6366f1'))} onBlur={e => e.target.style.cssText = ''} />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input type="url" placeholder="Logo URL or upload" value={explainerLogoUrl} onChange={e => setExplainerLogoUrl(e.target.value)} disabled={isLoading}
+                        style={{ ...inputStyle, flex: 1 }} onFocus={e => Object.assign(e.target.style, { ...focusGlow('#6366f1'), flex: 1 })} onBlur={e => e.target.style.cssText = ''} />
+                      <input type="file" ref={logoFileRef} accept="image/*" style={{ display: 'none' }}
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, setExplainerLogoUrl); }} />
+                      <button type="button" onClick={() => logoFileRef.current?.click()} disabled={isLoading}
+                        style={{ padding: '10px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                        <Upload size={14} />
+                        Upload
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -517,12 +537,23 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                       </div>
                     ))}
                   </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Optional scene images (max 3)</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Optional scene images (max 3) — paste a URL or upload</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[0, 1, 2].map(i => (
-                      <input key={i} type="url" placeholder={`Scene ${i + 1} image`} value={explainerImageUrls[i] || ''}
-                        onChange={e => { const n = [...explainerImageUrls]; n[i] = e.target.value; setExplainerImageUrls(n); }} disabled={isLoading}
-                        style={{ ...inputStyle, padding: '8px 10px', fontSize: '12px' }} />
+                      <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input type="url" placeholder={`Scene ${i + 1} image URL`} value={explainerImageUrls[i] || ''}
+                          onChange={e => { const n = [...explainerImageUrls]; n[i] = e.target.value; setExplainerImageUrls(n); }} disabled={isLoading}
+                          style={{ ...inputStyle, flex: 1, padding: '8px 10px', fontSize: '12px' }} />
+                        <input type="file" ref={sceneFileRefs[i]} accept="image/*" style={{ display: 'none' }}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, (url) => { const n = [...explainerImageUrls]; n[i] = url; setExplainerImageUrls(n); }); }} />
+                        <button type="button" onClick={() => sceneFileRefs[i].current?.click()} disabled={isLoading}
+                          style={{ padding: '8px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                          <Upload size={12} />
+                        </button>
+                        {explainerImageUrls[i] && (
+                          <img src={explainerImageUrls[i]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--border-subtle)' }} />
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
