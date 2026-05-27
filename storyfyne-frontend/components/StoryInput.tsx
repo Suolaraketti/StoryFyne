@@ -16,7 +16,7 @@ interface StoryInputProps {
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
   onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string, taggedText: string, context: string) => void;
-  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string) => void;
+  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string, logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string, imageUrls: string[]) => void;
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
   onPreviewInfluencer: (text: string, context: string) => Promise<{ tagged_text: string }>;
   onPreviewExplainer: (text: string) => Promise<{ scenes: any[] }>;
@@ -76,6 +76,13 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [explainerScenes, setExplainerScenes] = useState<any[]>([]);
   const [showExplainerPreview, setShowExplainerPreview] = useState(false);
   const [isPreviewingExplainer, setIsPreviewingExplainer] = useState(false);
+  const [explainerLogoUrl, setExplainerLogoUrl] = useState('');
+  const [explainerPrimaryColor, setExplainerPrimaryColor] = useState('#4f46e5');
+  const [explainerSecondaryColor, setExplainerSecondaryColor] = useState('#0ea5e9');
+  const [explainerBgColor, setExplainerBgColor] = useState('#0f172a');
+  const [explainerTextColor, setExplainerTextColor] = useState('#f8fafc');
+  const [explainerAccentColor, setExplainerAccentColor] = useState('#6366f1');
+  const [explainerImageUrls, setExplainerImageUrls] = useState<string[]>([]);
 
   // Avatar creation state
   const [showCreateAvatar, setShowCreateAvatar] = useState(false);
@@ -108,7 +115,21 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
     } else if (mode === 'influencer' && text.trim()) {
       onSubmitInfluencer(text.trim(), title.trim() || 'AI Influencer', author.trim() || 'Unknown', voiceId, avatarId, aspectRatio, influencerTaggedText.trim(), influencerContext.trim());
     } else if (mode === 'explainer' && text.trim()) {
-      onSubmitExplainer(text.trim(), title.trim() || 'Explainer Video', author.trim() || 'Unknown', voiceId, aspectRatio, JSON.stringify(explainerScenes));
+      onSubmitExplainer(
+        text.trim(),
+        title.trim() || 'Explainer Video',
+        author.trim() || 'Unknown',
+        voiceId,
+        aspectRatio,
+        JSON.stringify(explainerScenes),
+        explainerLogoUrl,
+        explainerPrimaryColor,
+        explainerSecondaryColor,
+        explainerBgColor,
+        explainerTextColor,
+        explainerAccentColor,
+        explainerImageUrls.filter(u => u.trim()),
+      );
     }
   };
 
@@ -314,6 +335,50 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                   <div style={{ color: '#666', fontSize: '13px', marginTop: '-8px' }}>
                     {ASPECT_RATIOS.find(r => r.id === aspectRatio)?.desc}
                   </div>
+
+                  {/* Brand Kit */}
+                  <div style={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#6366f1' }}>Brand Kit</div>
+                    <input type="url" placeholder="Logo URL (optional — transparent PNG recommended)" value={explainerLogoUrl} onChange={(e) => setExplainerLogoUrl(e.target.value)} disabled={isLoading}
+                      style={{ width: '100%', padding: '12px 14px', fontSize: '15px', borderRadius: '10px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', boxSizing: 'border-box' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="color" value={explainerPrimaryColor} onChange={(e) => setExplainerPrimaryColor(e.target.value)} disabled={isLoading}
+                          style={{ width: 36, height: 36, borderRadius: 6, border: '1px solid #333', padding: 2, backgroundColor: '#141414', cursor: 'pointer' }} />
+                        <span style={{ fontSize: '13px', color: '#888' }}>Primary</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="color" value={explainerSecondaryColor} onChange={(e) => setExplainerSecondaryColor(e.target.value)} disabled={isLoading}
+                          style={{ width: 36, height: 36, borderRadius: 6, border: '1px solid #333', padding: 2, backgroundColor: '#141414', cursor: 'pointer' }} />
+                        <span style={{ fontSize: '13px', color: '#888' }}>Secondary</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="color" value={explainerBgColor} onChange={(e) => setExplainerBgColor(e.target.value)} disabled={isLoading}
+                          style={{ width: 36, height: 36, borderRadius: 6, border: '1px solid #333', padding: 2, backgroundColor: '#141414', cursor: 'pointer' }} />
+                        <span style={{ fontSize: '13px', color: '#888' }}>Background</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="color" value={explainerTextColor} onChange={(e) => setExplainerTextColor(e.target.value)} disabled={isLoading}
+                          style={{ width: 36, height: 36, borderRadius: 6, border: '1px solid #333', padding: 2, backgroundColor: '#141414', cursor: 'pointer' }} />
+                        <span style={{ fontSize: '13px', color: '#888' }}>Text</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="color" value={explainerAccentColor} onChange={(e) => setExplainerAccentColor(e.target.value)} disabled={isLoading}
+                          style={{ width: 36, height: 36, borderRadius: 6, border: '1px solid #333', padding: 2, backgroundColor: '#141414', cursor: 'pointer' }} />
+                        <span style={{ fontSize: '13px', color: '#888' }}>Accent</span>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>Scene images (optional — one per scene, max 3)</div>
+                    {[0, 1, 2].map((i) => (
+                      <input key={i} type="url" placeholder={`Scene ${i + 1} image URL (optional)`} value={explainerImageUrls[i] || ''}
+                        onChange={(e) => {
+                          const next = [...explainerImageUrls];
+                          next[i] = e.target.value;
+                          setExplainerImageUrls(next);
+                        }} disabled={isLoading}
+                        style={{ width: '100%', padding: '10px 12px', fontSize: '14px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#141414', color: '#e0e0e0', outline: 'none', boxSizing: 'border-box' }} />
+                    ))}
+                  </div>
                 </>
               )}
 
@@ -464,7 +529,10 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '300px', overflowY: 'auto', padding: '4px' }}>
                 {explainerScenes.map((scene, idx) => (
                   <div key={idx} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '12px' }}>
-                    <div style={{ fontSize: '12px', color: '#6366f1', fontWeight: 600, marginBottom: '6px' }}>Scene {idx + 1}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '12px', color: '#6366f1', fontWeight: 600 }}>Scene {idx + 1}</span>
+                      <span style={{ fontSize: '11px', color: '#94a3b8', backgroundColor: '#1e293b', padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>{scene.type || 'feature'}</span>
+                    </div>
                     <div style={{ fontSize: '14px', color: '#e0e0e0', marginBottom: '6px' }}>{scene.scene_text}</div>
                     <div style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>{scene.visual_direction}</div>
                   </div>

@@ -76,8 +76,14 @@ EXPLAINER_SYSTEM_PROMPT = """You are a video script director. Your job is to bre
 Rules:
 1. Break the text into 3–8 scenes. Each scene should be 1–3 sentences (roughly 5–15 seconds when spoken).
 2. For each scene, provide:
-   - scene_text: The exact narration text for this scene. Keep it verbatim from the source where possible; lightly condense only if needed for pacing.
+   - scene_text: The exact narration text for this scene. Keep it verbatim from the source where possible; lightly condense only if needed for pacing. Write in the same language as the user's input.
    - visual_direction: A one-line description of what should appear on screen (e.g. "Title card with bold headline", "Bullet points fade in", "Statistic counter animation", "Split screen comparison").
+   - type: The scene type. Must be one of: title | feature | benefit | socialProof | cta.
+     * title   — Opening hook / headline (first scene).
+     * feature — Showcase a feature or capability.
+     * benefit — Highlight benefits / value proposition.
+     * socialProof — Testimonial, review, or trust signal.
+     * cta     — Call to action (last or second-to-last scene).
 3. Do NOT add TTS tags like [excitedly] or [pause]. The explainer audio uses a single clean voice.
 4. Ensure scenes flow logically: Hook → Problem → Solution → Proof → Call to Action.
 5. If the input is very short (<100 words), use 2–3 scenes max.
@@ -86,7 +92,7 @@ Output format:
 Return ONLY a valid JSON object. No markdown code blocks, no preamble. Format:
 {
   "scenes": [
-    {"scene_text": "...", "visual_direction": "..."},
+    {"scene_text": "...", "visual_direction": "...", "type": "title"},
     ...
   ]
 }

@@ -94,6 +94,15 @@ class ExplainerRequest(BaseModel):
     author: str = "Unknown"
     voice_id: str = "Puck"
     aspect_ratio: str = "16:9"
+    language: str = "en-US"
+    logo_url: str = ""
+    primary_color: str = "#4f46e5"
+    secondary_color: str = "#0ea5e9"
+    bg_color: str = "#0f172a"
+    text_color: str = "#f8fafc"
+    accent_color: str = "#6366f1"
+    template: str = "modern"
+    image_urls: list[str] = []
 
 
 class PreviewExplainerResponse(BaseModel):
@@ -1253,6 +1262,15 @@ async def _process_explainer(
     author: str,
     voice_id: str,
     aspect_ratio: str,
+    language: str = "en-US",
+    logo_url: str = "",
+    primary_color: str = "#4f46e5",
+    secondary_color: str = "#0ea5e9",
+    bg_color: str = "#0f172a",
+    text_color: str = "#f8fafc",
+    accent_color: str = "#6366f1",
+    template: str = "modern",
+    image_urls: list[str] = None,
 ):
     """Background task: break text into scenes, generate audio, render via Remotion Lambda."""
     start_time = time.time()
@@ -1307,7 +1325,12 @@ async def _process_explainer(
         duration_seconds = duration_ms / 1000
         total_duration_seconds += duration_seconds
 
+        scene_type = scene.get("type", "feature")
+        if scene_type not in ("title", "feature", "benefit", "socialProof", "cta"):
+            scene_type = "feature"
+
         scene_audios.append({
+            "type": scene_type,
             "text": scene_text,
             "visualDirection": scene.get("visual_direction", ""),
             "audioUrl": audio_url,
@@ -1351,10 +1374,22 @@ async def _process_explainer(
     # Step 3: Submit to Render Gateway
     update_job_progress(story_id, "rendering", "Submitting video render to Remotion Lambda...")
 
+    # Map optional per-scene images
+    image_list = image_urls or []
+    for idx, sa in enumerate(scene_audios):
+        if idx < len(image_list) and image_list[idx]:
+            sa["imageUrl"] = image_list[idx]
+
     composition_id = "ExplainerVideoMobile" if aspect_ratio == "9:16" else REMOTION_COMPOSITION_ID
     input_props = {
         "scenes": scene_audios,
         "aspectRatio": aspect_ratio,
+        "logoUrl": logo_url,
+        "primaryColor": primary_color,
+        "secondaryColor": secondary_color,
+        "bgColor": bg_color,
+        "textColor": text_color,
+        "accentColor": accent_color,
     }
 
     render_id = ""
@@ -1568,6 +1603,15 @@ async def process_explainer(request: ExplainerRequest):
                 author=request.author or "Unknown",
                 voice_id=voice_id,
                 aspect_ratio=request.aspect_ratio,
+                language=request.language,
+                logo_url=request.logo_url,
+                primary_color=request.primary_color,
+                secondary_color=request.secondary_color,
+                bg_color=request.bg_color,
+                text_color=request.text_color,
+                accent_color=request.accent_color,
+                template=request.template,
+                image_urls=request.image_urls,
             )
         except Exception as e:
             import traceback

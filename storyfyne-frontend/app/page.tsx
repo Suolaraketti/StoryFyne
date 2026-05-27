@@ -261,7 +261,11 @@ export default function Home() {
     return res.json();
   };
 
-  const handleSubmitExplainer = async (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string) => {
+  const handleSubmitExplainer = async (
+    text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string,
+    logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string,
+    imageUrls: string[],
+  ) => {
     setIsLoading(true);
     setProgressMode('explainer');
     setProgressStep('tagging');
@@ -272,7 +276,16 @@ export default function Home() {
       const res = await fetch(`${API_URL}/api/process-explainer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, title, author, voice_id: voiceId, aspect_ratio: aspectRatio }),
+        body: JSON.stringify({
+          text, title, author, voice_id: voiceId, aspect_ratio: aspectRatio,
+          logo_url: logoUrl,
+          primary_color: primaryColor,
+          secondary_color: secondaryColor,
+          bg_color: bgColor,
+          text_color: textColor,
+          accent_color: accentColor,
+          image_urls: imageUrls,
+        }),
       });
 
       if (!res.ok) {
