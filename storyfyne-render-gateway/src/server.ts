@@ -78,6 +78,7 @@ app.post("/render", async (req, res) => {
       privacy,
       outName: outName || undefined,
       downloadBehavior: { type: "download", fileName: outName || "video.mp4" },
+      concurrencyPerLambda: 1,
     });
 
     console.log(`[RENDER] SUCCESS | renderId=${result.renderId} | bucket=${result.bucketName}`);
