@@ -1,6 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Play, Pause } from 'lucide-react';
 
 interface AudioPlayerProps {
   src: string;
@@ -21,39 +23,45 @@ export default function AudioPlayer({ src, title }: AudioPlayerProps) {
     setIsPlaying(!isPlaying);
   };
 
-  const handleEnded = () => {
-    setIsPlaying(false);
-  };
+  const handleEnded = () => setIsPlaying(false);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-      <button
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)' }}>
+      <motion.button
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.92 }}
         onClick={togglePlay}
         style={{
-          width: '36px',
-          height: '36px',
+          width: '40px',
+          height: '40px',
           borderRadius: '50%',
           border: 'none',
-          backgroundColor: '#2563eb',
+          background: 'linear-gradient(135deg, #0ea5e9, #38bdf8)',
           color: '#fff',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '14px',
+          boxShadow: '0 0 16px rgba(14,165,233,0.3)',
+          flexShrink: 0,
         }}
         title={isPlaying ? 'Pause' : 'Play'}
       >
-        {isPlaying ? '⏸' : '▶'}
-      </button>
-      <audio
-        ref={audioRef}
-        src={src}
-        onEnded={handleEnded}
-        preload="none"
-        style={{ flex: 1 }}
-        controls
-      />
+        {isPlaying ? <Pause size={16} /> : <Play size={16} style={{ marginLeft: 2 }} />}
+      </motion.button>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {title}
+        </div>
+        <audio
+          ref={audioRef}
+          src={src}
+          onEnded={handleEnded}
+          preload="none"
+          style={{ width: '100%', height: '32px' }}
+          controls
+        />
+      </div>
     </div>
   );
 }
