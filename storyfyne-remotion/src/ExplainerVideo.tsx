@@ -4,7 +4,6 @@ import { z } from "zod";
 import { zColor } from "@remotion/zod-types";
 import { TRANSITION_FRAMES } from "./animations";
 import { Backgrounds, getBackgroundForSceneType } from "./backgrounds";
-import { TransitionOverlay, getTransitionForIndex, TransitionType } from "./transitions";
 import { CinematicMaster, CinematicMood } from "./effects";
 import { sceneComponentMap, SceneData } from "./scenes";
 import { templateComponentMap } from "./templates";
@@ -14,7 +13,6 @@ import { templateComponentMap } from "./templates";
 const sceneSchema = z.object({
   type: z.enum([
     "statement", "evidence", "flow", "metric", "lockup",
-    // Legacy fallbacks
     "title", "problem", "solution", "feature", "benefit",
     "process", "stats", "socialProof", "comparison", "cta",
   ]),
@@ -31,11 +29,11 @@ export const explainerVideoSchema = z.object({
   scenes: z.array(sceneSchema),
   aspectRatio: z.string().optional().default("16:9"),
   logoUrl: z.string().optional().default(""),
-  primaryColor: zColor().optional().default("#4f46e5"),
-  secondaryColor: zColor().optional().default("#0ea5e9"),
-  bgColor: zColor().optional().default("#f8f9fa"),
-  textColor: zColor().optional().default("#111111"),
-  accentColor: zColor().optional().default("#6366f1"),
+  primaryColor: zColor().optional().default("#10a37f"),
+  secondaryColor: zColor().optional().default("#19c59f"),
+  bgColor: zColor().optional().default("#050505"),
+  textColor: zColor().optional().default("#ffffff"),
+  accentColor: zColor().optional().default("#10a37f"),
   mood: z.enum(["clean", "dramatic", "retro", "cyber", "warm", "cold", "minimal"]).optional().default("clean"),
 });
 
@@ -76,11 +74,11 @@ export const defaultProps: ExplainerVideoProps = {
   ],
   aspectRatio: "16:9",
   logoUrl: "",
-  primaryColor: "#0ea5e9",
-  secondaryColor: "#6366f1",
-  bgColor: "#f8f9fa",
-  textColor: "#111111",
-  accentColor: "#0ea5e9",
+  primaryColor: "#10a37f",
+  secondaryColor: "#19c59f",
+  bgColor: "#050505",
+  textColor: "#ffffff",
+  accentColor: "#10a37f",
   mood: "clean",
 };
 
@@ -96,59 +94,58 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
   mood,
 }) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
-  const totalFrames = durationInFrames;
+  // ─── Build schedules ──────────────────────────────────────────────
+  // Audio: sequential, NO overlap. Each scene's audio plays fully.
+  // Visual: overlapping during transitions. Scene i+1 starts while scene i is exiting.
 
-  // Build scene schedule with transition overlaps
-  let accumulated = 0;
-  const sceneSchedule = scenes.map((scene, i) => {
-    const from = i === 0 ? 0 : accumulated - TRANSITION_FRAMES;
-    accumulated += scene.durationInFrames - (i > 0 ? TRANSITION_FRAMES : 0);
+  let audioAccumulated = 0;
+  const audioSchedule = scenes.map((scene) => {
+    const from = audioAccumulated;
+    audioAccumulated += scene.durationInFrames;
     return { scene, from, duration: scene.durationInFrames };
   });
+  const totalAudioFrames = audioAccumulated;
 
-  // Determine active transition
-  const activeTransition = sceneSchedule.findIndex(({ from, duration }) => {
-    const end = from + duration;
-    return frame >= end - TRANSITION_FRAMES && frame < end && frame < totalFrames;
+  let visualAccumulated = 0;
+  const visualSchedule = scenes.map((scene, i) => {
+    const from = i === 0 ? 0 : visualAccumulated - TRANSITION_FRAMES;
+    visualAccumulated += scene.durationInFrames;
+    // Visual stays for full duration + transition time to allow exit motion
+    const visualDuration = scene.durationInFrames + (i < scenes.length - 1 ? TRANSITION_FRAMES : 0);
+    return { scene, from, duration: scene.durationInFrames, visualDuration };
   });
 
-  const transitionProgress = activeTransition >= 0
-    ? (frame - (sceneSchedule[activeTransition].from + sceneSchedule[activeTransition].duration - TRANSITION_FRAMES)) / TRANSITION_FRAMES
-    : -1;
-
-  const transitionType: TransitionType = activeTransition >= 0
-    ? getTransitionForIndex(activeTransition)
-    : "wipe";
-
-  // Background selection based on currently dominant scene
-  const currentSceneIdx = sceneSchedule.findIndex(({ from, duration }) =>
-    frame >= from && frame < from + duration
+  // ─── Background ───────────────────────────────────────────────────
+  // Find currently dominant scene for background
+  const currentSceneIdx = visualSchedule.findIndex(
+    ({ from, visualDuration }) => frame >= from && frame < from + visualDuration
   );
   const effectiveIdx = Math.max(0, currentSceneIdx >= 0 ? currentSceneIdx : scenes.length - 1);
-
-  const dominantBgType = getBackgroundForSceneType(scenes[effectiveIdx]?.type || "cleanLight");
-  const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.cleanLight;
+  const dominantBgType = getBackgroundForSceneType(scenes[effectiveIdx]?.type || "cleanDark");
+  const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.cleanDark;
 
   return (
     <AbsoluteFill style={{ backgroundColor: bgColor }}>
       {/* Animated background */}
-      <BackgroundComponent
-        bgColor={bgColor}
-        primaryColor={primaryColor}
-      />
+      <BackgroundComponent bgColor={bgColor} primaryColor={primaryColor} />
 
-      {/* Scenes with overlap transitions (visual only) */}
-      {sceneSchedule.map(({ scene, from, duration }, i) => {
+      {/* Visual scenes — overlapping during transitions */}
+      {visualSchedule.map(({ scene, from, duration, visualDuration }, i) => {
         const SceneComponent = scene.template && templateComponentMap[scene.template]
-      ? templateComponentMap[scene.template]
-      : sceneComponentMap[scene.type] || sceneComponentMap.statement;
-        const zIndex = i;
+          ? templateComponentMap[scene.template]
+          : sceneComponentMap[scene.type] || sceneComponentMap.statement;
+
+        // Alternate entrance/exit directions for variety
+        const entranceDirs: Array<"left" | "right" | "up" | "down"> = ["up", "right", "left", "down"];
+        const exitDirs: Array<"left" | "right" | "up" | "down"> = ["down", "left", "right", "up"];
+        const entranceDir = entranceDirs[i % entranceDirs.length];
+        const exitDir = exitDirs[i % exitDirs.length];
 
         return (
-          <Sequence key={i} from={from} durationInFrames={duration + TRANSITION_FRAMES}>
-            <div style={{ position: "absolute", inset: 0, zIndex }}>
+          <Sequence key={`scene-${i}`} from={from} durationInFrames={visualDuration}>
+            <div style={{ position: "absolute", inset: 0 }}>
               <SceneComponent
                 scene={scene as SceneData}
                 primaryColor={primaryColor}
@@ -159,49 +156,36 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
                 frame={frame - from}
                 fps={fps}
                 duration={duration}
+                entranceDirection={entranceDir}
+                exitDirection={exitDir}
               />
             </div>
           </Sequence>
         );
       })}
 
-      {/* Audio layer — NO overlap, with smooth fade in/out */}
-      {sceneSchedule.map(({ scene, from, duration }, i) => {
+      {/* Audio layer — sequential, NO overlap, each plays fully */}
+      {audioSchedule.map(({ scene, from, duration }, i) => {
         if (!scene.audioUrl) return null;
-        const isLast = i === scenes.length - 1;
-        const audioDuration = isLast ? duration : Math.max(1, duration - TRANSITION_FRAMES);
-        const fadeFrames = Math.min(10, Math.floor(audioDuration / 4));
-
+        const fadeFrames = Math.min(12, Math.floor(duration / 5));
         return (
-          <Sequence key={`audio-${i}`} from={from} durationInFrames={audioDuration}>
+          <Sequence key={`audio-${i}`} from={from} durationInFrames={duration}>
             <Audio
               src={scene.audioUrl}
-              volume={(f) => {
-                return interpolate(
+              volume={(f) =>
+                interpolate(
                   f,
-                  [0, fadeFrames, audioDuration - fadeFrames, audioDuration],
+                  [0, fadeFrames, duration - fadeFrames, duration],
                   [0, 1, 1, 0],
                   { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-                );
-              }}
+                )
+              }
             />
           </Sequence>
         );
       })}
 
-      {/* Transition overlay */}
-      {activeTransition >= 0 && transitionProgress >= 0 && (
-        <AbsoluteFill style={{ zIndex: 99, pointerEvents: "none" }}>
-          <TransitionOverlay
-            type={transitionType}
-            progress={transitionProgress}
-            primaryColor={primaryColor}
-            secondaryColor={secondaryColor}
-          />
-        </AbsoluteFill>
-      )}
-
-      {/* Cinematic mood effects: lens flare, light leaks, film dust, etc. */}
+      {/* Cinematic overlay */}
       <CinematicMaster mood={(mood as CinematicMood) || "clean"} frame={frame} />
     </AbsoluteFill>
   );

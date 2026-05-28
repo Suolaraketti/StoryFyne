@@ -107,11 +107,11 @@ class ExplainerRequest(BaseModel):
     aspect_ratio: str = "16:9"
     language: str = "en-US"
     logo_url: str = ""
-    primary_color: str = "#4f46e5"
-    secondary_color: str = "#0ea5e9"
-    bg_color: str = "#0f172a"
-    text_color: str = "#f8fafc"
-    accent_color: str = "#6366f1"
+    primary_color: str = "#10a37f"
+    secondary_color: str = "#19c59f"
+    bg_color: str = "#050505"
+    text_color: str = "#ffffff"
+    accent_color: str = "#10a37f"
     template: str = "modern"
     image_urls: list[str] = []
     render_quality: str = "standard"  # "standard" = Lambda, "premium" = GPU worker
@@ -1335,11 +1335,11 @@ async def _process_explainer(
     aspect_ratio: str,
     language: str = "en-US",
     logo_url: str = "",
-    primary_color: str = "#4f46e5",
-    secondary_color: str = "#0ea5e9",
-    bg_color: str = "#0f172a",
-    text_color: str = "#f8fafc",
-    accent_color: str = "#6366f1",
+    primary_color: str = "#10a37f",
+    secondary_color: str = "#19c59f",
+    bg_color: str = "#050505",
+    text_color: str = "#ffffff",
+    accent_color: str = "#10a37f",
     template: str = "modern",
     image_urls: list[str] = None,
     render_quality: str = "standard",

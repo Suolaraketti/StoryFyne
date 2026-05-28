@@ -81,11 +81,11 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [showExplainerPreview, setShowExplainerPreview] = useState(false);
   const [isPreviewingExplainer, setIsPreviewingExplainer] = useState(false);
   const [explainerLogoUrl, setExplainerLogoUrl] = useState('');
-  const [explainerPrimaryColor, setExplainerPrimaryColor] = useState('#4f46e5');
-  const [explainerSecondaryColor, setExplainerSecondaryColor] = useState('#0ea5e9');
-  const [explainerBgColor, setExplainerBgColor] = useState('#0f172a');
-  const [explainerTextColor, setExplainerTextColor] = useState('#f8fafc');
-  const [explainerAccentColor, setExplainerAccentColor] = useState('#6366f1');
+  const [explainerPrimaryColor, setExplainerPrimaryColor] = useState('#10a37f');
+  const [explainerSecondaryColor, setExplainerSecondaryColor] = useState('#19c59f');
+  const [explainerBgColor, setExplainerBgColor] = useState('#050505');
+  const [explainerTextColor, setExplainerTextColor] = useState('#ffffff');
+  const [explainerAccentColor, setExplainerAccentColor] = useState('#10a37f');
   const [explainerImageUrls, setExplainerImageUrls] = useState<string[]>([]);
   const [explainerRenderQuality, setExplainerRenderQuality] = useState<'standard' | 'premium'>('standard');
 
