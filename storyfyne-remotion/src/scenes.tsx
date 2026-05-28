@@ -1,13 +1,10 @@
 // ─── Belief-Shaping Scene Library ───────────────────────────────────
 // Fallback scene components when no template is matched.
-// Primary rendering path is templates.tsx.
 
 import React from "react";
 import { AbsoluteFill, interpolate, spring } from "remotion";
-import { getSpringProgress, getCamera, TRANSITION_FRAMES, SNAPPY_SPRING, DEFAULT_SPRING } from "./animations";
-import { KineticHeadline, SceneMotion, useSceneSizes } from "./scene-core";
-
-// ─── Types ──────────────────────────────────────────────────────────
+import { getSpringProgress, TRANSITION_FRAMES, SNAPPY_SPRING, DEFAULT_SPRING } from "./animations";
+import { CinematicHeadline, CinematicBody, SceneMotion, useSceneSizes, FONT } from "./scene-core";
 
 export interface SceneData {
   type: string;
@@ -33,8 +30,6 @@ export interface SceneProps {
   exitDirection?: "left" | "right" | "up" | "down";
 }
 
-const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-
 // ─── 1. STATEMENT ───────────────────────────────────────────────────
 
 export const StatementScene: React.FC<SceneProps> = ({
@@ -42,9 +37,9 @@ export const StatementScene: React.FC<SceneProps> = ({
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
-        <KineticHeadline text={scene.text} frame={frame} fps={fps} duration={duration} color={textColor} size={sizes.headline} />
+        <CinematicHeadline text={scene.text} frame={frame} fps={fps} duration={duration} color={textColor} size={sizes.headline} />
       </AbsoluteFill>
     </SceneMotion>
   );
@@ -56,10 +51,10 @@ export const EvidenceScene: React.FC<SceneProps> = ({
   scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection,
 }) => {
   const sizes = useSceneSizes();
-  const cardS = getSpringProgress(frame, fps, 8, DEFAULT_SPRING);
+  const cardS = spring({ frame: Math.max(0, frame - 8), fps, config: DEFAULT_SPRING });
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{
           background: "#0f0f0f",
@@ -70,12 +65,13 @@ export const EvidenceScene: React.FC<SceneProps> = ({
           width: "100%",
           opacity: interpolate(cardS, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
           transform: `translateY(${interpolate(cardS, [0, 1], [50, 0])}px)`,
-          willChange: "transform, opacity",
+          filter: `blur(${interpolate(cardS, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" })}px)`,
+          willChange: "transform, opacity, filter",
         }}>
           <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>
             {scene.subtext || " "}
           </div>
-          <KineticHeadline text={scene.text} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.5)} align="left" />
+          <CinematicHeadline text={scene.text} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.5)} align="left" />
         </div>
       </AbsoluteFill>
     </SceneMotion>
@@ -91,7 +87,7 @@ export const FlowScene: React.FC<SceneProps> = ({
   const steps = scene.text.split(/[→\-\>]/).map(s => s.trim()).filter(Boolean);
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, width: "100%", maxWidth: "1100px" }}>
           {steps.map((step, i) => {
@@ -108,7 +104,8 @@ export const FlowScene: React.FC<SceneProps> = ({
                   textAlign: "center",
                   opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
                   transform: `translateY(${interpolate(s, [0, 1], [40, 0])}px)`,
-                  willChange: "transform, opacity",
+                  filter: `blur(${interpolate(s, [0, 0.5], [2, 0], { extrapolateLeft: "clamp" })}px)`,
+                  willChange: "transform, opacity, filter",
                   flex: 1,
                 }}>
                   <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, color: primaryColor, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }}>Step {i + 1}</div>
@@ -141,7 +138,7 @@ export const MetricScene: React.FC<SceneProps> = ({
   const formatted = numberStr.startsWith("$") ? `$${displayed.toLocaleString()}` : displayed.toLocaleString();
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontFamily: FONT, fontSize: Math.round(sizes.headline * 1.3), fontWeight: 800, lineHeight: 1, color: primaryColor, letterSpacing: "-0.04em", fontVariantNumeric: "tabular-nums" }}>
@@ -163,13 +160,13 @@ export const LockupScene: React.FC<SceneProps> = ({
 }) => {
   const sizes = useSceneSizes();
   const lineS = spring({ frame: Math.max(0, frame - 20), fps, config: SNAPPY_SPRING });
-  const lineWidth = interpolate(lineS, [0, 1], [0, 160], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const lineWidth = interpolate(lineS, [0, 1], [0, 180], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const isUrl = scene.text.includes(".") && !scene.text.includes(" ");
   const mainText = isUrl ? (scene.subtext || "Get started") : scene.text;
   const urlText = isUrl ? scene.text : (scene.subtext || "");
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontFamily: FONT, fontSize: Math.round(sizes.headline * 0.65), fontWeight: 800, lineHeight: 1.1, color: textColor, letterSpacing: "-0.03em", marginBottom: 24 }}>

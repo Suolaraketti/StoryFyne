@@ -18,81 +18,98 @@ var dist_esm = __webpack_require__(70761);
 
 
 const TRANSITION_FRAMES = 25;
+const EASE_OUT_EXPO = esm.Easing.bezier(0.16, 1, 0.3, 1);
+const EASE_OUT_QUART = esm.Easing.bezier(0.22, 1, 0.36, 1);
+const EASE_IN_OUT_SMOOTH = esm.Easing.bezier(0.65, 0, 0.35, 1);
 const animations_DEFAULT_SPRING = { damping: 14, stiffness: 90, mass: 1, overshootClamping: false };
 const BOUNCY_SPRING = { damping: 10, stiffness: 120, mass: 0.8, overshootClamping: false };
-const GENTLE_SPRING = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
 const animations_SNAPPY_SPRING = { damping: 18, stiffness: 180, mass: 0.6, overshootClamping: false };
-const DRAMATIC_SPRING = { damping: 12, stiffness: 60, mass: 1.5, overshootClamping: false };
+const GENTLE_SPRING = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 const lerp = (a, b, t) => a + (b - a) * t;
 function animations_getSpringProgress(frame, fps, delay = 0, config = animations_DEFAULT_SPRING) {
   return (0,esm.spring)({ frame: Math.max(0, frame - delay), fps, config });
 }
-function getFadeIn(frame, duration = 15, delay = 0) {
-  return interpolate(frame, [delay, delay + duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-}
-function getEntrance(frame, fps, delay = 0, config = animations_DEFAULT_SPRING) {
-  const s = animations_getSpringProgress(frame, fps, delay, config);
+function getCinematicEntrance(frame, delay = 0, duration = 30) {
+  const t = clamp((frame - delay) / duration, 0, 1);
+  const eased = EASE_OUT_EXPO(t);
   return {
-    opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-    y: (0,esm.interpolate)(s, [0, 1], [50, 0]),
-    scale: (0,esm.interpolate)(s, [0, 1], [0.92, 1])
+    opacity: eased,
+    y: lerp(40, 0, eased),
+    scale: lerp(0.94, 1, eased),
+    blur: lerp(4, 0, eased)
+    // px
   };
 }
-function getExit(frame, duration, direction = "left", outDuration = TRANSITION_FRAMES, fps = 30) {
+function getCinematicExit(frame, duration, direction = "left", outDuration = TRANSITION_FRAMES) {
   const start = duration - outDuration;
-  const s = (0,esm.spring)({ frame: Math.max(0, frame - start), fps, config: { damping: 14, stiffness: 90, mass: 1, overshootClamping: false } });
-  const dirMap = { left: { x: -200, y: 0 }, right: { x: 200, y: 0 }, up: { x: 0, y: -150 }, down: { x: 0, y: 150 } };
+  const t = clamp((frame - start) / outDuration, 0, 1);
+  const eased = esm.Easing.out(esm.Easing.cubic)(t);
+  const dirMap = { left: { x: -120, y: 0 }, right: { x: 120, y: 0 }, up: { x: 0, y: -80 }, down: { x: 0, y: 80 } };
   const dir = dirMap[direction];
   return {
-    opacity: (0,esm.interpolate)(s, [0, 1], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    x: (0,esm.interpolate)(s, [0, 1], [0, dir.x], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    y: (0,esm.interpolate)(s, [0, 1], [0, dir.y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    scale: (0,esm.interpolate)(s, [0, 1], [1, 0.94], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+    opacity: lerp(1, 0, eased),
+    x: lerp(0, dir.x, eased),
+    y: lerp(0, dir.y, eased),
+    scale: lerp(1, 0.96, eased),
+    blur: lerp(0, 3, eased)
   };
 }
-function getWordReveal(frame, fps, wordIndex, totalWords, sceneDuration, staggerDelay = 4) {
-  const revealWindow = sceneDuration * 0.65;
-  const delay = wordIndex / Math.max(1, totalWords - 1) * revealWindow;
-  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+function getClipReveal(frame, delay = 0, duration = 35) {
+  const t = clamp((frame - delay) / duration, 0, 1);
+  const eased = EASE_OUT_EXPO(t);
+  const visiblePercent = eased * 100;
+  return `inset(0 ${100 - visiblePercent}% 0 0)`;
+}
+function getCharReveal(frame, fps, charIndex, totalChars, sceneDuration) {
+  const revealWindow = sceneDuration * 0.5;
+  const delay = totalChars <= 1 ? 0 : charIndex / (totalChars - 1) * revealWindow;
+  const s = spring({ frame: Math.max(0, frame - delay), fps, config: animations_SNAPPY_SPRING });
   return {
-    opacity: interpolate(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-    y: interpolate(s, [0, 1], [18, 0]),
-    scale: interpolate(s, [0, 1], [0.96, 1])
+    opacity: interpolate(s, [0, 0.2, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+    y: interpolate(s, [0, 1], [16, 0]),
+    scale: interpolate(s, [0, 1], [0.92, 1]),
+    blur: interpolate(s, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" })
   };
 }
-function getTypewriterProgress(frame, delay = 0, speed = 0.35) {
-  return Math.max(0, Math.floor((frame - delay) * speed));
+function getWordReveal(frame, fps, wordIndex, totalWords, sceneDuration) {
+  const revealWindow = sceneDuration * 0.55;
+  const delay = totalWords <= 1 ? 0 : wordIndex / (totalWords - 1) * revealWindow;
+  const s = (0,esm.spring)({ frame: Math.max(0, frame - delay), fps, config: animations_DEFAULT_SPRING });
+  return {
+    opacity: (0,esm.interpolate)(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+    y: (0,esm.interpolate)(s, [0, 1], [14, 0]),
+    scale: (0,esm.interpolate)(s, [0, 1], [0.96, 1]),
+    blur: (0,esm.interpolate)(s, [0, 0.4], [2, 0], { extrapolateLeft: "clamp" })
+  };
 }
 function getCamera(frame, duration) {
   const t = clamp(frame / Math.max(1, duration), 0, 1);
-  const eased = esm.Easing.out(esm.Easing.cubic)(t);
   return {
-    scale: lerp(1, 1.05, eased),
-    y: lerp(0, -20, eased)
+    scale: lerp(1, 1.04, esm.Easing.out(esm.Easing.cubic)(t)),
+    y: lerp(0, -12, esm.Easing.out(esm.Easing.cubic)(t))
   };
 }
-function getFloat(frame, fps, amplitude = 8, speed = 0.6) {
+function getBgDrift(frame, duration) {
+  const t = clamp(frame / Math.max(1, duration), 0, 1);
+  return {
+    scale: lerp(1, 1.06, esm.Easing.out(esm.Easing.cubic)(t)),
+    y: lerp(0, -6, esm.Easing.out(esm.Easing.cubic)(t))
+  };
+}
+function getFloat(frame, fps, amplitude = 6, speed = 0.5) {
   return Math.sin(frame / fps * Math.PI * 2 * speed) * amplitude;
 }
-function getCounter(frame, fps, target, delay = 0, duration = 45) {
+function getCounter(frame, target, delay = 0, duration = 45) {
   const t = clamp((frame - delay) / duration, 0, 1);
   const eased = Easing.out(Easing.cubic)(t);
   return Math.round(eased * target);
 }
-function getStaggeredEntrance(frame, fps, index, baseDelay = 6, gap = 8) {
-  const s = animations_getSpringProgress(frame, fps, baseDelay + index * gap, animations_DEFAULT_SPRING);
-  return {
-    opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-    y: interpolate(s, [0, 1], [40, 0]),
-    scale: interpolate(s, [0, 1], [0.9, 1])
-  };
+function getTypewriterProgress(frame, delay = 0, speed = 0.35) {
+  return Math.max(0, Math.floor((frame - delay) * speed));
 }
 function getStaggerDelay(index, baseDelay = 6, gap = 8) {
   return baseDelay + index * gap;
-}
-function getHighlightProgress(frame, fps, delay = 0, duration = 25) {
-  return interpolate(frame, [delay, delay + duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 }
 function getScrambleReveal(frame, fps, text, delay = 0, duration = 40) {
   const progress = Math.min(1, Math.max(0, (frame - delay) / duration));
@@ -100,15 +117,21 @@ function getScrambleReveal(frame, fps, text, delay = 0, duration = 40) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*";
   let result = "";
   for (let i = 0; i < text.length; i++) {
-    if (text[i] === " ") {
-      result += " ";
-    } else if (i < revealedCount) {
-      result += text[i];
-    } else {
-      result += chars[Math.floor(Math.random() * chars.length)];
-    }
+    if (text[i] === " ") result += " ";
+    else if (i < revealedCount) result += text[i];
+    else result += chars[Math.floor(Math.random() * chars.length)];
   }
   return result;
+}
+function getHighlightProgress(frame, fps, delay = 0, duration = 25) {
+  return interpolate(frame, [delay, delay + duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+}
+function getFadeIn(frame, duration = 15, delay = 0) {
+  return interpolate(frame, [delay, delay + duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+}
+function getFadeOut(frame, duration, outDuration = TRANSITION_FRAMES, delay = 0) {
+  const start = delay + duration - outDuration;
+  return interpolate(frame, [start, start + outDuration], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 }
 
 ;// ./src/backgrounds.tsx
@@ -526,7 +549,7 @@ function useSceneSizes() {
     width,
     height,
     isVertical,
-    headline: Math.round(isVertical ? width * 0.12 : width * 0.085),
+    headline: Math.round(isVertical ? width * 0.13 : width * 0.09),
     subhead: Math.round(isVertical ? width * 0.055 : width * 0.04),
     body: Math.round(isVertical ? width * 0.042 : width * 0.03),
     small: Math.round(isVertical ? width * 0.032 : width * 0.022),
@@ -534,22 +557,28 @@ function useSceneSizes() {
     padY: isVertical ? "10%" : "8%"
   };
 }
-const KineticHeadline = ({ text, frame, fps, duration, color, size, align = "center", weight = 800 }) => {
-  const words = text.split(/\s+/).filter(Boolean);
-  const revealWindow = duration * 0.6;
+const CinematicHeadline = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0 }) => {
+  const chars = text.split("");
+  const revealWindow = duration * 0.45;
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { textAlign: align, maxWidth: "92%" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
     "div",
     {
       style: {
         display: "flex",
         flexWrap: "wrap",
-        gap: size * 0.2,
         justifyContent: align === "center" ? "center" : "flex-start",
         lineHeight: 1.08
       },
-      children: words.map((word, i) => {
-        const delay = words.length === 1 ? 0 : i / (words.length - 1) * revealWindow;
-        const s = (0,esm.spring)({ frame: Math.max(0, frame - delay), fps, config: animations_SNAPPY_SPRING });
+      children: chars.map((char, i) => {
+        const isSpace = char === " ";
+        const charDelay = delay + (chars.length <= 1 ? 0 : i / (chars.length - 1) * revealWindow);
+        const s = (0,esm.spring)({ frame: Math.max(0, frame - charDelay), fps, config: animations_SNAPPY_SPRING });
+        const reveal = {
+          opacity: (0,esm.interpolate)(s, [0, 0.15, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+          y: (0,esm.interpolate)(s, [0, 1], [18, 0]),
+          scale: (0,esm.interpolate)(s, [0, 1], [0.9, 1]),
+          blur: (0,esm.interpolate)(s, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" })
+        };
         return /* @__PURE__ */ (0,jsx_runtime.jsx)(
           "span",
           {
@@ -559,12 +588,14 @@ const KineticHeadline = ({ text, frame, fps, duration, color, size, align = "cen
               fontWeight: weight,
               color,
               letterSpacing: "-0.035em",
-              opacity: (0,esm.interpolate)(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-              transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [22, 0])}px)`,
+              opacity: reveal.opacity,
+              transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
+              filter: `blur(${reveal.blur}px)`,
               display: "inline-block",
-              willChange: "transform, opacity"
+              width: isSpace ? size * 0.25 : "auto",
+              willChange: "transform, opacity, filter"
             },
-            children: word
+            children: isSpace ? "\xA0" : char
           },
           i
         );
@@ -572,10 +603,60 @@ const KineticHeadline = ({ text, frame, fps, duration, color, size, align = "cen
     }
   ) });
 };
-const KineticBody = ({ text, frame, fps, duration, color, size, align = "center", baseDelay = 8 }) => {
+const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0 }) => {
+  const clip = getClipReveal(frame, delay, 40);
   const words = text.split(/\s+/).filter(Boolean);
-  const revealWindow = duration * 0.55;
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { textAlign: align, maxWidth: "85%", marginTop: size * 0.8 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    "div",
+    {
+      style: {
+        textAlign: align,
+        maxWidth: "92%",
+        clipPath: clip,
+        willChange: "clip-path"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        "div",
+        {
+          style: {
+            display: "flex",
+            flexWrap: "wrap",
+            gap: size * 0.22,
+            justifyContent: align === "center" ? "center" : "flex-start",
+            lineHeight: 1.08
+          },
+          children: words.map((word, i) => {
+            const wordDelay = delay + 6 + (words.length <= 1 ? 0 : i / (words.length - 1) * duration * 0.35);
+            const s = (0,esm.spring)({ frame: Math.max(0, frame - wordDelay), fps, config: animations_SNAPPY_SPRING });
+            return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+              "span",
+              {
+                style: {
+                  fontFamily: FONT,
+                  fontSize: size,
+                  fontWeight: weight,
+                  color,
+                  letterSpacing: "-0.035em",
+                  opacity: (0,esm.interpolate)(s, [0, 0.2, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+                  transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [14, 0])}px) scale(${(0,esm.interpolate)(s, [0, 1], [0.95, 1])})`,
+                  filter: `blur(${(0,esm.interpolate)(s, [0, 0.4], [2, 0], { extrapolateLeft: "clamp" })}px)`,
+                  display: "inline-block",
+                  willChange: "transform, opacity, filter"
+                },
+                children: word
+              },
+              i
+            );
+          })
+        }
+      )
+    }
+  );
+};
+const CinematicBody = ({ text, frame, fps, duration, color, size, align = "center", baseDelay = 10 }) => {
+  const words = text.split(/\s+/).filter(Boolean);
+  const revealWindow = duration * 0.5;
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { textAlign: align, maxWidth: "88%", marginTop: size * 0.7 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
     "div",
     {
       style: {
@@ -583,11 +664,11 @@ const KineticBody = ({ text, frame, fps, duration, color, size, align = "center"
         flexWrap: "wrap",
         gap: size * 0.25,
         justifyContent: align === "center" ? "center" : "flex-start",
-        lineHeight: 1.4
+        lineHeight: 1.45
       },
       children: words.map((word, i) => {
-        const delay = baseDelay + (words.length === 1 ? 0 : i / (words.length - 1) * revealWindow);
-        const s = (0,esm.spring)({ frame: Math.max(0, frame - delay), fps, config: animations_DEFAULT_SPRING });
+        const delay = baseDelay + (words.length <= 1 ? 0 : i / (words.length - 1) * revealWindow);
+        const reveal = getWordReveal(frame, fps, i, words.length, duration);
         return /* @__PURE__ */ (0,jsx_runtime.jsx)(
           "span",
           {
@@ -597,10 +678,11 @@ const KineticBody = ({ text, frame, fps, duration, color, size, align = "center"
               fontWeight: 500,
               color,
               letterSpacing: "-0.01em",
-              opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-              transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [14, 0])}px)`,
+              opacity: reveal.opacity,
+              transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
+              filter: `blur(${reveal.blur}px)`,
               display: "inline-block",
-              willChange: "transform, opacity"
+              willChange: "transform, opacity, filter"
             },
             children: word
           },
@@ -610,11 +692,12 @@ const KineticBody = ({ text, frame, fps, duration, color, size, align = "center"
     }
   ) });
 };
-const SceneMotion = ({ frame, fps, duration, entranceDirection = "up", exitDirection = "down", children }) => {
-  const entrance = getEntrance(frame, fps, 0, animations_DEFAULT_SPRING);
-  const exit = getExit(frame, duration, exitDirection, TRANSITION_FRAMES, fps);
+const SceneMotion = ({ frame, duration, entranceDirection = "up", exitDirection = "down", children, bgChildren }) => {
+  const entrance = getCinematicEntrance(frame, 0, 30);
+  const exit = getCinematicExit(frame, duration, exitDirection, TRANSITION_FRAMES);
   const cam = getCamera(frame, duration);
-  const entranceOffset = 60;
+  const bg = getBgDrift(frame, duration);
+  const entranceOffset = 50;
   const entranceMap = {
     left: { x: -entranceOffset, y: 0 },
     right: { x: entranceOffset, y: 0 },
@@ -622,21 +705,58 @@ const SceneMotion = ({ frame, fps, duration, entranceDirection = "up", exitDirec
     down: { x: 0, y: -entranceOffset }
   };
   const eDir = entranceMap[entranceDirection];
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    esm.AbsoluteFill,
+  const opacity = entrance.opacity * exit.opacity;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: [
+    bgChildren && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          inset: 0,
+          transform: `scale(${bg.scale}) translateY(${bg.y}px)`,
+          opacity: opacity * 0.6,
+          willChange: "transform"
+        },
+        children: bgChildren
+      }
+    ),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          opacity,
+          transform: `
+            translateX(${exit.x + eDir.x * (1 - entrance.opacity)}px)
+            translateY(${entrance.y + exit.y + eDir.y * (1 - entrance.opacity)}px)
+            scale(${entrance.scale * exit.scale * cam.scale})
+          `,
+          filter: `blur(${entrance.blur + exit.blur}px)`,
+          willChange: "transform, opacity, filter"
+        },
+        children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { transform: `translateY(${cam.y}px)`, width: "100%", height: "100%" }, children })
+      }
+    )
+  ] });
+};
+const FilmGrain = ({ intensity = 0.035 }) => {
+  const noiseUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARUlEQVR4nO3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD8G1hwAAE8lTpiAAAAAElFTkSuQmCC";
+  return /* @__PURE__ */ jsx(
+    AbsoluteFill,
     {
       style: {
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: entrance.opacity * exit.opacity,
-        transform: `
-          translateX(${exit.x + eDir.x * (1 - entrance.opacity)}px)
-          translateY(${entrance.y + exit.y + eDir.y * (1 - entrance.opacity)}px)
-          scale(${entrance.scale * exit.scale * cam.scale})
-        `,
-        willChange: "transform, opacity"
-      },
-      children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { transform: `translateY(${cam.y}px)`, width: "100%", height: "100%" }, children })
+        zIndex: 500,
+        pointerEvents: "none",
+        opacity: intensity,
+        backgroundImage: `url(${noiseUri})`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "128px 128px",
+        mixBlendMode: "overlay"
+      }
     }
   );
 };
@@ -648,7 +768,6 @@ const SceneMotion = ({ frame, fps, duration, entranceDirection = "up", exitDirec
 
 
 
-const scenes_FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const StatementScene = ({
   scene,
   textColor,
@@ -659,7 +778,7 @@ const StatementScene = ({
   exitDirection
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(KineticHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: sizes.headline }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: sizes.headline }) }) });
 };
 const EvidenceScene = ({
   scene,
@@ -672,8 +791,8 @@ const EvidenceScene = ({
   exitDirection
 }) => {
   const sizes = useSceneSizes();
-  const cardS = animations_getSpringProgress(frame, fps, 8, animations_DEFAULT_SPRING);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+  const cardS = (0,esm.spring)({ frame: Math.max(0, frame - 8), fps, config: animations_DEFAULT_SPRING });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
     background: "#0f0f0f",
     borderRadius: 24,
     border: "1px solid rgba(255,255,255,0.06)",
@@ -682,10 +801,11 @@ const EvidenceScene = ({
     width: "100%",
     opacity: (0,esm.interpolate)(cardS, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
     transform: `translateY(${(0,esm.interpolate)(cardS, [0, 1], [50, 0])}px)`,
-    willChange: "transform, opacity"
+    filter: `blur(${(0,esm.interpolate)(cardS, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" })}px)`,
+    willChange: "transform, opacity, filter"
   }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scenes_FONT, fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }, children: scene.subtext || " " }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(KineticHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.5), align: "left" })
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }, children: scene.subtext || " " }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.5), align: "left" })
   ] }) }) });
 };
 const FlowScene = ({
@@ -700,7 +820,7 @@ const FlowScene = ({
 }) => {
   const sizes = useSceneSizes();
   const steps = scene.text.split(/[→\-\>]/).map((s) => s.trim()).filter(Boolean);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, width: "100%", maxWidth: "1100px" }, children: steps.map((step, i) => {
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, width: "100%", maxWidth: "1100px" }, children: steps.map((step, i) => {
     const s = (0,esm.spring)({ frame: Math.max(0, frame - i * 10), fps, config: animations_DEFAULT_SPRING });
     const isLast = i === steps.length - 1;
     return /* @__PURE__ */ (0,jsx_runtime.jsxs)(react.Fragment, { children: [
@@ -713,14 +833,15 @@ const FlowScene = ({
         textAlign: "center",
         opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
         transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [40, 0])}px)`,
-        willChange: "transform, opacity",
+        filter: `blur(${(0,esm.interpolate)(s, [0, 0.5], [2, 0], { extrapolateLeft: "clamp" })}px)`,
+        willChange: "transform, opacity, filter",
         flex: 1
       }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: scenes_FONT, fontSize: 14, fontWeight: 700, color: primaryColor, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 700, color: primaryColor, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }, children: [
           "Step ",
           i + 1
         ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scenes_FONT, fontSize: Math.round(sizes.body * 0.9), fontWeight: 600, color: textColor, lineHeight: 1.3 }, children: step })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: Math.round(sizes.body * 0.9), fontWeight: 600, color: textColor, lineHeight: 1.3 }, children: step })
       ] }),
       !isLast && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 32, height: 2, background: primaryColor, opacity: (0,esm.interpolate)(s, [0, 1], [0, 0.4]), flexShrink: 0 } })
     ] }, i);
@@ -744,9 +865,9 @@ const MetricScene = ({
   const countS = animations_getSpringProgress(frame, fps, 0, animations_SNAPPY_SPRING);
   const displayed = Math.round((0,esm.interpolate)(countS, [0, 1], [0, targetNum], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
   const formatted = numberStr.startsWith("$") ? `$${displayed.toLocaleString()}` : displayed.toLocaleString();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scenes_FONT, fontSize: Math.round(sizes.headline * 1.3), fontWeight: 800, lineHeight: 1, color: primaryColor, letterSpacing: "-0.04em", fontVariantNumeric: "tabular-nums" }, children: formatted }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scenes_FONT, fontSize: sizes.body, fontWeight: 500, lineHeight: 1.4, color: `${textColor}88`, marginTop: 20, letterSpacing: "-0.01em" }, children: label })
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: Math.round(sizes.headline * 1.3), fontWeight: 800, lineHeight: 1, color: primaryColor, letterSpacing: "-0.04em", fontVariantNumeric: "tabular-nums" }, children: formatted }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: sizes.body, fontWeight: 500, lineHeight: 1.4, color: `${textColor}88`, marginTop: 20, letterSpacing: "-0.01em" }, children: label })
   ] }) }) });
 };
 const LockupScene = ({
@@ -761,14 +882,14 @@ const LockupScene = ({
 }) => {
   const sizes = useSceneSizes();
   const lineS = (0,esm.spring)({ frame: Math.max(0, frame - 20), fps, config: animations_SNAPPY_SPRING });
-  const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 160], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 180], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const isUrl = scene.text.includes(".") && !scene.text.includes(" ");
   const mainText = isUrl ? scene.subtext || "Get started" : scene.text;
   const urlText = isUrl ? scene.text : scene.subtext || "";
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scenes_FONT, fontSize: Math.round(sizes.headline * 0.65), fontWeight: 800, lineHeight: 1.1, color: textColor, letterSpacing: "-0.03em", marginBottom: 24 }, children: mainText }),
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: Math.round(sizes.headline * 0.65), fontWeight: 800, lineHeight: 1.1, color: textColor, letterSpacing: "-0.03em", marginBottom: 24 }, children: mainText }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "0 auto 24px" } }),
-    urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scenes_FONT, fontSize: sizes.body, fontWeight: 500, color: primaryColor, letterSpacing: "0.02em" }, children: urlText })
+    urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: sizes.body, fontWeight: 500, color: primaryColor, letterSpacing: "0.02em" }, children: urlText })
   ] }) }) });
 };
 const sceneComponentMap = {
@@ -1734,7 +1855,7 @@ const HeroStatementTemplate = ({
   exitDirection
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(KineticHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: sizes.headline }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ClipHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: sizes.headline }) }) });
 };
 const PhoneDemoTemplate = ({
   scene,
@@ -1748,16 +1869,13 @@ const PhoneDemoTemplate = ({
 }) => {
   const sizes = useSceneSizes();
   const textLower = scene.text.toLowerCase();
-  const floatY = getFloat(frame, fps, 6, 0.4);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { transform: `translateY(${floatY}px)` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(PhoneFrame, { frame, fps, primaryColor, children: [
+  const floatY = getFloat(frame, fps, 5, 0.35);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { transform: `translateY(${floatY}px)` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(PhoneFrame, { frame, fps, primaryColor, children: [
     (textLower.includes("call") || textLower.includes("alert") || textLower.includes("notify")) && /* @__PURE__ */ (0,jsx_runtime.jsx)(NotificationCard, { title: "Incoming Call", body: scene.subtext || scene.text, frame, fps, delay: 10, icon: "\u{1F4DE}" }),
     (textLower.includes("chat") || textLower.includes("ai") || textLower.includes("talk")) && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 60, padding: "0 4px" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
       ChatThread,
       {
-        messages: [
-          { text: scene.subtext || "Hi, I need help with...", direction: "left" },
-          { text: scene.text, direction: "right" }
-        ],
+        messages: [{ text: scene.subtext || "Hi, I need help with...", direction: "left" }, { text: scene.text, direction: "right" }],
         frame,
         fps,
         baseDelay: 15,
@@ -1784,7 +1902,7 @@ const BrowserDashboardTemplate = ({
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(BrowserFrame, { frame, fps, url: scene.subtext || "dashboard", children: [
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(BrowserFrame, { frame, fps, url: scene.subtext || "dashboard", children: [
     /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, marginBottom: 20 }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Calls Answered", value: "2,847", trend: 24, trendLabel: "vs last month", frame, fps, delay: 10 }),
       /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Jobs Booked", value: "186", trend: 18, trendLabel: "vs last month", frame, fps, delay: 18 }),
@@ -1818,7 +1936,7 @@ const StatsGridTemplate = ({
     const match = s.match(/([$€£]?[\d,.]+[KMBkmb]?)(?:\s+)?(.+)?/);
     return { value: (match == null ? void 0 : match[1]) || s, label: (match == null ? void 0 : match[2]) || "" };
   });
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: sizes.isVertical ? "column" : "row", gap: sizes.isVertical ? 40 : 60, alignItems: "center" }, children: parsed.map((stat, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(StatCard, { value: stat.value, label: stat.label, frame, fps, delay: i * 12 }, i)) }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: sizes.isVertical ? "column" : "row", gap: sizes.isVertical ? 40 : 60, alignItems: "center" }, children: parsed.map((stat, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(StatCard, { value: stat.value, label: stat.label, frame, fps, delay: i * 12 }, i)) }) }) });
 };
 const TestimonialQuoteTemplate = ({
   scene,
@@ -1831,7 +1949,7 @@ const TestimonialQuoteTemplate = ({
 }) => {
   var _a, _b, _c, _d;
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
     TestimonialCard,
     {
       quote: scene.text,
@@ -1856,15 +1974,13 @@ const BeforeAfterTemplate = ({
 }) => {
   const sizes = useSceneSizes();
   const parts = scene.text.split(/vs|versus|→|->/).map((s) => s.trim());
-  const before = parts[0] || "Before";
-  const after = parts[1] || "After";
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
     ComparisonCard,
     {
       beforeLabel: "Before",
-      beforeText: before,
+      beforeText: parts[0] || "Before",
       afterLabel: "After",
-      afterText: after,
+      afterText: parts[1] || "After",
       frame,
       fps,
       delay: 10
@@ -1883,7 +1999,7 @@ const WorkflowStepsTemplate = ({
 }) => {
   const sizes = useSceneSizes();
   const steps = scene.text.split(/[→\-\>]/).map((s) => s.trim()).filter(Boolean);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Stepper, { steps: steps.slice(0, 4), activeStep: steps.length - 1, frame, fps, delay: 10, primaryColor }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Stepper, { steps: steps.slice(0, 4), activeStep: steps.length - 1, frame, fps, delay: 10, primaryColor }) }) });
 };
 const PricingTiersTemplate = ({
   scene,
@@ -1897,7 +2013,7 @@ const PricingTiersTemplate = ({
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, alignItems: "center" }, children: [
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, alignItems: "center" }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Starter", price: "$29", period: "/mo", features: ["100 calls/mo", "Basic AI", "Email summaries"], frame, fps, delay: 10, primaryColor }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Pro", price: "$99", period: "/mo", features: ["Unlimited calls", "Custom AI voice", "Calendar sync", "Priority routing"], highlighted: true, frame, fps, delay: 18, primaryColor }),
     !isVertical && /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Enterprise", price: "Custom", period: "", features: ["Dedicated agent", "API access", "White-label", "SLA"], frame, fps, delay: 26, primaryColor })
@@ -1920,7 +2036,7 @@ const FeatureHighlightTemplate = ({
     { icon: "\u{1F4C5}", title: "Auto Booking", description: "Calendar integration" },
     { icon: "\u{1F4B0}", title: "Revenue Track", description: "Real-time metrics" }
   ];
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "grid", gridTemplateColumns: sizes.isVertical ? "1fr" : "1fr 1fr", gap: 16, maxWidth: 500 }, children: features.map((f, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(FeatureCard, { icon: f.icon, title: f.title, description: f.description, frame, fps, delay: 10 + i * 8, primaryColor }, i)) }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "grid", gridTemplateColumns: sizes.isVertical ? "1fr" : "1fr 1fr", gap: 16, maxWidth: 500 }, children: features.map((f, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(FeatureCard, { icon: f.icon, title: f.title, description: f.description, frame, fps, delay: 10 + i * 8, primaryColor }, i)) }) }) });
 };
 const TypewriterCommandTemplate = ({
   scene,
@@ -1933,7 +2049,7 @@ const TypewriterCommandTemplate = ({
   exitDirection
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(TypewriterInput, { text: scene.text, frame, fps, delay: 10, speed: 0.4 }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(TypewriterInput, { text: scene.text, frame, fps, delay: 10, speed: 0.4 }) }) });
 };
 const SocialProofBannerTemplate = ({
   scene,
@@ -1945,7 +2061,7 @@ const SocialProofBannerTemplate = ({
   exitDirection
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
     SocialProofRow,
     {
       avatars: ["A", "B", "C", "D"],
@@ -1969,7 +2085,7 @@ const CalendarBookingTemplate = ({
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 20, alignItems: "center" }, children: [
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 20, alignItems: "center" }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarMonth, { month: "March 2025", highlightedDays: [15, 16, 17, 18, 22], frame, fps, delay: 10, primaryColor }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarBlock, { time: "Mar 15, 2:00 PM", title: scene.text, frame, fps, delay: 25, primaryColor })
   ] }) }) });
@@ -1985,7 +2101,7 @@ const RevenueCounterTemplate = ({
   exitDirection
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ProgressRing, { percent: 85, label: scene.text, frame, fps, delay: 10, primaryColor }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ProgressRing, { percent: 85, label: scene.text, frame, fps, delay: 10, primaryColor }) }) });
 };
 const BrandLockupTemplate = ({
   scene,
@@ -1999,11 +2115,14 @@ const BrandLockupTemplate = ({
 }) => {
   const sizes = useSceneSizes();
   const lineS = (0,esm.spring)({ frame: Math.max(0, frame - 20), fps, config: animations_SNAPPY_SPRING });
-  const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 180], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, fps, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(KineticHeadline, { text: scene.subtext || scene.text, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.6) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "24px auto" } }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(KineticBody, { text: scene.text.includes(".") && !scene.text.includes(" ") ? scene.text : "Get Started \u2192", frame, fps, duration, color: primaryColor, size: sizes.body, baseDelay: 12 })
+  const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 200], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const isUrl = scene.text.includes(".") && !scene.text.includes(" ");
+  const mainText = isUrl ? scene.subtext || "Get started" : scene.text;
+  const urlText = isUrl ? scene.text : scene.subtext || "";
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicHeadline, { text: mainText, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.6), delay: 0 }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "28px auto" } }),
+    urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicBody, { text: urlText, frame, fps, duration, color: primaryColor, size: sizes.body, baseDelay: 14 })
   ] }) }) });
 };
 const templateComponentMap = {

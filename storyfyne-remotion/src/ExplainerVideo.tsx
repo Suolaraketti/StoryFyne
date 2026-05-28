@@ -5,6 +5,7 @@ import { zColor } from "@remotion/zod-types";
 import { TRANSITION_FRAMES } from "./animations";
 import { Backgrounds, getBackgroundForSceneType } from "./backgrounds";
 import { CinematicMaster, CinematicMood } from "./effects";
+import { FilmGrain } from "./scene-core";
 import { sceneComponentMap, SceneData } from "./scenes";
 import { templateComponentMap } from "./templates";
 

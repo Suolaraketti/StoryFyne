@@ -1,32 +1,34 @@
 // ─── Scene Templates ────────────────────────────────────────────────
-// Pre-built complete scene layouts. The AI picks a template per scene.
-// OpenAI aesthetic: dark, massive type, continuous motion, no dead frames.
+// OpenAI launch video templates.
+// Every template: blur + scale + opacity stack on entrance.
+// Nothing just appears. Everything arrives.
 
 import React from "react";
 import { AbsoluteFill, interpolate, spring } from "remotion";
-import { getSpringProgress, getCamera, getFloat, TRANSITION_FRAMES, SNAPPY_SPRING, DEFAULT_SPRING } from "./animations";
+import { getSpringProgress, getCamera, getFloat, getCinematicEntrance, TRANSITION_FRAMES, SNAPPY_SPRING, DEFAULT_SPRING } from "./animations";
 import { SceneProps } from "./scenes";
-import { KineticHeadline, KineticBody, SceneMotion, useSceneSizes, FONT } from "./scene-core";
+import { ClipHeadline, CinematicHeadline, CinematicBody, SceneMotion, useSceneSizes, FONT } from "./scene-core";
 import {
-  PhoneFrame, BrowserFrame, ChatBubble, ChatThread, NotificationCard,
+  PhoneFrame, BrowserFrame, ChatThread, NotificationCard,
   DashboardCard, StatCard, TestimonialCard, PricingCard, FeatureCard,
   ComparisonCard, CalendarBlock, CalendarMonth,
   BarChart, LineChart, ProgressRing,
   TypewriterInput, Button,
-  Stepper, Timeline,
-  Avatar, RatingStars, SocialProofRow, StatusPill,
+  Stepper,
+  SocialProofRow, StatusPill,
 } from "./ui-mockups";
 
 // ─── 1. HERO STATEMENT ──────────────────────────────────────────────
+// The flagship. Clip-path wipe + word pop + camera push.
 
 export const HeroStatementTemplate: React.FC<SceneProps> = ({
   scene, textColor, frame, fps, duration, entranceDirection, exitDirection,
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
-        <KineticHeadline text={scene.text} frame={frame} fps={fps} duration={duration} color={textColor} size={sizes.headline} />
+        <ClipHeadline text={scene.text} frame={frame} fps={fps} duration={duration} color={textColor} size={sizes.headline} />
       </AbsoluteFill>
     </SceneMotion>
   );
@@ -39,10 +41,10 @@ export const PhoneDemoTemplate: React.FC<SceneProps> = ({
 }) => {
   const sizes = useSceneSizes();
   const textLower = scene.text.toLowerCase();
-  const floatY = getFloat(frame, fps, 6, 0.4);
+  const floatY = getFloat(frame, fps, 5, 0.35);
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
         <div style={{ transform: `translateY(${floatY}px)` }}>
           <PhoneFrame frame={frame} fps={fps} primaryColor={primaryColor}>
@@ -52,10 +54,7 @@ export const PhoneDemoTemplate: React.FC<SceneProps> = ({
             {(textLower.includes("chat") || textLower.includes("ai") || textLower.includes("talk")) && (
               <div style={{ marginTop: 60, padding: "0 4px" }}>
                 <ChatThread
-                  messages={[
-                    { text: scene.subtext || "Hi, I need help with...", direction: "left" },
-                    { text: scene.text, direction: "right" },
-                  ]}
+                  messages={[{ text: scene.subtext || "Hi, I need help with...", direction: "left" }, { text: scene.text, direction: "right" }]}
                   frame={frame} fps={fps} baseDelay={15} primaryColor={primaryColor}
                 />
               </div>
@@ -86,7 +85,7 @@ export const BrowserDashboardTemplate: React.FC<SceneProps> = ({
   const { isVertical } = sizes;
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <BrowserFrame frame={frame} fps={fps} url={scene.subtext || "dashboard"}>
           <div style={{ display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, marginBottom: 20 }}>
@@ -123,7 +122,7 @@ export const StatsGridTemplate: React.FC<SceneProps> = ({
   });
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", gap: sizes.isVertical ? 40 : 60, alignItems: "center" }}>
           {parsed.map((stat, i) => (
@@ -142,16 +141,14 @@ export const TestimonialQuoteTemplate: React.FC<SceneProps> = ({
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <TestimonialCard
           quote={scene.text}
           name={scene.subtext?.split("-")[0]?.trim() || "Customer"}
           role={scene.subtext?.split("-")[1]?.trim() || "Verified User"}
           rating={5}
-          frame={frame}
-          fps={fps}
-          delay={10}
+          frame={frame} fps={fps} delay={10}
         />
       </AbsoluteFill>
     </SceneMotion>
@@ -165,15 +162,13 @@ export const BeforeAfterTemplate: React.FC<SceneProps> = ({
 }) => {
   const sizes = useSceneSizes();
   const parts = scene.text.split(/vs|versus|→|->/).map(s => s.trim());
-  const before = parts[0] || "Before";
-  const after = parts[1] || "After";
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <ComparisonCard
-          beforeLabel="Before" beforeText={before}
-          afterLabel="After" afterText={after}
+          beforeLabel="Before" beforeText={parts[0] || "Before"}
+          afterLabel="After" afterText={parts[1] || "After"}
           frame={frame} fps={fps} delay={10}
         />
       </AbsoluteFill>
@@ -190,7 +185,7 @@ export const WorkflowStepsTemplate: React.FC<SceneProps> = ({
   const steps = scene.text.split(/[→\-\>]/).map(s => s.trim()).filter(Boolean);
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <Stepper steps={steps.slice(0, 4)} activeStep={steps.length - 1} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} />
       </AbsoluteFill>
@@ -207,7 +202,7 @@ export const PricingTiersTemplate: React.FC<SceneProps> = ({
   const { isVertical } = sizes;
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, alignItems: "center" }}>
           <PricingCard plan="Starter" price="$29" period="/mo" features={["100 calls/mo", "Basic AI", "Email summaries"]} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} />
@@ -233,7 +228,7 @@ export const FeatureHighlightTemplate: React.FC<SceneProps> = ({
   ];
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "grid", gridTemplateColumns: sizes.isVertical ? "1fr" : "1fr 1fr", gap: 16, maxWidth: 500 }}>
           {features.map((f, i) => (
@@ -252,7 +247,7 @@ export const TypewriterCommandTemplate: React.FC<SceneProps> = ({
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <TypewriterInput text={scene.text} frame={frame} fps={fps} delay={10} speed={0.4} />
       </AbsoluteFill>
@@ -267,7 +262,7 @@ export const SocialProofBannerTemplate: React.FC<SceneProps> = ({
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <SocialProofRow
           avatars={["A", "B", "C", "D"]}
@@ -289,7 +284,7 @@ export const CalendarBookingTemplate: React.FC<SceneProps> = ({
   const { isVertical } = sizes;
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: isVertical ? "column" : "row", gap: 20, alignItems: "center" }}>
           <CalendarMonth month="March 2025" highlightedDays={[15, 16, 17, 18, 22]} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} />
@@ -307,7 +302,7 @@ export const RevenueCounterTemplate: React.FC<SceneProps> = ({
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
         <ProgressRing percent={85} label={scene.text} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} />
       </AbsoluteFill>
@@ -316,21 +311,27 @@ export const RevenueCounterTemplate: React.FC<SceneProps> = ({
 };
 
 // ─── 14. BRAND LOCKUP ───────────────────────────────────────────────
+// Clean CTA. Line grows with spring. Text reveals word-by-word.
 
 export const BrandLockupTemplate: React.FC<SceneProps> = ({
   scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection,
 }) => {
   const sizes = useSceneSizes();
   const lineS = spring({ frame: Math.max(0, frame - 20), fps, config: SNAPPY_SPRING });
-  const lineWidth = interpolate(lineS, [0, 1], [0, 180], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const lineWidth = interpolate(lineS, [0, 1], [0, 200], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const isUrl = scene.text.includes(".") && !scene.text.includes(" ");
+  const mainText = isUrl ? (scene.subtext || "Get started") : scene.text;
+  const urlText = isUrl ? scene.text : (scene.subtext || "");
 
   return (
-    <SceneMotion frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ textAlign: "center" }}>
-          <KineticHeadline text={scene.subtext || scene.text} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.6)} />
-          <div style={{ height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "24px auto" }} />
-          <KineticBody text={scene.text.includes(".") && !scene.text.includes(" ") ? scene.text : "Get Started →"} frame={frame} fps={fps} duration={duration} color={primaryColor} size={sizes.body} baseDelay={12} />
+          <CinematicHeadline text={mainText} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.6)} delay={0} />
+          <div style={{ height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "28px auto" }} />
+          {urlText && (
+            <CinematicBody text={urlText} frame={frame} fps={fps} duration={duration} color={primaryColor} size={sizes.body} baseDelay={14} />
+          )}
         </div>
       </AbsoluteFill>
     </SceneMotion>

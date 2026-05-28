@@ -1,10 +1,15 @@
 // ─── Shared Scene Components ────────────────────────────────────────
-// Kinetic typography, camera motion, responsive sizing.
-// Used by both scenes.tsx and templates.tsx.
+// OpenAI launch video motion system.
+// Stacks: blur + scale + opacity + translateY. Clip-path reveals.
+// Layered depth. Nothing just appears.
 
 import React from "react";
 import { AbsoluteFill, useVideoConfig, interpolate, spring } from "remotion";
-import { getEntrance, getExit, getCamera, TRANSITION_FRAMES, SNAPPY_SPRING, DEFAULT_SPRING } from "./animations";
+import {
+  getCinematicEntrance, getCinematicExit, getCamera, getBgDrift,
+  getClipReveal, getCharReveal, getWordReveal,
+  TRANSITION_FRAMES, SNAPPY_SPRING, DEFAULT_SPRING,
+} from "./animations";
 
 export const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
@@ -17,7 +22,7 @@ export function useSceneSizes() {
     width,
     height,
     isVertical,
-    headline: Math.round(isVertical ? width * 0.12 : width * 0.085),
+    headline: Math.round(isVertical ? width * 0.13 : width * 0.09),
     subhead: Math.round(isVertical ? width * 0.055 : width * 0.04),
     body: Math.round(isVertical ? width * 0.042 : width * 0.03),
     small: Math.round(isVertical ? width * 0.032 : width * 0.022),
@@ -26,10 +31,11 @@ export function useSceneSizes() {
   };
 }
 
-// ─── Kinetic Headline ───────────────────────────────────────────────
-// Word-by-word reveal with spring physics.
+// ─── Cinematic Headline ─────────────────────────────────────────────
+// Character-by-character reveal with spring + blur clearing.
+// Each letter has weight. Feels expensive.
 
-export const KineticHeadline: React.FC<{
+export const CinematicHeadline: React.FC<{
   text: string;
   frame: number;
   fps: number;
@@ -38,23 +44,31 @@ export const KineticHeadline: React.FC<{
   size: number;
   align?: "center" | "left";
   weight?: number;
-}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800 }) => {
-  const words = text.split(/\s+/).filter(Boolean);
-  const revealWindow = duration * 0.6;
+  delay?: number;
+}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0 }) => {
+  const chars = text.split("");
+  const revealWindow = duration * 0.45;
+
   return (
     <div style={{ textAlign: align, maxWidth: "92%" }}>
       <div
         style={{
           display: "flex",
           flexWrap: "wrap",
-          gap: size * 0.2,
           justifyContent: align === "center" ? "center" : "flex-start",
           lineHeight: 1.08,
         }}
       >
-        {words.map((word, i) => {
-          const delay = words.length === 1 ? 0 : (i / (words.length - 1)) * revealWindow;
-          const s = spring({ frame: Math.max(0, frame - delay), fps, config: SNAPPY_SPRING });
+        {chars.map((char, i) => {
+          const isSpace = char === " ";
+          const charDelay = delay + (chars.length <= 1 ? 0 : (i / (chars.length - 1)) * revealWindow);
+          const s = spring({ frame: Math.max(0, frame - charDelay), fps, config: SNAPPY_SPRING });
+          const reveal = {
+            opacity: interpolate(s, [0, 0.15, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+            y: interpolate(s, [0, 1], [18, 0]),
+            scale: interpolate(s, [0, 1], [0.9, 1]),
+            blur: interpolate(s, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" }),
+          };
           return (
             <span
               key={i}
@@ -64,10 +78,76 @@ export const KineticHeadline: React.FC<{
                 fontWeight: weight,
                 color,
                 letterSpacing: "-0.035em",
-                opacity: interpolate(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                transform: `translateY(${interpolate(s, [0, 1], [22, 0])}px)`,
+                opacity: reveal.opacity,
+                transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
+                filter: `blur(${reveal.blur}px)`,
                 display: "inline-block",
-                willChange: "transform, opacity",
+                width: isSpace ? size * 0.25 : "auto",
+                willChange: "transform, opacity, filter",
+              }}
+            >
+              {isSpace ? "\u00A0" : char}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ─── Clip-Path Headline ─────────────────────────────────────────────
+// Wipe reveal with clip-path. The container reveals, then characters pop.
+// Most cinematic option for hero statements.
+
+export const ClipHeadline: React.FC<{
+  text: string;
+  frame: number;
+  fps: number;
+  duration: number;
+  color: string;
+  size: number;
+  align?: "center" | "left";
+  weight?: number;
+  delay?: number;
+}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0 }) => {
+  const clip = getClipReveal(frame, delay, 40);
+  const words = text.split(/\s+/).filter(Boolean);
+
+  return (
+    <div
+      style={{
+        textAlign: align,
+        maxWidth: "92%",
+        clipPath: clip,
+        willChange: "clip-path",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: size * 0.22,
+          justifyContent: align === "center" ? "center" : "flex-start",
+          lineHeight: 1.08,
+        }}
+      >
+        {words.map((word, i) => {
+          const wordDelay = delay + 6 + (words.length <= 1 ? 0 : (i / (words.length - 1)) * duration * 0.35);
+          const s = spring({ frame: Math.max(0, frame - wordDelay), fps, config: SNAPPY_SPRING });
+          return (
+            <span
+              key={i}
+              style={{
+                fontFamily: FONT,
+                fontSize: size,
+                fontWeight: weight,
+                color,
+                letterSpacing: "-0.035em",
+                opacity: interpolate(s, [0, 0.2, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+                transform: `translateY(${interpolate(s, [0, 1], [14, 0])}px) scale(${interpolate(s, [0, 1], [0.95, 1])})`,
+                filter: `blur(${interpolate(s, [0, 0.4], [2, 0], { extrapolateLeft: "clamp" })}px)`,
+                display: "inline-block",
+                willChange: "transform, opacity, filter",
               }}
             >
               {word}
@@ -79,9 +159,9 @@ export const KineticHeadline: React.FC<{
   );
 };
 
-// ─── Kinetic Body Text ──────────────────────────────────────────────
+// ─── Cinematic Body Text ────────────────────────────────────────────
 
-export const KineticBody: React.FC<{
+export const CinematicBody: React.FC<{
   text: string;
   frame: number;
   fps: number;
@@ -90,23 +170,24 @@ export const KineticBody: React.FC<{
   size: number;
   align?: "center" | "left";
   baseDelay?: number;
-}> = ({ text, frame, fps, duration, color, size, align = "center", baseDelay = 8 }) => {
+}> = ({ text, frame, fps, duration, color, size, align = "center", baseDelay = 10 }) => {
   const words = text.split(/\s+/).filter(Boolean);
-  const revealWindow = duration * 0.55;
+  const revealWindow = duration * 0.5;
+
   return (
-    <div style={{ textAlign: align, maxWidth: "85%", marginTop: size * 0.8 }}>
+    <div style={{ textAlign: align, maxWidth: "88%", marginTop: size * 0.7 }}>
       <div
         style={{
           display: "flex",
           flexWrap: "wrap",
           gap: size * 0.25,
           justifyContent: align === "center" ? "center" : "flex-start",
-          lineHeight: 1.4,
+          lineHeight: 1.45,
         }}
       >
         {words.map((word, i) => {
-          const delay = baseDelay + (words.length === 1 ? 0 : (i / (words.length - 1)) * revealWindow);
-          const s = spring({ frame: Math.max(0, frame - delay), fps, config: DEFAULT_SPRING });
+          const delay = baseDelay + (words.length <= 1 ? 0 : (i / (words.length - 1)) * revealWindow);
+          const reveal = getWordReveal(frame, fps, i, words.length, duration);
           return (
             <span
               key={i}
@@ -116,10 +197,11 @@ export const KineticBody: React.FC<{
                 fontWeight: 500,
                 color,
                 letterSpacing: "-0.01em",
-                opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                transform: `translateY(${interpolate(s, [0, 1], [14, 0])}px)`,
+                opacity: reveal.opacity,
+                transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
+                filter: `blur(${reveal.blur}px)`,
                 display: "inline-block",
-                willChange: "transform, opacity",
+                willChange: "transform, opacity, filter",
               }}
             >
               {word}
@@ -132,21 +214,24 @@ export const KineticBody: React.FC<{
 };
 
 // ─── Scene Motion Wrapper ───────────────────────────────────────────
-// Entrance + exit + camera push-in.
+// Layered depth: background drifts, content snaps, camera pushes.
+// Entrance: blur + scale + opacity + translateY stack.
+// Exit: blur INCREASES as it leaves.
 
 export const SceneMotion: React.FC<{
   frame: number;
-  fps: number;
   duration: number;
   entranceDirection?: "left" | "right" | "up" | "down";
   exitDirection?: "left" | "right" | "up" | "down";
   children: React.ReactNode;
-}> = ({ frame, fps, duration, entranceDirection = "up", exitDirection = "down", children }) => {
-  const entrance = getEntrance(frame, fps, 0, DEFAULT_SPRING);
-  const exit = getExit(frame, duration, exitDirection, TRANSITION_FRAMES, fps);
+  bgChildren?: React.ReactNode;
+}> = ({ frame, duration, entranceDirection = "up", exitDirection = "down", children, bgChildren }) => {
+  const entrance = getCinematicEntrance(frame, 0, 30);
+  const exit = getCinematicExit(frame, duration, exitDirection, TRANSITION_FRAMES);
   const cam = getCamera(frame, duration);
+  const bg = getBgDrift(frame, duration);
 
-  const entranceOffset = 60;
+  const entranceOffset = 50;
   const entranceMap = {
     left: { x: -entranceOffset, y: 0 },
     right: { x: entranceOffset, y: 0 },
@@ -155,23 +240,72 @@ export const SceneMotion: React.FC<{
   };
   const eDir = entranceMap[entranceDirection];
 
+  // Combined opacity (entrance fade in + exit fade out)
+  const opacity = entrance.opacity * exit.opacity;
+
+  return (
+    <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
+      {/* Background layer — drifts slower, creates depth */}
+      {bgChildren && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            transform: `scale(${bg.scale}) translateY(${bg.y}px)`,
+            opacity: opacity * 0.6,
+            willChange: "transform",
+          }}
+        >
+          {bgChildren}
+        </div>
+      )}
+
+      {/* Content layer — stacks blur + scale + translate */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          opacity,
+          transform: `
+            translateX(${exit.x + eDir.x * (1 - entrance.opacity)}px)
+            translateY(${entrance.y + exit.y + eDir.y * (1 - entrance.opacity)}px)
+            scale(${entrance.scale * exit.scale * cam.scale})
+          `,
+          filter: `blur(${entrance.blur + exit.blur}px)`,
+          willChange: "transform, opacity, filter",
+        }}
+      >
+        <div style={{ transform: `translateY(${cam.y}px)`, width: "100%", height: "100%" }}>
+          {children}
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// ─── Film Grain Overlay ─────────────────────────────────────────────
+// Subtle noise at 3-4% opacity. Makes digital motion feel cinematic.
+
+export const FilmGrain: React.FC<{ intensity?: number }> = ({ intensity = 0.035 }) => {
+  // Use a data URI for a tiny repeating noise tile
+  // This is a 64x64 PNG of random noise, base64 encoded
+  const noiseUri =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAARUlEQVR4nO3BAQ0AAADCoPdPbQ8HFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD8G1hwAAE8lTpiAAAAAElFTkSuQmCC";
+
   return (
     <AbsoluteFill
       style={{
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: entrance.opacity * exit.opacity,
-        transform: `
-          translateX(${exit.x + eDir.x * (1 - entrance.opacity)}px)
-          translateY(${entrance.y + exit.y + eDir.y * (1 - entrance.opacity)}px)
-          scale(${entrance.scale * exit.scale * cam.scale})
-        `,
-        willChange: "transform, opacity",
+        zIndex: 500,
+        pointerEvents: "none",
+        opacity: intensity,
+        backgroundImage: `url(${noiseUri})`,
+        backgroundRepeat: "repeat",
+        backgroundSize: "128px 128px",
+        mixBlendMode: "overlay",
       }}
-    >
-      <div style={{ transform: `translateY(${cam.y}px)`, width: "100%", height: "100%" }}>
-        {children}
-      </div>
-    </AbsoluteFill>
+    />
   );
 };

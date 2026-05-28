@@ -1,120 +1,155 @@
 // ─── Animation Engine ───────────────────────────────────────────────
-// Production-grade frame-based animation utilities for Remotion.
+// OpenAI launch video motion system.
+// Rule: nothing just appears. It arrives, disturbs the air, keeps breathing.
 
 import { interpolate, spring, Easing, SpringConfig } from "remotion";
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSITION_FRAMES = 25; // ~0.8s
+export const TRANSITION_FRAMES = 25;
+
+// ─── Easing Curves ──────────────────────────────────────────────────
+// These are the curves that make motion feel expensive.
+
+/** Butter-smooth ease-out-expo for entrances. The gold standard. */
+export const EASE_OUT_EXPO = Easing.bezier(0.16, 1, 0.3, 1);
+
+/** Slightly more aggressive ease-out for dramatic reveals. */
+export const EASE_OUT_QUART = Easing.bezier(0.22, 1, 0.36, 1);
+
+/** Gentle ease-in-out for camera movements. Never use linear. */
+export const EASE_IN_OUT_SMOOTH = Easing.bezier(0.65, 0, 0.35, 1);
+
+// Spring configs
 export const DEFAULT_SPRING: SpringConfig = { damping: 14, stiffness: 90, mass: 1, overshootClamping: false };
 export const BOUNCY_SPRING: SpringConfig = { damping: 10, stiffness: 120, mass: 0.8, overshootClamping: false };
-export const GENTLE_SPRING: SpringConfig = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
 export const SNAPPY_SPRING: SpringConfig = { damping: 18, stiffness: 180, mass: 0.6, overshootClamping: false };
-export const DRAMATIC_SPRING: SpringConfig = { damping: 12, stiffness: 60, mass: 1.5, overshootClamping: false };
+export const GENTLE_SPRING: SpringConfig = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
 
 // ─── Core ───────────────────────────────────────────────────────────
 
 export const clamp = (val: number, min: number, max: number) => Math.min(max, Math.max(min, val));
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-/** Generic spring entrance returning 0→1 progress */
+/** Spring progress 0→1 */
 export function getSpringProgress(frame: number, fps: number, delay = 0, config: SpringConfig = DEFAULT_SPRING): number {
   return spring({ frame: Math.max(0, frame - delay), fps, config });
 }
 
-/** Fade in */
-export function getFadeIn(frame: number, duration = 15, delay = 0): number {
-  return interpolate(frame, [delay, delay + duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-}
+// ─── Cinematic Entrance ─────────────────────────────────────────────
+// Stacks: scale + opacity + translateY + BLUR. All with expo easing.
+// This is what makes things feel like they ARRIVE instead of just appearing.
 
-/** Full entrance: opacity + translateY + scale */
-export function getEntrance(frame: number, fps: number, delay = 0, config: SpringConfig = DEFAULT_SPRING) {
-  const s = getSpringProgress(frame, fps, delay, config);
+export function getCinematicEntrance(frame: number, delay = 0, duration = 30) {
+  const t = clamp((frame - delay) / duration, 0, 1);
+  const eased = EASE_OUT_EXPO(t);
   return {
-    opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-    y: interpolate(s, [0, 1], [50, 0]),
-    scale: interpolate(s, [0, 1], [0.92, 1]),
+    opacity: eased,
+    y: lerp(40, 0, eased),
+    scale: lerp(0.94, 1, eased),
+    blur: lerp(4, 0, eased), // px
   };
 }
 
-/** Exit: slide + fade with spring */
-export function getExit(frame: number, duration: number, direction: "left" | "right" | "up" | "down" = "left", outDuration = TRANSITION_FRAMES, fps = 30) {
+/** Exit with blur INCREASING as it leaves. Feels like it's dissolving into the air. */
+export function getCinematicExit(frame: number, duration: number, direction: "left" | "right" | "up" | "down" = "left", outDuration = TRANSITION_FRAMES) {
   const start = duration - outDuration;
-  const s = spring({ frame: Math.max(0, frame - start), fps, config: { damping: 14, stiffness: 90, mass: 1, overshootClamping: false } });
-  const dirMap = { left: { x: -200, y: 0 }, right: { x: 200, y: 0 }, up: { x: 0, y: -150 }, down: { x: 0, y: 150 } };
+  const t = clamp((frame - start) / outDuration, 0, 1);
+  const eased = Easing.out(Easing.cubic)(t);
+  const dirMap = { left: { x: -120, y: 0 }, right: { x: 120, y: 0 }, up: { x: 0, y: -80 }, down: { x: 0, y: 80 } };
   const dir = dirMap[direction];
   return {
-    opacity: interpolate(s, [0, 1], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    x: interpolate(s, [0, 1], [0, dir.x], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    y: interpolate(s, [0, 1], [0, dir.y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    scale: interpolate(s, [0, 1], [1, 0.94], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+    opacity: lerp(1, 0, eased),
+    x: lerp(0, dir.x, eased),
+    y: lerp(0, dir.y, eased),
+    scale: lerp(1, 0.96, eased),
+    blur: lerp(0, 3, eased),
   };
 }
 
-// ─── Kinetic Typography ─────────────────────────────────────────────
+// ─── Clip-Path Text Reveal ──────────────────────────────────────────
+// Wipes text in from left to right. More cinematic than fade.
 
-/** Word-by-word reveal. Returns per-word opacity, y-offset, scale for a given word index */
-export function getWordReveal(frame: number, fps: number, wordIndex: number, totalWords: number, sceneDuration: number, staggerDelay = 4) {
-  // All words revealed by 65% of scene duration
-  const revealWindow = sceneDuration * 0.65;
-  const delay = (wordIndex / Math.max(1, totalWords - 1)) * revealWindow;
-  const s = getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+export function getClipReveal(frame: number, delay = 0, duration = 35) {
+  const t = clamp((frame - delay) / duration, 0, 1);
+  const eased = EASE_OUT_EXPO(t);
+  const visiblePercent = eased * 100;
+  return `inset(0 ${100 - visiblePercent}% 0 0)`;
+}
+
+// ─── Character Reveal ───────────────────────────────────────────────
+// Per-character spring with stagger. Each letter has weight.
+
+export function getCharReveal(frame: number, fps: number, charIndex: number, totalChars: number, sceneDuration: number) {
+  const revealWindow = sceneDuration * 0.5;
+  const delay = totalChars <= 1 ? 0 : (charIndex / (totalChars - 1)) * revealWindow;
+  const s = spring({ frame: Math.max(0, frame - delay), fps, config: SNAPPY_SPRING });
+  return {
+    opacity: interpolate(s, [0, 0.2, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+    y: interpolate(s, [0, 1], [16, 0]),
+    scale: interpolate(s, [0, 1], [0.92, 1]),
+    blur: interpolate(s, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" }),
+  };
+}
+
+// ─── Word Reveal ────────────────────────────────────────────────────
+// Per-word spring. Use for body text.
+
+export function getWordReveal(frame: number, fps: number, wordIndex: number, totalWords: number, sceneDuration: number) {
+  const revealWindow = sceneDuration * 0.55;
+  const delay = totalWords <= 1 ? 0 : (wordIndex / (totalWords - 1)) * revealWindow;
+  const s = spring({ frame: Math.max(0, frame - delay), fps, config: DEFAULT_SPRING });
   return {
     opacity: interpolate(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-    y: interpolate(s, [0, 1], [18, 0]),
+    y: interpolate(s, [0, 1], [14, 0]),
     scale: interpolate(s, [0, 1], [0.96, 1]),
+    blur: interpolate(s, [0, 0.4], [2, 0], { extrapolateLeft: "clamp" }),
   };
-}
-
-/** Character-by-character typewriter reveal */
-export function getTypewriterProgress(frame: number, delay = 0, speed = 0.35): number {
-  return Math.max(0, Math.floor((frame - delay) * speed));
 }
 
 // ─── Camera Movement ────────────────────────────────────────────────
+// Slow, deliberate, bezier-based. Never spring-based.
 
-/** Slow cinematic push-in + drift. Apply to scene wrapper. */
 export function getCamera(frame: number, duration: number) {
   const t = clamp(frame / Math.max(1, duration), 0, 1);
-  const eased = Easing.out(Easing.cubic)(t);
   return {
-    scale: lerp(1, 1.05, eased),
-    y: lerp(0, -20, eased),
+    scale: lerp(1, 1.04, Easing.out(Easing.cubic)(t)),
+    y: lerp(0, -12, Easing.out(Easing.cubic)(t)),
   };
 }
 
-/** Subtle ambient float — use on isolated elements */
-export function getFloat(frame: number, fps: number, amplitude = 8, speed = 0.6): number {
+/** Background drift — slower than foreground. Creates depth. */
+export function getBgDrift(frame: number, duration: number) {
+  const t = clamp(frame / Math.max(1, duration), 0, 1);
+  return {
+    scale: lerp(1, 1.06, Easing.out(Easing.cubic)(t)),
+    y: lerp(0, -6, Easing.out(Easing.cubic)(t)),
+  };
+}
+
+/** Ambient float for isolated elements */
+export function getFloat(frame: number, fps: number, amplitude = 6, speed = 0.5): number {
   return Math.sin((frame / fps) * Math.PI * 2 * speed) * amplitude;
 }
 
-/** Number counter that animates 0 → target */
-export function getCounter(frame: number, fps: number, target: number, delay = 0, duration = 45): number {
+// ─── Counter / Number Animation ─────────────────────────────────────
+
+export function getCounter(frame: number, target: number, delay = 0, duration = 45) {
   const t = clamp((frame - delay) / duration, 0, 1);
   const eased = Easing.out(Easing.cubic)(t);
   return Math.round(eased * target);
 }
 
-// ─── Staggered Element Reveal ───────────────────────────────────────
+// ─── Typewriter Progress ────────────────────────────────────────────
 
-/** Get entrance values for element at index in a staggered list */
-export function getStaggeredEntrance(frame: number, fps: number, index: number, baseDelay = 6, gap = 8) {
-  const s = getSpringProgress(frame, fps, baseDelay + index * gap, DEFAULT_SPRING);
-  return {
-    opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-    y: interpolate(s, [0, 1], [40, 0]),
-    scale: interpolate(s, [0, 1], [0.9, 1]),
-  };
+export function getTypewriterProgress(frame: number, delay = 0, speed = 0.35): number {
+  return Math.max(0, Math.floor((frame - delay) * speed));
 }
 
-// ─── Legacy compatibility exports ───────────────────────────────────
+// ─── Legacy compatibility ───────────────────────────────────────────
 
 export function getStaggerDelay(index: number, baseDelay = 6, gap = 8): number {
   return baseDelay + index * gap;
-}
-
-export function getHighlightProgress(frame: number, fps: number, delay = 0, duration = 25) {
-  return interpolate(frame, [delay, delay + duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 }
 
 export function getScrambleReveal(frame: number, fps: number, text: string, delay = 0, duration = 40) {
@@ -123,13 +158,22 @@ export function getScrambleReveal(frame: number, fps: number, text: string, dela
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*";
   let result = "";
   for (let i = 0; i < text.length; i++) {
-    if (text[i] === " ") {
-      result += " ";
-    } else if (i < revealedCount) {
-      result += text[i];
-    } else {
-      result += chars[Math.floor(Math.random() * chars.length)];
-    }
+    if (text[i] === " ") result += " ";
+    else if (i < revealedCount) result += text[i];
+    else result += chars[Math.floor(Math.random() * chars.length)];
   }
   return result;
+}
+
+export function getHighlightProgress(frame: number, fps: number, delay = 0, duration = 25) {
+  return interpolate(frame, [delay, delay + duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+}
+
+export function getFadeIn(frame: number, duration = 15, delay = 0) {
+  return interpolate(frame, [delay, delay + duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+}
+
+export function getFadeOut(frame: number, duration: number, outDuration = TRANSITION_FRAMES, delay = 0) {
+  const start = delay + duration - outDuration;
+  return interpolate(frame, [start, start + outDuration], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 }
