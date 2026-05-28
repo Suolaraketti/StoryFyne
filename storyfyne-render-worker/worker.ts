@@ -102,6 +102,49 @@ async function downloadBundle(serveUrl: string, targetDir: string): Promise<bool
   return false;
 }
 
+function serveBundleStatic(bundleDir: string): Promise<{ url: string; server: http.Server }> {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      const reqPath = decodeURIComponent(req.url || "/").split("?")[0];
+      const safePath = path.normalize(reqPath).replace(/^(\.\.(\\|\/|$))+/, "");
+      const filePath = path.join(bundleDir, safePath === "/" ? "index.html" : safePath);
+
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.writeHead(404);
+          res.end("Not found");
+          return;
+        }
+        const ext = path.extname(filePath).toLowerCase();
+        const ct: Record<string, string> = {
+          ".html": "text/html",
+          ".js": "application/javascript",
+          ".css": "text/css",
+          ".json": "application/json",
+          ".png": "image/png",
+          ".jpg": "image/jpeg",
+          ".jpeg": "image/jpeg",
+          ".svg": "image/svg+xml",
+          ".woff2": "font/woff2",
+          ".woff": "font/woff",
+        };
+        res.writeHead(200, { "Content-Type": ct[ext] || "application/octet-stream" });
+        res.end(data);
+      });
+    });
+
+    server.listen(0, "127.0.0.1", () => {
+      const addr = server.address();
+      if (addr && typeof addr === "object") {
+        resolve({ url: `http://127.0.0.1:${addr.port}`, server });
+      } else {
+        reject(new Error("Failed to get server address"));
+      }
+    });
+    server.on("error", reject);
+  });
+}
+
 async function renderVideo(job: RenderJob): Promise<string> {
   const jobDir = path.join(WORK_DIR, job.jobId);
   await fs.ensureDir(jobDir);
@@ -112,57 +155,68 @@ async function renderVideo(job: RenderJob): Promise<string> {
   const outputPath = path.join(jobDir, job.outputFileName);
 
   // Use local bundle if available (has the new premium code)
-  // __dirname is dist/ so go up 2 levels to reach project root
-  const localBundle = path.resolve(__dirname, "..", "..", "storyfyne-remotion", "build", "index.html");
-  const useLocalBundle = await fs.pathExists(localBundle);
-  const serveUrl = useLocalBundle ? localBundle : job.serveUrl;
+  const bundleDir = path.resolve(__dirname, "..", "..", "storyfyne-remotion", "build");
+  const hasLocalBundle = await fs.pathExists(path.join(bundleDir, "index.html"));
+  let serveUrl: string;
+  let bundleServer: http.Server | null = null;
 
-  if (useLocalBundle) {
-    log(`[${job.jobId}] ✓ USING LOCAL PREMIUM BUNDLE: ${serveUrl}`);
+  if (hasLocalBundle) {
+    const served = await serveBundleStatic(bundleDir);
+    bundleServer = served.server;
+    serveUrl = served.url;
+    log(`[${job.jobId}] ✓ USING LOCAL PREMIUM BUNDLE via ${serveUrl}`);
   } else {
-    log(`[${job.jobId}] ✗ Local bundle not found at ${localBundle}, falling back to remote serveUrl: ${serveUrl}`);
+    serveUrl = job.serveUrl;
+    log(`[${job.jobId}] ✗ Local bundle not found at ${bundleDir}, falling back to remote serveUrl: ${serveUrl}`);
   }
 
-  // Build Remotion render command with GPU flags
-  const cmd = [
-    `npx remotion render`,
-    `"${serveUrl}"`,
-    `"${job.compositionId}"`,
-    `"${outputPath}"`,
-    `--props="${propsPath}"`,
-    `--codec=h264`,
-    `--gl=${REMOTION_GL}`,
-    `--chrome-mode=${REMOTION_CHROME_MODE}`,
-    `--log=verbose`,
-    // Concurrency: safe for 8GB VRAM
-    `--concurrency=2`,
-  ].join(" ");
+  try {
+    // Build Remotion render command with GPU flags
+    const cmd = [
+      `npx remotion render`,
+      `"${serveUrl}"`,
+      `"${job.compositionId}"`,
+      `"${outputPath}"`,
+      `--props="${propsPath}"`,
+      `--codec=h264`,
+      `--gl=${REMOTION_GL}`,
+      `--chrome-mode=${REMOTION_CHROME_MODE}`,
+      `--log=verbose`,
+      // Concurrency: safe for 8GB VRAM
+      `--concurrency=2`,
+    ].join(" ");
 
-  log(`[${job.jobId}] Starting render: ${cmd}`);
-  const startTime = Date.now();
+    log(`[${job.jobId}] Starting render: ${cmd}`);
+    const startTime = Date.now();
 
-  const { stdout, stderr } = await execAsync(cmd, {
-    cwd: jobDir,
-    env: {
-      ...process.env,
-      REMOTION_GL,
-      REMOTION_CHROME_MODE,
-    },
-    timeout: 600000, // 10 minutes max
-  });
+    const { stdout, stderr } = await execAsync(cmd, {
+      cwd: jobDir,
+      env: {
+        ...process.env,
+        REMOTION_GL,
+        REMOTION_CHROME_MODE,
+      },
+      timeout: 600000, // 10 minutes max
+    });
 
-  const renderTime = Date.now() - startTime;
-  log(`[${job.jobId}] Render complete in ${renderTime}ms`);
+    const renderTime = Date.now() - startTime;
+    log(`[${job.jobId}] Render complete in ${renderTime}ms`);
 
-  // Check output exists
-  if (!(await fs.pathExists(outputPath))) {
-    throw new Error(`Output file not found: ${outputPath}\nstdout: ${stdout}\nstderr: ${stderr}`);
+    // Check output exists
+    if (!(await fs.pathExists(outputPath))) {
+      throw new Error(`Output file not found: ${outputPath}\nstdout: ${stdout}\nstderr: ${stderr}`);
+    }
+
+    // Update idle timer so auto-shutdown doesn't kill us mid-render
+    await fs.writeFile(`${os.tmpdir()}/storyfyne_last_render`, String(Math.floor(Date.now() / 1000)));
+
+    return outputPath;
+  } finally {
+    if (bundleServer) {
+      bundleServer.close();
+      log(`[${job.jobId}] Bundle server stopped`);
+    }
   }
-
-  // Update idle timer so auto-shutdown doesn't kill us mid-render
-  await fs.writeFile(`${os.tmpdir()}/storyfyne_last_render`, String(Math.floor(Date.now() / 1000)));
-
-  return outputPath;
 }
 
 async function uploadToR2(localPath: string, key: string): Promise<string> {
