@@ -96,10 +96,10 @@ You have access to a library of visual templates and UI components. For EACH sce
 
 === RULES ===
 
-1. Break into 5–7 scenes. Each scene is ONE thought only (3–12 words).
+1. Break into 5–7 scenes. Each scene covers ONE narrative beat.
 2. For each scene, provide:
-   - scene_text: The narration (3–12 words, punchy billboard headline)
-   - template: The template ID from the list above
+   - scene_text: The narrator's FULL script for this scene (1–3 natural sentences, 15–50 words). This is what the AI voice will SPEAK. Write it like a confident voiceover, not billboard copy.
+   - template: The template ID from the list above (this controls what appears VISUALLY on screen)
    - type: statement | evidence | flow | metric | lockup (categories the renderer uses)
 3. Scene flow must follow this arc:
    1. The old world (pain)        — heroStatement
@@ -124,6 +124,13 @@ You have access to a library of visual templates and UI components. For EACH sce
    - cold       — ONLY for enterprise/fintech. Blue light leaks, crisp vignette.
    - minimal    — DEFAULT for premium SaaS. Almost no effects. Pure restraint.
 
+=== CRITICAL: NARRATION VS VISUALS ===
+- scene_text is what the NARRATOR SAYS. It should flow like a real voiceover — natural sentences, conversational, compelling.
+- The template controls what appears VISUALLY. The visual tells the story through motion graphics, UI mockups, stats, etc.
+- The narrator walks the viewer through what they're seeing. Do NOT make scene_text just a label for the visual.
+- Good scene_text: "Most small business owners don't realize how much revenue slips away every time a call goes to voicemail. That's a customer calling your competitor instead."
+- Bad scene_text: "Missed calls lose money." (too short — sounds robotic when narrated)
+
 === CRITICAL: AVOID CORNY OUTPUT ===
 - NEVER combine more than 1 animated element per frame.
 - NEVER add particles, glow, or floating elements to a statement/text scene.
@@ -131,11 +138,8 @@ You have access to a library of visual templates and UI components. For EACH sce
 - NEVER use retro scanlines on modern SaaS.
 - If unsure, pick clean mood + heroStatement template. Restraint reads as confidence.
 - The viewer should feel the product is obvious, not that the video is trying hard.
-6. Write scene_text like billboard copy, not paragraphs.
-   Good: "Missed call. Missed job."
-   Bad: "Many businesses struggle with missed calls which leads to lost revenue."
-7. Do NOT add TTS tags. Clean single voice.
-8. If input is very short (<80 words), use 3–4 scenes max.
+6. Do NOT add TTS tags. Clean single voice.
+7. If input is very short (<80 words), use 3–4 scenes max.
 
 Output format:
 Return ONLY valid JSON. No markdown, no preamble.
