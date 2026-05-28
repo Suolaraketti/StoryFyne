@@ -17,7 +17,7 @@ var dist_esm = __webpack_require__(70761);
 ;// ./src/animations.ts
 
 
-const TRANSITION_FRAMES = 20;
+const TRANSITION_FRAMES = 30;
 const animations_DEFAULT_SPRING = { damping: 14, stiffness: 90, mass: 1, overshootClamping: false };
 const BOUNCY_SPRING = { damping: 10, stiffness: 120, mass: 0.8, overshootClamping: false };
 const GENTLE_SPRING = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
@@ -73,9 +73,13 @@ function getEntrance(frame, fps, delay = 0, config = animations_DEFAULT_SPRING) 
     scale: (0,esm.interpolate)(s, [0, 1], [0.92, 1])
   };
 }
-function getExit(frame, duration, direction = "left", outDuration = TRANSITION_FRAMES) {
+function getExit(frame, duration, direction = "left", outDuration = TRANSITION_FRAMES, fps = 30) {
   const start = duration - outDuration;
-  const progress = clamp((frame - start) / outDuration, 0, 1);
+  const s = (0,esm.spring)({
+    frame: Math.max(0, frame - start),
+    fps,
+    config: { damping: 14, stiffness: 90, mass: 1, overshootClamping: false }
+  });
   const dirMap = {
     left: { x: -120, y: 0 },
     right: { x: 120, y: 0 },
@@ -84,10 +88,10 @@ function getExit(frame, duration, direction = "left", outDuration = TRANSITION_F
   };
   const dir = dirMap[direction];
   return {
-    opacity: (0,esm.interpolate)(progress, [0, 1], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    x: (0,esm.interpolate)(progress, [0, 1], [0, dir.x], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    y: (0,esm.interpolate)(progress, [0, 1], [0, dir.y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    scale: (0,esm.interpolate)(progress, [0, 1], [1, 0.94], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+    opacity: (0,esm.interpolate)(s, [0, 1], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+    x: (0,esm.interpolate)(s, [0, 1], [0, dir.x], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+    y: (0,esm.interpolate)(s, [0, 1], [0, dir.y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+    scale: (0,esm.interpolate)(s, [0, 1], [1, 0.94], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
   };
 }
 function getCounter(frame, fps, target, delay = 0, duration = 45) {
@@ -938,6 +942,38 @@ const Watermark = ({ text, textColor }) => {
     }
   );
 };
+const CinematicOverlay = () => {
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        zIndex: 200,
+        pointerEvents: "none",
+        mixBlendMode: "overlay",
+        opacity: 0.12
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("svg", { width: "100%", height: "100%", style: { position: "absolute", inset: 0 }, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)("filter", { id: "film-grain", children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("feTurbulence", { type: "fractalNoise", baseFrequency: "0.8", numOctaves: "3", stitchTiles: "stitch" }),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("feColorMatrix", { type: "saturate", values: "0" })
+          ] }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("rect", { width: "100%", height: "100%", filter: "url(#film-grain)" })
+        ] }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              position: "absolute",
+              inset: 0,
+              background: "radial-gradient(ellipse at center, rgba(0,0,0,0) 50%, rgba(0,0,0,0.35) 100%)"
+            }
+          }
+        )
+      ]
+    }
+  );
+};
 
 ;// ./src/text-animations.tsx
 
@@ -1153,7 +1189,7 @@ const TitleScene = ({
   const entrance = getEntrance(frame, fps, 0);
   const subEntrance = getSlideIn(frame, fps, 12, 30);
   const lineS = animations_getSpringProgress(frame, fps, 20, SNAPPY_SPRING);
-  const exit = getExit(frame, duration, "left");
+  const exit = getExit(frame, duration, "left", TRANSITION_FRAMES, fps);
   const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 160], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
     esm.AbsoluteFill,
@@ -1226,7 +1262,7 @@ const ProblemScene = ({
   duration
 }) => {
   const entrance = getEntrance(frame, fps, 0, GENTLE_SPRING);
-  const exit = getExit(frame, duration, "down");
+  const exit = getExit(frame, duration, "down", TRANSITION_FRAMES, fps);
   const floatY = getFloat(frame, fps, 6, 0.4);
   const problems = scene.text.split(/[.\n]/).filter((s) => s.trim().length > 3).slice(0, 3);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
@@ -1372,7 +1408,7 @@ const SolutionScene = ({
 }) => {
   const entrance = getScaleIn(frame, fps, 0, BOUNCY_SPRING);
   const subEntrance = getSlideIn(frame, fps, 15, 40);
-  const exit = getExit(frame, duration, "up");
+  const exit = getExit(frame, duration, "up", TRANSITION_FRAMES, fps);
   const lineS = animations_getSpringProgress(frame, fps, 25, SNAPPY_SPRING);
   const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 200], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const glowPulse = getPulse(frame, fps, 1.2);
@@ -1505,7 +1541,7 @@ const FeatureScene = ({
 }) => {
   const textEntrance = getEntrance(frame, fps, 0);
   const imgEntrance = getScaleIn(frame, fps, 8);
-  const exit = getExit(frame, duration, "right");
+  const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
   const hasImage = scene.imageUrl && scene.imageUrl.trim().length > 0;
   const kenBurns = getKenBurns(frame, duration);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
@@ -1647,7 +1683,7 @@ const BenefitScene = ({
   duration
 }) => {
   const titleEntrance = getSlideIn(frame, fps, 0, -40);
-  const exit = getExit(frame, duration, "left");
+  const exit = getExit(frame, duration, "left", TRANSITION_FRAMES, fps);
   const rawItems = scene.text.split(/[.\n•]/).filter((s) => s.trim().length > 2).slice(0, 4);
   const items = rawItems.length > 0 ? rawItems : [scene.text];
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -1765,7 +1801,7 @@ const ProcessScene = ({
   duration
 }) => {
   const entrance = getEntrance(frame, fps, 0);
-  const exit = getExit(frame, duration, "right");
+  const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
   const steps = scene.text.split(/[.\n]/).filter((s) => s.trim().length > 3).slice(0, 4);
   const stepLabels = ["Step 1", "Step 2", "Step 3", "Step 4"];
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -1881,7 +1917,7 @@ const StatsScene = ({
   duration
 }) => {
   const entrance = getEntrance(frame, fps, 0);
-  const exit = getExit(frame, duration, "up");
+  const exit = getExit(frame, duration, "up", TRANSITION_FRAMES, fps);
   const numberMatches = scene.text.match(/(\d+(?:[,.]\d+)?)\s*(%|x|X|times|hours?|minutes?|days?|weeks?|months?|years?|K|M|B)?/gi) || [];
   const labels = scene.text.replace(/(\d+(?:[,.]\d+)?)\s*(%|x|X|times|hours?|minutes?|days?|weeks?|months?|years?|K|M|B)?/gi, "|").split("|").filter((s) => s.trim().length > 2);
   const stats = [];
@@ -1990,7 +2026,7 @@ const SocialProofScene = ({
   const cardEntrance = getScaleIn(frame, fps, 0, GENTLE_SPRING);
   const quoteS = animations_getSpringProgress(frame, fps, 5, { damping: 12, stiffness: 80, mass: 1, overshootClamping: false });
   const textEntrance = getEntrance(frame, fps, 15);
-  const exit = getExit(frame, duration, "right");
+  const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
   const quoteScale = (0,esm.interpolate)(quoteS, [0, 1], [0.3, 1]);
   const quoteOpacity = (0,esm.interpolate)(quoteS, [0, 0.5, 1], [0, 1, 0.1], { extrapolateLeft: "clamp" });
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -2116,7 +2152,7 @@ const ComparisonScene = ({
 }) => {
   var _a, _b;
   const entrance = getEntrance(frame, fps, 0);
-  const exit = getExit(frame, duration, "left");
+  const exit = getExit(frame, duration, "left", TRANSITION_FRAMES, fps);
   const parts = scene.text.split(/(?:vs|versus|compared to|before|after)/i);
   const beforeText = ((_a = parts[0]) == null ? void 0 : _a.trim()) || "Before";
   const afterText = ((_b = parts[1]) == null ? void 0 : _b.trim()) || scene.subtext || "After";
@@ -2290,7 +2326,7 @@ const CTAScene = ({
   const headlineS = animations_getSpringProgress(frame, fps, 0, BOUNCY_SPRING);
   const subEntrance = getSlideIn(frame, fps, 10, 30);
   const buttonEntrance = getScaleIn(frame, fps, 20);
-  const exit = getExit(frame, duration, "up");
+  const exit = getExit(frame, duration, "up", TRANSITION_FRAMES, fps);
   const pulse = getPulse(frame, fps, 1.5);
   const particles = (0,react.useMemo)(() => {
     return Array.from({ length: 10 }).map((_, i) => ({
@@ -2556,23 +2592,40 @@ const ExplainerVideo = ({
     sceneSchedule.map(({ scene, from, duration }, i) => {
       const SceneComponent = sceneComponentMap[scene.type] || sceneComponentMap.feature;
       const zIndex = i;
-      return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.Sequence, { from, durationInFrames: duration + TRANSITION_FRAMES, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", inset: 0, zIndex }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          SceneComponent,
-          {
-            scene,
-            primaryColor,
-            secondaryColor,
-            textColor,
-            accentColor,
-            bgColor,
-            frame: frame - from,
-            fps,
-            duration
+      return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from, durationInFrames: duration + TRANSITION_FRAMES, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", inset: 0, zIndex }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        SceneComponent,
+        {
+          scene,
+          primaryColor,
+          secondaryColor,
+          textColor,
+          accentColor,
+          bgColor,
+          frame: frame - from,
+          fps,
+          duration
+        }
+      ) }) }, i);
+    }),
+    sceneSchedule.map(({ scene, from, duration }, i) => {
+      if (!scene.audioUrl) return null;
+      const isLast = i === scenes.length - 1;
+      const audioDuration = isLast ? duration : Math.max(1, duration - TRANSITION_FRAMES);
+      const fadeFrames = Math.min(10, Math.floor(audioDuration / 4));
+      return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from, durationInFrames: audioDuration, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        esm.Audio,
+        {
+          src: scene.audioUrl,
+          volume: (f) => {
+            return (0,esm.interpolate)(
+              f,
+              [0, fadeFrames, audioDuration - fadeFrames, audioDuration],
+              [0, 1, 1, 0],
+              { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+            );
           }
-        ) }),
-        scene.audioUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Audio, { src: scene.audioUrl })
-      ] }, i);
+        }
+      ) }, `audio-${i}`);
     }),
     activeTransition >= 0 && transitionProgress >= 0 && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { zIndex: 99, pointerEvents: "none" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
       TransitionOverlay,
@@ -2606,7 +2659,8 @@ const ExplainerVideo = ({
         primaryColor,
         secondaryColor
       }
-    )
+    ),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicOverlay, {})
   ] });
 };
 

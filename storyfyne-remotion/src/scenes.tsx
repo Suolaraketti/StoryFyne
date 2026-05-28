@@ -51,7 +51,7 @@ export const TitleScene: React.FC<SceneProps> = ({
   const entrance = getEntrance(frame, fps, 0);
   const subEntrance = getSlideIn(frame, fps, 12, 30);
   const lineS = getSpringProgress(frame, fps, 20, SNAPPY_SPRING);
-  const exit = getExit(frame, duration, "left");
+  const exit = getExit(frame, duration, "left", TRANSITION_FRAMES, fps);
   const lineWidth = interpolate(lineS, [0, 1], [0, 160], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 
   return (
@@ -117,7 +117,7 @@ export const ProblemScene: React.FC<SceneProps> = ({
   scene, primaryColor, textColor, accentColor, frame, fps, duration,
 }) => {
   const entrance = getEntrance(frame, fps, 0, GENTLE_SPRING);
-  const exit = getExit(frame, duration, "down");
+  const exit = getExit(frame, duration, "down", TRANSITION_FRAMES, fps);
   const floatY = getFloat(frame, fps, 6, 0.4);
 
   // Parse problem statements
@@ -249,7 +249,7 @@ export const SolutionScene: React.FC<SceneProps> = ({
 }) => {
   const entrance = getScaleIn(frame, fps, 0, BOUNCY_SPRING);
   const subEntrance = getSlideIn(frame, fps, 15, 40);
-  const exit = getExit(frame, duration, "up");
+  const exit = getExit(frame, duration, "up", TRANSITION_FRAMES, fps);
   const lineS = getSpringProgress(frame, fps, 25, SNAPPY_SPRING);
   const lineWidth = interpolate(lineS, [0, 1], [0, 200], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const glowPulse = getPulse(frame, fps, 1.2);
@@ -366,7 +366,7 @@ export const FeatureScene: React.FC<SceneProps> = ({
 }) => {
   const textEntrance = getEntrance(frame, fps, 0);
   const imgEntrance = getScaleIn(frame, fps, 8);
-  const exit = getExit(frame, duration, "right");
+  const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
   const hasImage = scene.imageUrl && scene.imageUrl.trim().length > 0;
   const kenBurns = getKenBurns(frame, duration);
 
@@ -486,7 +486,7 @@ export const BenefitScene: React.FC<SceneProps> = ({
   scene, primaryColor, secondaryColor, textColor, frame, fps, duration,
 }) => {
   const titleEntrance = getSlideIn(frame, fps, 0, -40);
-  const exit = getExit(frame, duration, "left");
+  const exit = getExit(frame, duration, "left", TRANSITION_FRAMES, fps);
 
   const rawItems = scene.text.split(/[.\n•]/).filter(s => s.trim().length > 2).slice(0, 4);
   const items = rawItems.length > 0 ? rawItems : [scene.text];
@@ -597,7 +597,7 @@ export const ProcessScene: React.FC<SceneProps> = ({
   scene, primaryColor, secondaryColor, textColor, frame, fps, duration,
 }) => {
   const entrance = getEntrance(frame, fps, 0);
-  const exit = getExit(frame, duration, "right");
+  const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
 
   // Parse steps from text
   const steps = scene.text.split(/[.\n]/).filter(s => s.trim().length > 3).slice(0, 4);
@@ -710,7 +710,7 @@ export const StatsScene: React.FC<SceneProps> = ({
   scene, primaryColor, secondaryColor, textColor, frame, fps, duration,
 }) => {
   const entrance = getEntrance(frame, fps, 0);
-  const exit = getExit(frame, duration, "up");
+  const exit = getExit(frame, duration, "up", TRANSITION_FRAMES, fps);
 
   // Try to extract numbers from text for animated counters
   const numberMatches = scene.text.match(/(\d+(?:[,.]\d+)?)\s*(%|x|X|times|hours?|minutes?|days?|weeks?|months?|years?|K|M|B)?/gi) || [];
@@ -818,7 +818,7 @@ export const SocialProofScene: React.FC<SceneProps> = ({
   const cardEntrance = getScaleIn(frame, fps, 0, GENTLE_SPRING);
   const quoteS = getSpringProgress(frame, fps, 5, { damping: 12, stiffness: 80, mass: 1, overshootClamping: false });
   const textEntrance = getEntrance(frame, fps, 15);
-  const exit = getExit(frame, duration, "right");
+  const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
 
   const quoteScale = interpolate(quoteS, [0, 1], [0.3, 1]);
   const quoteOpacity = interpolate(quoteS, [0, 0.5, 1], [0, 1, 0.1], { extrapolateLeft: "clamp" });
@@ -930,7 +930,7 @@ export const ComparisonScene: React.FC<SceneProps> = ({
   scene, primaryColor, secondaryColor, textColor, accentColor, frame, fps, duration,
 }) => {
   const entrance = getEntrance(frame, fps, 0);
-  const exit = getExit(frame, duration, "left");
+  const exit = getExit(frame, duration, "left", TRANSITION_FRAMES, fps);
 
   // Parse before/after from text
   const parts = scene.text.split(/(?:vs|versus|compared to|before|after)/i);
@@ -1088,7 +1088,7 @@ export const CTAScene: React.FC<SceneProps> = ({
   const headlineS = getSpringProgress(frame, fps, 0, BOUNCY_SPRING);
   const subEntrance = getSlideIn(frame, fps, 10, 30);
   const buttonEntrance = getScaleIn(frame, fps, 20);
-  const exit = getExit(frame, duration, "up");
+  const exit = getExit(frame, duration, "up", TRANSITION_FRAMES, fps);
   const pulse = getPulse(frame, fps, 1.5);
 
   // Particle burst behind button

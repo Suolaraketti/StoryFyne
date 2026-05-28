@@ -310,3 +310,37 @@ export const Watermark: React.FC<{
     </div>
   );
 };
+
+// ─── Cinematic Film Grain + Vignette ────────────────────────────────
+
+export const CinematicOverlay: React.FC = () => {
+  return (
+    <AbsoluteFill
+      style={{
+        zIndex: 200,
+        pointerEvents: "none",
+        mixBlendMode: "overlay",
+        opacity: 0.12,
+      }}
+    >
+      {/* Film grain using SVG noise filter */}
+      <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
+        <filter id="film-grain">
+          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#film-grain)" />
+      </svg>
+
+      {/* Vignette: darkens edges */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(ellipse at center, rgba(0,0,0,0) 50%, rgba(0,0,0,0.35) 100%)",
+        }}
+      />
+    </AbsoluteFill>
+  );
+};

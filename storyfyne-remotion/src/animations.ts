@@ -6,7 +6,7 @@ import { interpolate, spring, Easing, SpringConfig } from "remotion";
 
 // ─── Constants ──────────────────────────────────────────────────────
 
-export const TRANSITION_FRAMES = 20; // ~0.67s overlap
+export const TRANSITION_FRAMES = 30; // ~1.0s overlap
 export const DEFAULT_SPRING: SpringConfig = { damping: 14, stiffness: 90, mass: 1, overshootClamping: false };
 export const BOUNCY_SPRING: SpringConfig = { damping: 10, stiffness: 120, mass: 0.8, overshootClamping: false };
 export const GENTLE_SPRING: SpringConfig = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
@@ -126,15 +126,20 @@ export function getEntrance(
   };
 }
 
-/** Exit animation: slide + fade + subtle scale down */
+/** Exit animation: slide + fade + subtle scale down with spring physics */
 export function getExit(
   frame: number,
   duration: number,
   direction: "left" | "right" | "up" | "down" = "left",
-  outDuration = TRANSITION_FRAMES
+  outDuration = TRANSITION_FRAMES,
+  fps = 30
 ) {
   const start = duration - outDuration;
-  const progress = clamp((frame - start) / outDuration, 0, 1);
+  const s = spring({
+    frame: Math.max(0, frame - start),
+    fps,
+    config: { damping: 14, stiffness: 90, mass: 1, overshootClamping: false },
+  });
   const dirMap = {
     left: { x: -120, y: 0 },
     right: { x: 120, y: 0 },
@@ -143,10 +148,10 @@ export function getExit(
   };
   const dir = dirMap[direction];
   return {
-    opacity: interpolate(progress, [0, 1], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    x: interpolate(progress, [0, 1], [0, dir.x], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    y: interpolate(progress, [0, 1], [0, dir.y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-    scale: interpolate(progress, [0, 1], [1, 0.94], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+    opacity: interpolate(s, [0, 1], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+    x: interpolate(s, [0, 1], [0, dir.x], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+    y: interpolate(s, [0, 1], [0, dir.y], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+    scale: interpolate(s, [0, 1], [1, 0.94], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
   };
 }
 

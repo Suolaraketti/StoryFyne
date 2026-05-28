@@ -1,11 +1,11 @@
 import React from "react";
-import { AbsoluteFill, Audio, useCurrentFrame, useVideoConfig, Sequence } from "remotion";
+import { AbsoluteFill, Audio, useCurrentFrame, useVideoConfig, Sequence, interpolate } from "remotion";
 import { z } from "zod";
 import { zColor } from "@remotion/zod-types";
 import { TRANSITION_FRAMES } from "./animations";
 import { Backgrounds, getBackgroundForSceneType } from "./backgrounds";
 import { TransitionOverlay, getTransitionForIndex, TransitionType } from "./transitions";
-import { LogoOverlay, ProgressBar, SceneCounter, LowerThirdBar, ChapterMarker } from "./overlays";
+import { LogoOverlay, ProgressBar, SceneCounter, LowerThirdBar, ChapterMarker, CinematicOverlay } from "./overlays";
 import { sceneComponentMap, SceneData } from "./scenes";
 
 // ─── Schema ─────────────────────────────────────────────────────────
@@ -126,7 +126,7 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
         accentColor={accentColor}
       />
 
-      {/* Scenes with overlap transitions */}
+      {/* Scenes with overlap transitions (visual only) */}
       {sceneSchedule.map(({ scene, from, duration }, i) => {
         const SceneComponent = sceneComponentMap[scene.type] || sceneComponentMap.feature;
         const zIndex = i;
@@ -146,7 +146,30 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
                 duration={duration}
               />
             </div>
-            {scene.audioUrl && <Audio src={scene.audioUrl} />}
+          </Sequence>
+        );
+      })}
+
+      {/* Audio layer — NO overlap, with smooth fade in/out */}
+      {sceneSchedule.map(({ scene, from, duration }, i) => {
+        if (!scene.audioUrl) return null;
+        const isLast = i === scenes.length - 1;
+        const audioDuration = isLast ? duration : Math.max(1, duration - TRANSITION_FRAMES);
+        const fadeFrames = Math.min(10, Math.floor(audioDuration / 4));
+
+        return (
+          <Sequence key={`audio-${i}`} from={from} durationInFrames={audioDuration}>
+            <Audio
+              src={scene.audioUrl}
+              volume={(f) => {
+                return interpolate(
+                  f,
+                  [0, fadeFrames, audioDuration - fadeFrames, audioDuration],
+                  [0, 1, 1, 0],
+                  { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+                );
+              }}
+            />
           </Sequence>
         );
       })}
@@ -184,6 +207,9 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
       />
+
+      {/* Cinematic film grain + vignette */}
+      <CinematicOverlay />
     </AbsoluteFill>
   );
 };
