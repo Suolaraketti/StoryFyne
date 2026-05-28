@@ -479,6 +479,65 @@ export const TEMPLATE_COMPONENTS: TemplateMeta[] = [
 
 // ─── Full Registry Export ───────────────────────────────────────────
 
+export const EFFECT_COMPONENTS: ComponentMeta[] = [
+  { id: "LensFlare", name: "Lens Flare", description: "Anamorphic lens flare that sweeps across frame. Cinematic punch.", keywords: ["lens", "flare", "cinematic", "light", "sweep", "dramatic"], sceneTypes: ["statement", "lockup"], props: ["intensity", "color", "sweepDuration"] },
+  { id: "ChromaticAberration", name: "Chromatic Aberration", description: "RGB channel split distortion. Expensive camera feel.", keywords: ["chromatic", "aberration", "distortion", "rgb", "camera", "glitch"], sceneTypes: ["statement", "evidence"], props: ["intensity", "duration"] },
+  { id: "LightLeak", name: "Light Leak", description: "Organic film light leak drifting across corners.", keywords: ["light", "leak", "film", "retro", "warm", "corner"], sceneTypes: ["statement", "evidence", "metric"], props: ["color", "corner", "intensity"] },
+  { id: "FilmDust", name: "Film Dust & Scratches", description: "Procedural dust particles and occasional scratch lines.", keywords: ["dust", "scratch", "film", "grain", "vintage", "organic"], sceneTypes: ["statement", "evidence", "metric", "lockup"], props: ["density", "scratchChance"] },
+  { id: "Scanlines", name: "CRT Scanlines", description: "Horizontal scanlines with subtle flicker. Retro monitor feel.", keywords: ["scanlines", "crt", "retro", "monitor", "lines"], sceneTypes: ["statement", "evidence"], props: ["intensity"] },
+  { id: "GlitchEffect", name: "Digital Glitch", description: "RGB block-shift glitch with scan lines. Use sparingly on impact.", keywords: ["glitch", "digital", "corruption", "impact", "cyber"], sceneTypes: ["statement", "evidence"], props: ["intensity", "triggerFrame", "duration"] },
+  { id: "HolographicShimmer", name: "Holographic Shimmer", description: "Iridescent rainbow shimmer overlay. Futuristic/cyberpunk.", keywords: ["holographic", "shimmer", "rainbow", "iridescent", "futuristic", "cyber"], sceneTypes: ["evidence", "metric"], props: ["intensity", "speed"] },
+  { id: "SpeedLines", name: "Anime Speed Lines", description: "Radiating lines from center. For fast transitions and impact.", keywords: ["speed", "lines", "anime", "fast", "impact", "radiating"], sceneTypes: ["statement"], props: ["intensity", "count"] },
+  { id: "VignettePulse", name: "Vignette Pulse", description: "Animated vignette that breathes with scene intensity.", keywords: ["vignette", "pulse", "breathe", "darken", "edges"], sceneTypes: ["statement", "evidence", "metric", "lockup"], props: ["intensity", "pulseSpeed"] },
+];
+
+export const TYPOGRAPHY_COMPONENTS: ComponentMeta[] = [
+  { id: "KineticText", name: "Kinetic Typography", description: "Each letter animates independently with spring physics.", keywords: ["kinetic", "typography", "letter", "spring", "animate", "text"], sceneTypes: ["statement"], props: ["text", "mode", "stagger"] },
+  { id: "ScrambleDecode", name: "Scramble Decode", description: "Matrix-style character scramble before text resolves.", keywords: ["scramble", "decode", "matrix", "tech", "hack", "reveal"], sceneTypes: ["statement", "evidence"], props: ["text", "duration"] },
+  { id: "PerspectiveText", name: "3D Perspective Text", description: "Text emerging from 3D depth with rotation.", keywords: ["3d", "perspective", "depth", "rotate", "emerge", "text"], sceneTypes: ["statement"], props: ["text", "rotateX"] },
+  { id: "GradientText", name: "Gradient Text Shift", description: "Animated gradient color shifting across text.", keywords: ["gradient", "text", "color", "shift", "rainbow", "vibrant"], sceneTypes: ["statement"], props: ["text", "gradient"] },
+  { id: "MaskRevealText", name: "Mask Reveal Text", description: "Text revealed by expanding geometric mask.", keywords: ["mask", "reveal", "clip", "circle", "wipe", "text"], sceneTypes: ["statement"], props: ["text", "maskShape"] },
+  { id: "WaveText", name: "Wave Text", description: "Text flowing in sine wave pattern. Organic motion.", keywords: ["wave", "sine", "fluid", "organic", "flow", "text"], sceneTypes: ["statement"], props: ["text", "amplitude", "frequency"] },
+  { id: "StrikeReveal", name: "Strike Reveal", description: "Line strikes through, then text appears. Editorial feel.", keywords: ["strike", "reveal", "line", "editorial", "dramatic", "text"], sceneTypes: ["statement"], props: ["text", "lineColor"] },
+  { id: "CounterText", name: "Counter Text", description: "Numbers counting up with spring physics.", keywords: ["counter", "number", "count", "spring", "metric", "animate"], sceneTypes: ["metric"], props: ["target", "prefix", "suffix"] },
+  { id: "TypewriterCursor", name: "Typewriter Cursor", description: "Classic typewriter with blinking cursor and pacing.", keywords: ["typewriter", "cursor", "typing", "input", "command"], sceneTypes: ["statement", "evidence"], props: ["text", "speed"] },
+  { id: "BreathingText", name: "Breathing Text", description: "Text that subtly scales and fades rhythmically.", keywords: ["breathing", "pulse", "meditative", "calm", "rhythm", "text"], sceneTypes: ["statement"], props: ["text", "speed"] },
+];
+
+export const PHYSICS_COMPONENTS: ComponentMeta[] = [
+  { id: "GravityParticles", name: "Gravity Particles", description: "Particles fall with gravity and bounce. Impact moments.", keywords: ["gravity", "particles", "fall", "bounce", "physics", "impact"], sceneTypes: ["metric", "evidence"], props: ["count", "colors", "gravity"] },
+  { id: "ConstellationNetwork", name: "Constellation Network", description: "Connected dots with drifting nodes. AI/network metaphor.", keywords: ["constellation", "network", "nodes", "connections", "ai", "web"], sceneTypes: ["evidence"], props: ["nodeCount", "colors"] },
+  { id: "AudioReactiveBars", name: "Audio-Reactive Bars", description: "Vertical bars reacting to simulated audio energy.", keywords: ["audio", "reactive", "bars", "waveform", "energy", "sound"], sceneTypes: ["evidence"], props: ["barCount", "color", "energy"] },
+  { id: "FloatingOrbs", name: "Floating Orbs", description: "Large soft orbs drifting with subtle collision.", keywords: ["orbs", "floating", "soft", "dreamy", "ethereal", "blur"], sceneTypes: ["statement", "evidence"], props: ["count", "colors", "sizeRange"] },
+  { id: "MagneticField", name: "Magnetic Field Lines", description: "Curved lines flowing around center point. Energy metaphor.", keywords: ["magnetic", "field", "lines", "flow", "energy", "power"], sceneTypes: ["statement", "evidence"], props: ["lineCount", "color"] },
+  { id: "RippleEffect", name: "Ripple Effect", description: "Concentric circles expanding from impact point.", keywords: ["ripple", "water", "impact", "drop", "concentric", "wave"], sceneTypes: ["evidence", "metric"], props: ["x", "y", "color", "maxRadius"] },
+  { id: "DNAHelix", name: "DNA Helix", description: "Rotating double helix strands. Building blocks metaphor.", keywords: ["dna", "helix", "rotate", "biology", "building", "blocks"], sceneTypes: ["evidence"], props: ["nodeCount", "color1", "color2"] },
+];
+
+export const INTERACTION_COMPONENTS: ComponentMeta[] = [
+  { id: "FingerTap", name: "Finger Tap", description: "Simulated finger touch with ripple.", keywords: ["finger", "tap", "touch", "mobile", "gesture", "screen"], sceneTypes: ["evidence"], props: ["x", "y", "color"] },
+  { id: "CursorMovement", name: "Cursor Movement", description: "Mouse cursor moving along path with clicks.", keywords: ["cursor", "mouse", "click", "desktop", "movement", "path"], sceneTypes: ["evidence"], props: ["path", "speed"] },
+  { id: "ScrollGesture", name: "Scroll Gesture", description: "Simulated finger scroll with momentum.", keywords: ["scroll", "gesture", "swipe", "list", "momentum", "mobile"], sceneTypes: ["evidence"], props: ["scrollY", "containerHeight"] },
+  { id: "SwipeGesture", name: "Swipe Gesture", description: "Card swiped left/right with rotation.", keywords: ["swipe", "card", "dismiss", "gesture", "mobile"], sceneTypes: ["evidence"], props: ["direction"] },
+  { id: "PinchZoom", name: "Pinch Zoom", description: "Two-finger pinch zooming into content.", keywords: ["pinch", "zoom", "gesture", "map", "detail", "scale"], sceneTypes: ["evidence"], props: ["fromScale", "toScale"] },
+  { id: "PullToRefresh", name: "Pull to Refresh", description: "iOS-style pull-to-refresh with spinner.", keywords: ["pull", "refresh", "spinner", "ios", "loading", "update"], sceneTypes: ["evidence"], props: [] },
+  { id: "MobileKeyboard", name: "Mobile Keyboard", description: "Simulated mobile keyboard with key presses.", keywords: ["keyboard", "typing", "mobile", "keys", "input"], sceneTypes: ["evidence"], props: ["activeKeys"] },
+  { id: "HoverPreview", name: "Hover Preview", description: "Mouse hover revealing tooltip or preview card.", keywords: ["hover", "preview", "tooltip", "desktop", "reveal"], sceneTypes: ["evidence"], props: ["trigger", "preview"] },
+];
+
+export const TRANSITION_COMPONENTS: ComponentMeta[] = [
+  { id: "DepthPush", name: "Depth Push", description: "Scene pushes into Z-space. Through the looking glass.", keywords: ["depth", "push", "3d", "z-space", "cinematic"], sceneTypes: [], props: ["direction"] },
+  { id: "PageFlip", name: "Page Flip", description: "3D page turn like a book. Y-axis rotation.", keywords: ["page", "flip", "book", "turn", "3d"], sceneTypes: [], props: ["direction"] },
+  { id: "MorphShape", name: "Morph Shape", description: "Geometric shape morphs across screen.", keywords: ["morph", "shape", "circle", "diamond", "wipe"], sceneTypes: [], props: ["primaryColor", "secondaryColor"] },
+  { id: "GlitchCut", name: "Glitch Cut", description: "Digital corruption blocks clearing to reveal.", keywords: ["glitch", "cut", "digital", "corruption", "blocks"], sceneTypes: [], props: [] },
+  { id: "PixelDissolve", name: "Pixel Dissolve", description: "Scene dissolves into falling pixels.", keywords: ["pixel", "dissolve", "fall", "blocks", "retro"], sceneTypes: [], props: [] },
+  { id: "ShutterReveal", name: "Shutter Reveal", description: "Camera shutter blades opening/closing.", keywords: ["shutter", "camera", "blades", "reveal", "aperture"], sceneTypes: [], props: [] },
+  { id: "ZoomBlur", name: "Zoom Blur", description: "Radial zoom blur exploding outward.", keywords: ["zoom", "blur", "radial", "explode", "speed"], sceneTypes: [], props: [] },
+  { id: "SliceWipe", name: "Slice Wipe", description: "Screen sliced into strips sliding alternate directions.", keywords: ["slice", "wipe", "strips", "slide", "alternate"], sceneTypes: [], props: ["sliceCount"] },
+  { id: "PerspectiveRotate", name: "Perspective Rotate", description: "Scene rotates in 3D like a dealt card.", keywords: ["perspective", "rotate", "3d", "card", "dealt"], sceneTypes: [], props: ["axis"] },
+  { id: "LiquidWipe", name: "Liquid Wipe", description: "Organic liquid blob expanding to cover screen.", keywords: ["liquid", "wipe", "blob", "organic", "fluid"], sceneTypes: [], props: ["primaryColor", "secondaryColor"] },
+];
+
 export const ALL_COMPONENTS: ComponentMeta[] = [
   ...DEVICE_COMPONENTS,
   ...MESSAGE_COMPONENTS,
@@ -487,6 +546,10 @@ export const ALL_COMPONENTS: ComponentMeta[] = [
   ...INPUT_COMPONENTS,
   ...NAV_COMPONENTS,
   ...SOCIAL_COMPONENTS,
+  ...EFFECT_COMPONENTS,
+  ...TYPOGRAPHY_COMPONENTS,
+  ...PHYSICS_COMPONENTS,
+  ...INTERACTION_COMPONENTS,
 ];
 
 export const ALL_TEMPLATES: TemplateMeta[] = TEMPLATE_COMPONENTS;

@@ -1446,6 +1446,9 @@ async def _process_explainer(
             sa["imageUrl"] = image_list[idx]
 
     composition_id = "ExplainerVideoMobile" if aspect_ratio == "9:16" else REMOTION_COMPOSITION_ID
+    # Extract mood from Claude response if present
+    mood = scenes_data.get("mood", "clean") if isinstance(scenes_data, dict) else "clean"
+
     input_props = {
         "scenes": scene_audios,
         "aspectRatio": aspect_ratio,
@@ -1455,6 +1458,7 @@ async def _process_explainer(
         "bgColor": bg_color,
         "textColor": text_color,
         "accentColor": accent_color,
+        "mood": mood,
     }
     logger.info(f"[story {story_id}] RENDER SUBMIT | composition={composition_id} | serve_url={REMOTION_SERVE_URL[:80]}... | scenes={len(scene_audios)}")
     logger.info(f"[story {story_id}] RENDER PROPS | logo={logo_url!r} | colors={primary_color},{secondary_color},{bg_color},{text_color},{accent_color}")
@@ -1860,7 +1864,7 @@ async def diagnostic_render():
     # Step 2: Submit minimal render
     composition_id = REMOTION_COMPOSITION_ID
     input_props = {
-        "scenes": [{"type": "title", "text": "Test", "subtext": "", "visualDirection": "Test", "audioUrl": "", "durationInFrames": 60}],
+        "scenes": [{"type": "title", "text": "Test", "subtext": "", "visualDirection": "Test", "template": "heroStatement", "audioUrl": "", "durationInFrames": 60}],
         "aspectRatio": "16:9",
         "logoUrl": "",
         "primaryColor": "#4f46e5",
@@ -1868,6 +1872,7 @@ async def diagnostic_render():
         "bgColor": "#0f172a",
         "textColor": "#f8fafc",
         "accentColor": "#6366f1",
+        "mood": "clean",
     }
     log("2_render_submit", f"Submitting to gateway | composition={composition_id} | serveUrl={REMOTION_SERVE_URL[:60]}...")
     render_id = ""

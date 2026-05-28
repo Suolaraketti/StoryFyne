@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 72030:
+/***/ 61101:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -20,7 +20,7 @@ var dist_esm = __webpack_require__(70761);
 const animations_TRANSITION_FRAMES = 30;
 const animations_DEFAULT_SPRING = { damping: 14, stiffness: 90, mass: 1, overshootClamping: false };
 const BOUNCY_SPRING = { damping: 10, stiffness: 120, mass: 0.8, overshootClamping: false };
-const animations_GENTLE_SPRING = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
+const GENTLE_SPRING = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
 const animations_SNAPPY_SPRING = { damping: 18, stiffness: 180, mass: 0.6, overshootClamping: false };
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -37,7 +37,7 @@ function animations_getSpringProgress(frame, fps, delay = 0, config = animations
     config
   });
 }
-function animations_getFadeIn(frame, duration = 15, delay = 0) {
+function getFadeIn(frame, duration = 15, delay = 0) {
   return interpolate(frame, [delay, delay + duration], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
@@ -116,7 +116,7 @@ function getStrokeDraw(frame, fps, pathLength, delay = 0, duration = 30) {
 function getRotation(frame, fps, speed = 0.2) {
   return frame / fps * 360 * speed;
 }
-function animations_getStaggerDelay(index, baseDelay = 0, stagger = 5) {
+function getStaggerDelay(index, baseDelay = 0, stagger = 5) {
   return baseDelay + index * stagger;
 }
 function getParallax(frame, factor = 0.5) {
@@ -466,332 +466,319 @@ const TransitionOverlay = ({ type, progress, primaryColor, secondaryColor }) => 
   }
 };
 
-;// ./src/overlays.tsx
+// EXTERNAL MODULE: ./node_modules/react/index.js
+var react = __webpack_require__(96540);
+;// ./src/effects.tsx
 
 
 
 
-const LogoOverlay = ({ logoUrl, primaryColor, delay = 0, position = "topLeft", size = 52 }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  if (!logoUrl || logoUrl.trim().length === 0) return null;
-  const s = getSpringProgress(frame, fps, delay, { damping: 16, stiffness: 110, mass: 1, overshootClamping: false });
-  const opacity = interpolate(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" });
-  const y = interpolate(s, [0, 1], [-20, 0]);
+const LensFlare = ({ intensity = 0.6, color = "#ffffff", sweepDuration = 60, delay = 0 }) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const progress = (0,esm.interpolate)(frame - delay, [0, sweepDuration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const x = progress * width * 1.5 - width * 0.25;
+  const y = height * 0.5 + Math.sin(progress * Math.PI * 2) * height * 0.1;
+  const size = 200 + Math.sin(progress * Math.PI) * 100;
+  const opacity = Math.sin(progress * Math.PI) * intensity;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { zIndex: 150, pointerEvents: "none", opacity }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          left: x - size / 2,
+          top: y - size / 2,
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${color}88 0%, ${color}22 40%, transparent 70%)`,
+          filter: "blur(20px)"
+        }
+      }
+    ),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          left: 0,
+          top: y - 2,
+          width,
+          height: 4,
+          background: `linear-gradient(90deg, transparent 0%, ${color}44 30%, ${color}88 50%, ${color}44 70%, transparent 100%)`,
+          filter: "blur(8px)"
+        }
+      }
+    ),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          left: x - size * 0.3 - 60,
+          top: y + 20,
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${color}66 0%, transparent 70%)`,
+          filter: "blur(10px)"
+        }
+      }
+    )
+  ] });
+};
+const ChromaticAberration = ({ intensity = 3, frame, duration = 30 }) => {
+  const progress = interpolate(frame, [0, duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const currentIntensity = Math.sin(progress * Math.PI) * intensity;
+  return /* @__PURE__ */ jsx(AbsoluteFill, { style: { zIndex: 150, pointerEvents: "none", mixBlendMode: "screen" }, children: /* @__PURE__ */ jsx(
+    "div",
+    {
+      style: {
+        position: "absolute",
+        inset: -currentIntensity * 2,
+        background: "transparent",
+        boxShadow: `inset ${currentIntensity}px 0 ${currentIntensity * 2}px rgba(255,0,0,0.15), inset -${currentIntensity}px 0 ${currentIntensity * 2}px rgba(0,255,255,0.15)`
+      }
+    }
+  ) });
+};
+const LightLeak = ({ color = "#ff6b35", corner = "top-left", intensity = 0.25, driftSpeed = 0.3 }) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const drift = Math.sin(frame * driftSpeed * 0.05) * 30;
+  const pulse = Math.sin(frame * 0.02) * 0.1 + 0.9;
   const positions = {
-    topLeft: { top: 32, left: 40 },
-    topRight: { top: 32, right: 40 },
-    bottomLeft: { bottom: 32, left: 40 },
-    bottomRight: { bottom: 32, right: 40 },
-    center: { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }
+    "top-left": { top: -100 + drift, left: -100 + drift },
+    "top-right": { top: -100 + drift, right: -100 + drift },
+    "bottom-left": { bottom: -100 + drift, left: -100 + drift },
+    "bottom-right": { bottom: -100 + drift, right: -100 + drift }
   };
-  return /* @__PURE__ */ jsxs(
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { zIndex: 140, pointerEvents: "none", mixBlendMode: "screen" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
     "div",
     {
       style: {
         position: "absolute",
-        zIndex: 50,
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        opacity,
-        transform: `translateY(${y}px)`,
-        willChange: "transform, opacity",
-        ...positions[position]
-      },
-      children: [
-        /* @__PURE__ */ jsx(
-          "div",
-          {
-            style: {
-              position: "absolute",
-              width: size + 16,
-              height: size + 16,
-              borderRadius: "50%",
-              background: `radial-gradient(circle, ${primaryColor}25 0%, transparent 65%)`,
-              filter: "blur(16px)",
-              left: -8,
-              top: -8
-            }
-          }
-        ),
-        /* @__PURE__ */ jsx(
-          Img,
-          {
-            src: logoUrl,
-            style: {
-              height: size,
-              width: "auto",
-              objectFit: "contain",
-              position: "relative",
-              filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.25))"
-            }
-          }
-        )
-      ]
+        width: 600,
+        height: 600,
+        borderRadius: "50%",
+        background: `radial-gradient(circle, ${color} 0%, ${color}88 20%, transparent 60%)`,
+        filter: "blur(80px)",
+        opacity: intensity * pulse,
+        ...positions[corner]
+      }
     }
-  );
+  ) });
 };
-const ProgressBar = ({ progress, primaryColor, secondaryColor, thickness = 3 }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const s = getSpringProgress(frame, fps, 0, GENTLE_SPRING);
-  const fillWidth = interpolate(s, [0, 1], [0, progress * 100]);
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      style: {
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: thickness,
-        backgroundColor: "rgba(255,255,255,0.04)",
-        zIndex: 50
-      },
-      children: [
-        /* @__PURE__ */ jsx(
-          "div",
-          {
-            style: {
-              height: "100%",
-              width: `${fillWidth}%`,
-              background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`,
-              borderRadius: "0 2px 2px 0",
-              boxShadow: `0 0 10px ${primaryColor}50`,
-              willChange: "width"
-            }
+const FilmDust = ({ density = 30, scratchChance = 0.02 }) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const { width, height } = (0,esm.useVideoConfig)();
+  const dustParticles = react.useMemo(() => {
+    return Array.from({ length: density }, (_, i) => ({
+      x: (0,esm.random)(`dust-x-${i}`) * width,
+      y: (0,esm.random)(`dust-y-${i}`) * height,
+      size: 1 + (0,esm.random)(`dust-s-${i}`) * 3,
+      opacity: 0.1 + (0,esm.random)(`dust-o-${i}`) * 0.3,
+      seed: i
+    }));
+  }, [density, width, height]);
+  const hasScratch = (0,esm.random)(`scratch-${frame}`) < scratchChance;
+  const scratchX = (0,esm.random)(`scratch-x-${frame}`) * width;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { zIndex: 145, pointerEvents: "none" }, children: [
+    dustParticles.map((p, i) => {
+      const flicker = (0,esm.random)(`flicker-${frame}-${p.seed}`) > 0.7 ? 0 : 1;
+      return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        "div",
+        {
+          style: {
+            position: "absolute",
+            left: p.x,
+            top: p.y,
+            width: p.size,
+            height: p.size,
+            borderRadius: "50%",
+            background: "#ffffff",
+            opacity: p.opacity * flicker
           }
-        ),
-        /* @__PURE__ */ jsx(
-          "div",
-          {
-            style: {
-              position: "absolute",
-              height: "100%",
-              width: 2,
-              background: "white",
-              left: `${fillWidth}%`,
-              borderRadius: 2,
-              boxShadow: `0 0 6px 1px ${primaryColor}60`,
-              opacity: progress > 0.01 ? 0.7 : 0,
-              willChange: "left"
-            }
-          }
-        )
-      ]
-    }
-  );
+        },
+        i
+      );
+    }),
+    hasScratch && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          left: scratchX,
+          top: 0,
+          width: 1,
+          height: "100%",
+          background: "rgba(255,255,255,0.15)",
+          transform: `rotate(${(0,esm.random)(`scratch-angle-${frame}`) * 4 - 2}deg)`
+        }
+      }
+    )
+  ] });
 };
-const SceneCounter = ({ current, total, textColor, delay = 5 }) => {
-  const frame = useCurrentFrame();
-  const fade = getFadeIn(frame, 12, delay);
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      style: {
-        position: "absolute",
-        top: 40,
-        right: 40,
-        zIndex: 50,
-        fontFamily: "Inter, -apple-system, sans-serif",
-        fontSize: 13,
-        fontWeight: 600,
-        color: `${textColor}35`,
-        letterSpacing: "0.08em",
-        textTransform: "uppercase",
-        opacity: fade
-      },
-      children: [
-        String(current + 1).padStart(2, "0"),
-        " / ",
-        String(total).padStart(2, "0")
-      ]
-    }
-  );
-};
-const LowerThirdBar = ({ text, primaryColor, delay = 5 }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const barS = getSpringProgress(frame, fps, delay, { damping: 16, stiffness: 120, mass: 1, overshootClamping: false });
-  const textS = getSpringProgress(frame, fps, getStaggerDelay(0, delay, 10), DEFAULT_SPRING);
-  const barScaleX = interpolate(barS, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const textOpacity = interpolate(textS, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      style: {
-        position: "absolute",
-        bottom: 40,
-        left: 40,
-        zIndex: 50
-      },
-      children: [
-        /* @__PURE__ */ jsx(
-          "div",
-          {
-            style: {
-              height: 3,
-              width: 180,
-              background: `linear-gradient(90deg, ${primaryColor}, transparent)`,
-              borderRadius: 2,
-              transformOrigin: "left center",
-              transform: `scaleX(${barScaleX})`,
-              marginBottom: 8,
-              willChange: "transform"
-            }
-          }
-        ),
-        /* @__PURE__ */ jsx(
-          "p",
-          {
-            style: {
-              fontFamily: "Inter, -apple-system, sans-serif",
-              fontSize: 12,
-              fontWeight: 600,
-              color: `${primaryColor}bb`,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              margin: 0,
-              opacity: textOpacity
-            },
-            children: text
-          }
-        )
-      ]
-    }
-  );
-};
-const ChapterMarker = ({ title, subtitle, primaryColor, textColor, delay = 0 }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
-  const opacity = interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" });
-  const y = interpolate(s, [0, 1], [30, 0]);
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      style: {
-        position: "absolute",
-        top: 100,
-        left: 40,
-        zIndex: 50,
-        opacity,
-        transform: `translateY(${y}px)`,
-        willChange: "transform, opacity"
-      },
-      children: [
-        /* @__PURE__ */ jsxs(
-          "div",
-          {
-            style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 6
-            },
-            children: [
-              /* @__PURE__ */ jsx(
-                "div",
-                {
-                  style: {
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    backgroundColor: primaryColor,
-                    boxShadow: `0 0 8px ${primaryColor}60`
-                  }
-                }
-              ),
-              /* @__PURE__ */ jsx(
-                "span",
-                {
-                  style: {
-                    fontFamily: "Inter, -apple-system, sans-serif",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: primaryColor,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase"
-                  },
-                  children: title
-                }
-              )
-            ]
-          }
-        ),
-        subtitle && /* @__PURE__ */ jsx(
-          "p",
-          {
-            style: {
-              fontFamily: "Inter, -apple-system, sans-serif",
-              fontSize: 13,
-              fontWeight: 400,
-              color: `${textColor}60`,
-              margin: 0,
-              marginLeft: 18
-            },
-            children: subtitle
-          }
-        )
-      ]
-    }
-  );
-};
-const Watermark = ({ text, textColor }) => {
-  return /* @__PURE__ */ jsx(
-    "div",
-    {
-      style: {
-        position: "absolute",
-        bottom: 50,
-        right: 40,
-        zIndex: 50,
-        fontFamily: "Inter, -apple-system, sans-serif",
-        fontSize: 11,
-        fontWeight: 500,
-        color: `${textColor}15`,
-        letterSpacing: "0.05em"
-      },
-      children: text
-    }
-  );
-};
-const CinematicOverlay = () => {
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+const Scanlines = ({ intensity = 0.08 }) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const flicker = 1 + Math.sin(frame * 0.5) * 0.02;
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
     esm.AbsoluteFill,
     {
       style: {
-        zIndex: 200,
+        zIndex: 130,
         pointerEvents: "none",
-        mixBlendMode: "overlay",
-        opacity: 0.12
-      },
-      children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("svg", { width: "100%", height: "100%", style: { position: "absolute", inset: 0 }, children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsxs)("filter", { id: "film-grain", children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("feTurbulence", { type: "fractalNoise", baseFrequency: "0.8", numOctaves: "3", stitchTiles: "stitch" }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("feColorMatrix", { type: "saturate", values: "0" })
-          ] }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("rect", { width: "100%", height: "100%", filter: "url(#film-grain)" })
-        ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              position: "absolute",
-              inset: 0,
-              background: "radial-gradient(ellipse at center, rgba(0,0,0,0) 50%, rgba(0,0,0,0.35) 100%)"
-            }
-          }
-        )
-      ]
+        backgroundImage: "linear-gradient(transparent 50%, rgba(0,0,0,0.1) 50%)",
+        backgroundSize: "100% 4px",
+        opacity: intensity * flicker
+      }
     }
   );
 };
+const GlitchEffect = ({ frame, intensity = 8, triggerFrame = 0, duration = 10 }) => {
+  const progress = (0,esm.interpolate)(frame - triggerFrame, [0, duration], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const active = progress > 0 && progress < 1;
+  const currentIntensity = Math.sin(progress * Math.PI) * intensity;
+  if (!active) return null;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { zIndex: 160, pointerEvents: "none" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          inset: 0,
+          background: "transparent",
+          boxShadow: `inset ${currentIntensity}px 0 ${currentIntensity}px rgba(255,0,0,0.2), inset -${currentIntensity}px 0 ${currentIntensity}px rgba(0,255,255,0.2)`
+        }
+      }
+    ),
+    Array.from({ length: 5 }).map((_, i) => {
+      const y = (0,esm.random)(`glitch-y-${frame}-${i}`) * 100;
+      const h = 2 + (0,esm.random)(`glitch-h-${frame}-${i}`) * 20;
+      const offset = ((0,esm.random)(`glitch-o-${frame}-${i}`) - 0.5) * currentIntensity * 4;
+      return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        "div",
+        {
+          style: {
+            position: "absolute",
+            left: 0,
+            top: `${y}%`,
+            width: "100%",
+            height: h,
+            background: "rgba(255,255,255,0.1)",
+            transform: `translateX(${offset}px)`
+          }
+        },
+        i
+      );
+    })
+  ] });
+};
+const HolographicShimmer = ({ intensity = 0.3, speed = 1 }) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const hue = frame * speed % 360;
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        zIndex: 125,
+        pointerEvents: "none",
+        mixBlendMode: "overlay",
+        background: `linear-gradient(${135 + frame}deg, hsla(${hue},100%,50%,${intensity * 0.3}) 0%, hsla(${(hue + 120) % 360},100%,50%,${intensity * 0.2}) 50%, hsla(${(hue + 240) % 360},100%,50%,${intensity * 0.3}) 100%)`
+      }
+    }
+  );
+};
+const NeonBloom = ({ children, color = "#0ea5e9", intensity = 0.5 }) => {
+  return /* @__PURE__ */ jsxs("div", { style: { position: "relative" }, children: [
+    /* @__PURE__ */ jsx("div", { style: { position: "absolute", inset: -4, filter: `blur(12px)`, opacity: intensity }, children }),
+    /* @__PURE__ */ jsx("div", { style: { position: "relative" }, children })
+  ] });
+};
+const SpeedLines = ({ frame, intensity = 0.3, count = 40 }) => {
+  const lines = React.useMemo(() => {
+    return Array.from({ length: count }, (_, i) => ({
+      angle: i / count * 360 + random(`speed-angle-${i}`) * 10,
+      length: 100 + random(`speed-len-${i}`) * 300,
+      width: 1 + random(`speed-w-${i}`) * 3,
+      delay: random(`speed-d-${i}`) * 20
+    }));
+  }, [count]);
+  return /* @__PURE__ */ jsx(AbsoluteFill, { style: { zIndex: 120, pointerEvents: "none" }, children: lines.map((line, i) => {
+    const s = interpolate(frame - line.delay, [0, 15], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+    const currentLength = line.length * s;
+    return /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: {
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          width: currentLength,
+          height: line.width,
+          background: `linear-gradient(90deg, transparent, rgba(255,255,255,${intensity * s}))`,
+          transformOrigin: "left center",
+          transform: `rotate(${line.angle}deg)`
+        }
+      },
+      i
+    );
+  }) });
+};
+const VignettePulse = ({ intensity = 0.4, pulseSpeed = 0.03 }) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const pulse = Math.sin(frame * pulseSpeed) * 0.15 + 0.85;
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        zIndex: 135,
+        pointerEvents: "none",
+        background: `radial-gradient(ellipse at center, transparent ${45 * pulse}%, rgba(0,0,0,${intensity * pulse}) 100%)`
+      }
+    }
+  );
+};
+const CinematicMaster = ({ mood, frame, intensity = 1 }) => {
+  const configs = {
+    clean: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.25 * intensity, pulseSpeed: 0.02 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 15, scratchChance: 5e-3 })
+    ] }),
+    dramatic: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.55 * intensity, pulseSpeed: 0.04 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LensFlare, { intensity: 0.5 * intensity, sweepDuration: 90 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ff6b35", corner: "top-left", intensity: 0.2 * intensity }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 25, scratchChance: 0.015 })
+    ] }),
+    retro: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(Scanlines, { intensity: 0.12 * intensity }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.45 * intensity, pulseSpeed: 0.03 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ffaa00", corner: "top-right", intensity: 0.3 * intensity }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 40, scratchChance: 0.025 })
+    ] }),
+    cyber: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(Scanlines, { intensity: 0.06 * intensity }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(HolographicShimmer, { intensity: 0.25 * intensity, speed: 1.5 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(GlitchEffect, { frame, intensity: 4 * intensity, triggerFrame: 0, duration: 8 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.35 * intensity, pulseSpeed: 0.05 })
+    ] }),
+    warm: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ff8c42", corner: "top-left", intensity: 0.35 * intensity, driftSpeed: 0.2 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ffcc00", corner: "bottom-right", intensity: 0.2 * intensity, driftSpeed: 0.15 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.3 * intensity, pulseSpeed: 0.025 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 20, scratchChance: 0.01 })
+    ] }),
+    cold: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#00d4ff", corner: "top-right", intensity: 0.25 * intensity, driftSpeed: 0.25 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.35 * intensity, pulseSpeed: 0.03 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 20, scratchChance: 8e-3 })
+    ] }),
+    minimal: /* @__PURE__ */ (0,jsx_runtime.jsx)(jsx_runtime.Fragment, { children: /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.15 * intensity, pulseSpeed: 0.015 }) })
+  };
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(jsx_runtime.Fragment, { children: configs[mood] || configs.clean });
+};
 
-// EXTERNAL MODULE: ./node_modules/react/index.js
-var react = __webpack_require__(96540);
 ;// ./src/ui-mockups.tsx
 
 
@@ -2780,7 +2767,8 @@ const explainerVideoSchema = lib.z.object({
   secondaryColor: (0,dist_esm.zColor)().optional().default("#0ea5e9"),
   bgColor: (0,dist_esm.zColor)().optional().default("#f8f9fa"),
   textColor: (0,dist_esm.zColor)().optional().default("#111111"),
-  accentColor: (0,dist_esm.zColor)().optional().default("#6366f1")
+  accentColor: (0,dist_esm.zColor)().optional().default("#6366f1"),
+  mood: lib.z.enum(["clean", "dramatic", "retro", "cyber", "warm", "cold", "minimal"]).optional().default("clean")
 });
 const defaultProps = {
   scenes: [
@@ -2819,13 +2807,15 @@ const defaultProps = {
   secondaryColor: "#6366f1",
   bgColor: "#f8f9fa",
   textColor: "#111111",
-  accentColor: "#0ea5e9"
+  accentColor: "#0ea5e9",
+  mood: "clean"
 };
 const ExplainerVideo = ({
   scenes,
   primaryColor,
   bgColor,
-  textColor
+  textColor,
+  mood
 }) => {
   var _a;
   const frame = (0,esm.useCurrentFrame)();
@@ -2904,7 +2894,7 @@ const ExplainerVideo = ({
         secondaryColor
       }
     ) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicOverlay, {})
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicMaster, { mood: mood || "clean", frame })
   ] });
 };
 
@@ -57619,7 +57609,7 @@ var z = /*#__PURE__*/Object.freeze({
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	__webpack_require__(96507);
-/******/ 	__webpack_require__(72030);
+/******/ 	__webpack_require__(61101);
 /******/ 	__webpack_require__(63610);
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __webpack_require__(66456);

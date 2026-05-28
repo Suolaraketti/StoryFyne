@@ -5,7 +5,7 @@ import { zColor } from "@remotion/zod-types";
 import { TRANSITION_FRAMES } from "./animations";
 import { Backgrounds, getBackgroundForSceneType } from "./backgrounds";
 import { TransitionOverlay, getTransitionForIndex, TransitionType } from "./transitions";
-import { CinematicOverlay } from "./overlays";
+import { CinematicMaster, CinematicMood } from "./effects";
 import { sceneComponentMap, SceneData } from "./scenes";
 import { templateComponentMap } from "./templates";
 
@@ -36,6 +36,7 @@ export const explainerVideoSchema = z.object({
   bgColor: zColor().optional().default("#f8f9fa"),
   textColor: zColor().optional().default("#111111"),
   accentColor: zColor().optional().default("#6366f1"),
+  mood: z.enum(["clean", "dramatic", "retro", "cyber", "warm", "cold", "minimal"]).optional().default("clean"),
 });
 
 export type ExplainerVideoProps = z.infer<typeof explainerVideoSchema>;
@@ -78,6 +79,7 @@ export const defaultProps: ExplainerVideoProps = {
   bgColor: "#f8f9fa",
   textColor: "#111111",
   accentColor: "#0ea5e9",
+  mood: "clean",
 };
 
 // ─── Main Component ─────────────────────────────────────────────────
@@ -87,6 +89,7 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
   primaryColor,
   bgColor,
   textColor,
+  mood,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -194,8 +197,8 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
         </AbsoluteFill>
       )}
 
-      {/* Subtle film grain texture */}
-      <CinematicOverlay />
+      {/* Cinematic mood effects: lens flare, light leaks, film dust, etc. */}
+      <CinematicMaster mood={(mood as CinematicMood) || "clean"} frame={frame} />
     </AbsoluteFill>
   );
 };

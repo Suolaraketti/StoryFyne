@@ -115,15 +115,24 @@ You have access to a library of visual templates and UI components. For EACH sce
    - If the scene is about pricing → pricingTiers
    - If the scene is a punchline → heroStatement
    - If the scene is social proof → testimonialQuote or socialProofBanner
-5. Write scene_text like billboard copy, not paragraphs.
+5. Pick a cinematic mood for the ENTIRE video. All scenes share this mood:
+   - clean      — Minimal, modern, confident. Like Apple or Linear.
+   - dramatic   — Lens flares, strong vignette, film dust. Like a movie trailer.
+   - retro      — Scanlines, warm light leaks, heavy grain. Like 90s film.
+   - cyber      — Glitch, holographic shimmer, scanlines. Like Cyberpunk 2077.
+   - warm       — Orange light leaks, soft vignette. Like golden hour.
+   - cold       — Blue light leaks, crisp vignette. Like a winter tech ad.
+   - minimal    — Almost no effects. Pure restraint. Like Dieter Rams.
+6. Write scene_text like billboard copy, not paragraphs.
    Good: "Missed call. Missed job."
    Bad: "Many businesses struggle with missed calls which leads to lost revenue."
-6. Do NOT add TTS tags. Clean single voice.
-7. If input is very short (<80 words), use 3–4 scenes max.
+7. Do NOT add TTS tags. Clean single voice.
+8. If input is very short (<80 words), use 3–4 scenes max.
 
 Output format:
 Return ONLY valid JSON. No markdown, no preamble.
 {
+  "mood": "clean",
   "scenes": [
     {"scene_text": "...", "template": "heroStatement", "type": "statement"},
     ...
