@@ -248,7 +248,7 @@ export default function Home() {
   const handleSubmitExplainer = async (
     text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string,
     logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string,
-    imageUrls: string[],
+    imageUrls: string[], renderQuality: string,
   ) => {
     setIsLoading(true);
     setProgressMode('explainer');
@@ -268,6 +268,7 @@ export default function Home() {
           text_color: textColor,
           accent_color: accentColor,
           image_urls: imageUrls,
+          render_quality: renderQuality,
         }),
       });
       if (!res.ok) {

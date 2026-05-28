@@ -1,0 +1,26 @@
+{
+  "name": "storyfyne-render-worker",
+  "version": "1.0.0",
+  "description": "GPU render worker for StoryFyne explainer videos",
+  "main": "dist/worker.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx worker.ts",
+    "start": "node dist/worker.js"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.284",
+    "@remotion/renderer": "4.0.284",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.3",
+    "fs-extra": "^11.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/fs-extra": "^11.0.4",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}

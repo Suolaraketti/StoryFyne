@@ -85,5 +85,9 @@ REMOTION_SERVE_URL = os.getenv("REMOTION_SERVE_URL", "")
 REMOTION_FPS = int(os.getenv("REMOTION_FPS", "30"))
 REMOTION_COMPOSITION_ID = os.getenv("REMOTION_COMPOSITION_ID", "ExplainerVideo")
 
+# GPU Render Worker (optional, for premium renders)
+GPU_WORKER_URL = os.getenv("GPU_WORKER_URL", "")
+GPU_WORKER_TIMEOUT = int(os.getenv("GPU_WORKER_TIMEOUT", "300"))
+
 # Cache
 STORIES_CACHE_TTL_SECONDS = 60

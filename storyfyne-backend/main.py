@@ -30,6 +30,8 @@ from config import (
     REMOTION_SERVE_URL,
     REMOTION_FPS,
     REMOTION_COMPOSITION_ID,
+    GPU_WORKER_URL,
+    GPU_WORKER_TIMEOUT,
 )
 from scraper import scrape_reddit_post, scrape_website
 from tagger import tag_text_with_claude
@@ -112,6 +114,7 @@ class ExplainerRequest(BaseModel):
     accent_color: str = "#6366f1"
     template: str = "modern"
     image_urls: list[str] = []
+    render_quality: str = "standard"  # "standard" = Lambda, "premium" = GPU worker
 
 
 class PreviewExplainerResponse(BaseModel):
@@ -1264,6 +1267,64 @@ async def preview_explainer(request: ExplainerRequest):
     return PreviewExplainerResponse(scenes=scenes)
 
 
+async def submit_to_gpu_worker(
+    story_id: int,
+    input_props: dict,
+    composition_id: str,
+    output_filename: str,
+) -> dict:
+    """Submit a render job to the GPU worker and poll until complete."""
+    if not GPU_WORKER_URL:
+        raise RuntimeError("GPU_WORKER_URL not configured")
+
+    job_id = f"story-{story_id}"
+    payload = {
+        "jobId": job_id,
+        "storyId": str(story_id),
+        "serveUrl": REMOTION_SERVE_URL,
+        "compositionId": composition_id,
+        "inputProps": json.dumps(input_props),
+        "outputFileName": output_filename,
+        "durationInFrames": sum(s.get("durationInFrames", 30) for s in input_props.get("scenes", [])),
+        "fps": REMOTION_FPS,
+        "width": 1920,
+        "height": 1080,
+    }
+
+    logger.info(f"[story {story_id}] GPU WORKER SUBMIT | url={GPU_WORKER_URL} | job={job_id}")
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        response = await client.post(f"{GPU_WORKER_URL}/render", json=payload)
+
+    if response.status_code != 200:
+        raise RuntimeError(f"GPU worker rejected job: {response.status_code} - {response.text}")
+
+    accept_data = response.json()
+    if not accept_data.get("accepted"):
+        raise RuntimeError(f"GPU worker did not accept job: {accept_data}")
+
+    # Poll GPU worker status
+    logger.info(f"[story {story_id}] GPU WORKER POLLING | job={job_id}")
+    for poll in range(120):  # 120 × 5s = 10 minutes max
+        await asyncio.sleep(5)
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                status_resp = await client.get(f"{GPU_WORKER_URL}/status/{job_id}")
+            if status_resp.status_code == 200:
+                status_data = status_resp.json()
+                status = status_data.get("status")
+                if status == "done":
+                    logger.info(f"[story {story_id}] GPU WORKER DONE | url={status_data.get('outputUrl')}")
+                    return status_data
+                elif status == "error":
+                    raise RuntimeError(f"GPU render failed: {status_data.get('error')}")
+                # else: still rendering, continue polling
+        except Exception as e:
+            logger.warning(f"[story {story_id}] GPU WORKER POLL {poll+1} | {e}")
+
+    raise RuntimeError("GPU worker render timed out after 10 minutes")
+
+
 async def _process_explainer(
     story_id: int,
     text: str,
@@ -1280,6 +1341,7 @@ async def _process_explainer(
     accent_color: str = "#6366f1",
     template: str = "modern",
     image_urls: list[str] = None,
+    render_quality: str = "standard",
 ):
     """Background task: break text into scenes, generate audio, render via Remotion Lambda."""
     start_time = time.time()
@@ -1343,7 +1405,8 @@ async def _process_explainer(
         total_duration_seconds += duration_seconds
 
         scene_type = scene.get("type", "feature")
-        if scene_type not in ("title", "feature", "benefit", "socialProof", "cta"):
+        valid_types = ("title", "problem", "solution", "feature", "benefit", "process", "stats", "socialProof", "comparison", "cta")
+        if scene_type not in valid_types:
             scene_type = "feature"
 
         scene_audios.append({
@@ -1395,118 +1458,156 @@ async def _process_explainer(
     logger.info(f"[story {story_id}] RENDER SUBMIT | composition={composition_id} | serve_url={REMOTION_SERVE_URL[:80]}... | scenes={len(scene_audios)}")
     logger.info(f"[story {story_id}] RENDER PROPS | logo={logo_url!r} | colors={primary_color},{secondary_color},{bg_color},{text_color},{accent_color}")
 
-    render_id = ""
-    bucket_name = ""
-    try:
-        if not RENDER_GATEWAY_URL:
-            raise RuntimeError("RENDER_GATEWAY_URL not configured")
-
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(
-                f"{RENDER_GATEWAY_URL}/render",
-                json={
-                    "serveUrl": REMOTION_SERVE_URL,
-                    "compositionId": composition_id,
-                    "inputProps": input_props,
-                    "outName": f"explainer_{story_id}.mp4",
-                },
-            )
-
-        logger.info(f"[story {story_id}] GATEWAY RESPONSE | status={response.status_code} | body={response.text[:300]}")
-
-        if response.status_code != 200:
-            raise RuntimeError(f"Gateway error: {response.status_code} - {response.text}")
-
-        render_result = response.json()
-        render_id = render_result.get("renderId", "")
-        bucket_name = render_result.get("bucketName", "")
-        if not render_id:
-            raise RuntimeError("No renderId from gateway")
-        logger.info(f"[story {story_id}] RENDER STARTED | render_id={render_id} | bucket={bucket_name}")
-    except Exception as e:
-        logger.error(f"[story {story_id}] RENDER SUBMIT FAILED | {e}")
-        metadata = {
-            "id": story_id, "reddit_url": "", "title": title, "author": author,
-            "subreddit": "explainer", "mode": "explainer", "status": "audio_only",
-            "audio_url": scene_audios[0]["audioUrl"] if scene_audios else "",
-            "video_url": "", "duration_seconds": int(total_duration_seconds),
-            "file_size_bytes": 0, "voice_assignments": {"NARRATOR": voice_id},
-            "tagged_text_preview": text[:200],
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "processing_time_seconds": int(time.time() - start_time),
-            "error": f"Render submission failed: {str(e)}",
-        }
-        await upload_story_metadata(story_id, metadata)
-        await add_story_to_index({"id": story_id, "title": title, "subreddit": "explainer", "mode": "explainer", "status": "audio_only", "audio_url": metadata["audio_url"], "duration_seconds": metadata["duration_seconds"], "created_at": metadata["created_at"]})
-        invalidate_cache()
-        update_job_progress(story_id, "complete", "Audio ready. Video render failed.")
-        return
-
-    # Step 4: Poll render gateway
-    update_job_progress(story_id, "rendering", f"Rendering video via Remotion Lambda... ({render_id[:8]})")
+    # Step 4: Render video (GPU worker or Lambda)
     video_url = ""
     video_bytes = b""
     polling_error = ""
-    poll_count = 0
+    use_gpu = render_quality == "premium" and GPU_WORKER_URL
 
-    for _ in range(360):
-        await asyncio.sleep(5)
-        poll_count += 1
+    if use_gpu:
+        # ─── GPU Worker Path ────────────────────────────────────────────
+        update_job_progress(story_id, "rendering", "Rendering video via GPU worker...")
+        logger.info(f"[story {story_id}] RENDER GPU | worker={GPU_WORKER_URL}")
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                status_response = await client.get(
-                    f"{RENDER_GATEWAY_URL}/status",
-                    params={"renderId": render_id, "bucketName": bucket_name},
+            gpu_result = await submit_to_gpu_worker(
+                story_id=story_id,
+                input_props=input_props,
+                composition_id=composition_id,
+                output_filename=f"explainer_{story_id}.mp4",
+            )
+            video_url = gpu_result.get("outputUrl", "")
+            logger.info(f"[story {story_id}] GPU RENDER DONE | url={video_url[:120] if video_url else 'EMPTY'}")
+            if video_url:
+                try:
+                    async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
+                        dl = await client.get(video_url)
+                        logger.info(f"[story {story_id}] VIDEO DOWNLOAD | HTTP {dl.status_code} | {len(dl.content)} bytes")
+                        if dl.status_code == 200:
+                            video_bytes = dl.content
+                            update_job_progress(story_id, "rendering", f"Video rendered ({len(video_bytes) // 1024} KB).")
+                        else:
+                            polling_error = f"GPU video ready but download returned {dl.status_code}"
+                            logger.error(f"[story {story_id}] VIDEO DOWNLOAD FAILED | {polling_error}")
+                except Exception as dl_err:
+                    polling_error = f"GPU video ready but download failed: {dl_err}"
+                    logger.error(f"[story {story_id}] VIDEO DOWNLOAD EXCEPTION | {dl_err}")
+            else:
+                polling_error = "GPU render completed but no output URL."
+                logger.error(f"[story {story_id}] GPU RENDER COMPLETE BUT NO URL")
+        except Exception as gpu_err:
+            polling_error = f"GPU render failed: {gpu_err}"
+            logger.error(f"[story {story_id}] GPU RENDER FAILED | {gpu_err}")
+    else:
+        # ─── Lambda Path ────────────────────────────────────────────────
+        render_id = ""
+        bucket_name = ""
+        try:
+            if not RENDER_GATEWAY_URL:
+                raise RuntimeError("RENDER_GATEWAY_URL not configured")
+
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    f"{RENDER_GATEWAY_URL}/render",
+                    json={
+                        "serveUrl": REMOTION_SERVE_URL,
+                        "compositionId": composition_id,
+                        "inputProps": input_props,
+                        "outName": f"explainer_{story_id}.mp4",
+                    },
                 )
 
-            if status_response.status_code != 200:
-                logger.warning(f"[story {story_id}] POLL {poll_count} | gateway HTTP {status_response.status_code} | {status_response.text[:200]}")
-                continue
+            logger.info(f"[story {story_id}] GATEWAY RESPONSE | status={response.status_code} | body={response.text[:300]}")
 
-            status_data = status_response.json()
-            status = status_data.get("status", "")
-            progress_pct = status_data.get("progressPercent", 0)
-            logger.info(f"[story {story_id}] POLL {poll_count} | status={status} | progress={progress_pct}% | frames={status_data.get('framesRendered','?')}")
+            if response.status_code != 200:
+                raise RuntimeError(f"Gateway error: {response.status_code} - {response.text}")
 
-            if status == "completed":
-                video_url = status_data.get("outputFile", "")
-                logger.info(f"[story {story_id}] RENDER COMPLETED | outputFile={video_url[:120] if video_url else 'EMPTY'}")
-                if video_url:
-                    try:
-                        async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
-                            dl = await client.get(video_url)
-                            logger.info(f"[story {story_id}] VIDEO DOWNLOAD | HTTP {dl.status_code} | {len(dl.content)} bytes")
-                            if dl.status_code == 200:
-                                video_bytes = dl.content
-                                update_job_progress(story_id, "rendering", f"Video rendered ({len(video_bytes) // 1024} KB). Downloading...")
-                            else:
-                                polling_error = f"Video ready but S3 returned {dl.status_code}. URL: {video_url[:120]}"
-                                update_job_progress(story_id, "rendering", polling_error)
-                                logger.error(f"[story {story_id}] VIDEO DOWNLOAD FAILED | {polling_error}")
-                    except Exception as dl_err:
-                        polling_error = f"Video ready but download failed: {dl_err}"
+            render_result = response.json()
+            render_id = render_result.get("renderId", "")
+            bucket_name = render_result.get("bucketName", "")
+            if not render_id:
+                raise RuntimeError("No renderId from gateway")
+            logger.info(f"[story {story_id}] RENDER STARTED | render_id={render_id} | bucket={bucket_name}")
+        except Exception as e:
+            logger.error(f"[story {story_id}] RENDER SUBMIT FAILED | {e}")
+            metadata = {
+                "id": story_id, "reddit_url": "", "title": title, "author": author,
+                "subreddit": "explainer", "mode": "explainer", "status": "audio_only",
+                "audio_url": scene_audios[0]["audioUrl"] if scene_audios else "",
+                "video_url": "", "duration_seconds": int(total_duration_seconds),
+                "file_size_bytes": 0, "voice_assignments": {"NARRATOR": voice_id},
+                "tagged_text_preview": text[:200],
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "processing_time_seconds": int(time.time() - start_time),
+                "error": f"Render submission failed: {str(e)}",
+            }
+            await upload_story_metadata(story_id, metadata)
+            await add_story_to_index({"id": story_id, "title": title, "subreddit": "explainer", "mode": "explainer", "status": "audio_only", "audio_url": metadata["audio_url"], "duration_seconds": metadata["duration_seconds"], "created_at": metadata["created_at"]})
+            invalidate_cache()
+            update_job_progress(story_id, "complete", "Audio ready. Video render failed.")
+            return
+
+        # Poll render gateway
+        update_job_progress(story_id, "rendering", f"Rendering video via Remotion Lambda... ({render_id[:8]})")
+        poll_count = 0
+
+        for _ in range(360):
+            await asyncio.sleep(5)
+            poll_count += 1
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    status_response = await client.get(
+                        f"{RENDER_GATEWAY_URL}/status",
+                        params={"renderId": render_id, "bucketName": bucket_name},
+                    )
+
+                if status_response.status_code != 200:
+                    logger.warning(f"[story {story_id}] POLL {poll_count} | gateway HTTP {status_response.status_code} | {status_response.text[:200]}")
+                    continue
+
+                status_data = status_response.json()
+                status = status_data.get("status", "")
+                progress_pct = status_data.get("progressPercent", 0)
+                logger.info(f"[story {story_id}] POLL {poll_count} | status={status} | progress={progress_pct}% | frames={status_data.get('framesRendered','?')}")
+
+                if status == "completed":
+                    video_url = status_data.get("outputFile", "")
+                    logger.info(f"[story {story_id}] RENDER COMPLETED | outputFile={video_url[:120] if video_url else 'EMPTY'}")
+                    if video_url:
+                        try:
+                            async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
+                                dl = await client.get(video_url)
+                                logger.info(f"[story {story_id}] VIDEO DOWNLOAD | HTTP {dl.status_code} | {len(dl.content)} bytes")
+                                if dl.status_code == 200:
+                                    video_bytes = dl.content
+                                    update_job_progress(story_id, "rendering", f"Video rendered ({len(video_bytes) // 1024} KB). Downloading...")
+                                else:
+                                    polling_error = f"Video ready but S3 returned {dl.status_code}. URL: {video_url[:120]}"
+                                    update_job_progress(story_id, "rendering", polling_error)
+                                    logger.error(f"[story {story_id}] VIDEO DOWNLOAD FAILED | {polling_error}")
+                        except Exception as dl_err:
+                            polling_error = f"Video ready but download failed: {dl_err}"
+                            update_job_progress(story_id, "rendering", polling_error)
+                            logger.error(f"[story {story_id}] VIDEO DOWNLOAD EXCEPTION | {dl_err}")
+                    else:
+                        polling_error = "Render completed but no outputFile URL returned."
                         update_job_progress(story_id, "rendering", polling_error)
-                        logger.error(f"[story {story_id}] VIDEO DOWNLOAD EXCEPTION | {dl_err}")
+                        logger.error(f"[story {story_id}] RENDER COMPLETE BUT NO URL")
+                    break
+                elif status == "failed":
+                    errors = status_data.get("errors", ["Unknown render error"])
+                    polling_error = errors[0] if errors else "Unknown render error"
+                    update_job_progress(story_id, "rendering", f"Render failed: {polling_error}")
+                    logger.error(f"[story {story_id}] RENDER FAILED | {polling_error}")
+                    break
                 else:
-                    polling_error = "Render completed but no outputFile URL returned."
-                    update_job_progress(story_id, "rendering", polling_error)
-                    logger.error(f"[story {story_id}] RENDER COMPLETE BUT NO URL")
-                break
-            elif status == "failed":
-                errors = status_data.get("errors", ["Unknown render error"])
-                polling_error = errors[0] if errors else "Unknown render error"
-                update_job_progress(story_id, "rendering", f"Render failed: {polling_error}")
-                logger.error(f"[story {story_id}] RENDER FAILED | {polling_error}")
-                break
-            else:
-                update_job_progress(story_id, "rendering", f"Rendering video... {progress_pct}%")
-        except Exception as poll_err:
-            logger.warning(f"[story {story_id}] POLL {poll_count} EXCEPTION | {poll_err}")
-            continue
-    else:
-        polling_error = "Video render timed out."
-        update_job_progress(story_id, "rendering", f"{polling_error} Saving audio only.")
-        logger.error(f"[story {story_id}] RENDER TIMEOUT | {poll_count} polls")
+                    update_job_progress(story_id, "rendering", f"Rendering video... {progress_pct}%")
+            except Exception as poll_err:
+                logger.warning(f"[story {story_id}] POLL {poll_count} EXCEPTION | {poll_err}")
+                continue
+        else:
+            polling_error = "Video render timed out."
+            update_job_progress(story_id, "rendering", f"{polling_error} Saving audio only.")
+            logger.error(f"[story {story_id}] RENDER TIMEOUT | {poll_count} polls")
 
     # Step 5: Upload final video (or keep S3 URL if download failed)
     video_upload_url = ""
@@ -1616,6 +1717,7 @@ async def process_explainer(request: ExplainerRequest):
                 accent_color=request.accent_color,
                 template=request.template,
                 image_urls=request.image_urls,
+                render_quality=request.render_quality,
             )
         except Exception as e:
             import traceback
@@ -1663,6 +1765,67 @@ async def process_explainer(request: ExplainerRequest):
         duration_seconds=0,
         status="processing",
     )
+
+
+@app.post("/api/render-complete")
+async def render_complete_webhook(request: Request):
+    """Webhook called by GPU render worker when a render finishes."""
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    story_id_str = data.get("storyId", "")
+    status = data.get("status", "")
+    output_url = data.get("outputUrl", "")
+    error = data.get("error", "")
+    render_time_ms = data.get("renderTimeMs", 0)
+
+    logger.info(f"[webhook] RENDER COMPLETE | story={story_id_str} | status={status} | time={render_time_ms}ms")
+
+    try:
+        story_id = int(story_id_str)
+    except ValueError:
+        logger.error(f"[webhook] Invalid story_id: {story_id_str}")
+        return {"ok": False, "error": "Invalid story_id"}
+
+    if status == "done":
+        update_job_progress(story_id, "complete", f"GPU render complete. Video: {output_url[:80]}...")
+    else:
+        update_job_progress(story_id, "render_failed", f"GPU render failed: {error}")
+
+    if status == "done" and output_url:
+        try:
+            async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
+                dl = await client.get(output_url)
+            if dl.status_code == 200:
+                video_upload_url = await upload_story_video(story_id, dl.content, slug="explainer")
+                logger.info(f"[webhook] VIDEO SAVED | story={story_id} | url={video_upload_url}")
+
+                metadata = await get_story_metadata(story_id)
+                if metadata:
+                    metadata["video_url"] = video_upload_url
+                    metadata["status"] = "complete"
+                    metadata["file_size_bytes"] = len(dl.content)
+                    await upload_story_metadata(story_id, metadata)
+                    await add_story_to_index({
+                        "id": story_id,
+                        "title": metadata.get("title", "Explainer Video"),
+                        "subreddit": "explainer",
+                        "mode": "explainer",
+                        "status": "complete",
+                        "audio_url": metadata.get("audio_url", ""),
+                        "video_url": video_upload_url,
+                        "duration_seconds": metadata.get("duration_seconds", 0),
+                        "created_at": metadata.get("created_at", ""),
+                    })
+                    invalidate_cache()
+            else:
+                logger.error(f"[webhook] VIDEO DOWNLOAD FAILED | HTTP {dl.status_code}")
+        except Exception as e:
+            logger.error(f"[webhook] VIDEO SAVE FAILED | {e}")
+
+    return {"ok": True}
 
 
 @app.post("/api/diagnostic-render")

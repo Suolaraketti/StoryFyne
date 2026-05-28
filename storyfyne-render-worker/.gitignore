@@ -1,0 +1,12 @@
+# Secrets
+.env
+
+# Logs
+*.log
+
+# Build output
+dist/
+node_modules/
+
+# Jobs
+jobs/

@@ -22,7 +22,7 @@ interface StoryInputProps {
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
   onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string, taggedText: string, context: string) => void;
-  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string, logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string, imageUrls: string[]) => void;
+  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string, logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string, imageUrls: string[], renderQuality: string) => void;
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
   onPreviewInfluencer: (text: string, context: string) => Promise<{ tagged_text: string }>;
   onPreviewExplainer: (text: string) => Promise<{ scenes: any[] }>;
@@ -87,6 +87,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [explainerTextColor, setExplainerTextColor] = useState('#f8fafc');
   const [explainerAccentColor, setExplainerAccentColor] = useState('#6366f1');
   const [explainerImageUrls, setExplainerImageUrls] = useState<string[]>([]);
+  const [explainerRenderQuality, setExplainerRenderQuality] = useState<'standard' | 'premium'>('standard');
 
   const [showCreateAvatar, setShowCreateAvatar] = useState(false);
   const [newAvatarName, setNewAvatarName] = useState('');
@@ -125,6 +126,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
         explainerLogoUrl, explainerPrimaryColor, explainerSecondaryColor,
         explainerBgColor, explainerTextColor, explainerAccentColor,
         explainerImageUrls.filter(u => u.trim()),
+        explainerRenderQuality,
       );
     }
   };
@@ -705,6 +707,43 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                     style={{ padding: '8px 16px', fontSize: '13px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                     Regenerate
                   </button>
+                  {/* Render Quality Toggle */}
+                  <div style={{ display: 'flex', gap: 0, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', overflow: 'hidden' }}>
+                    <button
+                      type="button"
+                      onClick={() => setExplainerRenderQuality('standard')}
+                      disabled={isLoading}
+                      style={{
+                        padding: '8px 14px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        border: 'none',
+                        background: explainerRenderQuality === 'standard' ? '#6366f1' : 'var(--bg-elevated)',
+                        color: explainerRenderQuality === 'standard' ? '#fff' : 'var(--text-secondary)',
+                        cursor: isLoading ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      Standard
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExplainerRenderQuality('premium')}
+                      disabled={isLoading}
+                      style={{
+                        padding: '8px 14px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        border: 'none',
+                        background: explainerRenderQuality === 'premium' ? '#6366f1' : 'var(--bg-elevated)',
+                        color: explainerRenderQuality === 'premium' ? '#fff' : 'var(--text-secondary)',
+                        cursor: isLoading ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      Premium (GPU)
+                    </button>
+                  </div>
                   <button type="submit" disabled={isLoading || explainerScenes.length === 0}
                     style={{ padding: '10px 24px', fontSize: '14px', fontWeight: 600, borderRadius: 'var(--radius-md)', border: 'none', background: isLoading ? '#333' : '#6366f1', color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
                     {isLoading ? 'Generating...' : 'Generate Explainer Video'}
