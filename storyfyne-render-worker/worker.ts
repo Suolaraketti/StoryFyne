@@ -111,10 +111,22 @@ async function renderVideo(job: RenderJob): Promise<string> {
 
   const outputPath = path.join(jobDir, job.outputFileName);
 
+  // Use local bundle if available (has the new premium code)
+  // Otherwise fall back to remote serveUrl
+  const localBundle = path.resolve(__dirname, "..", "storyfyne-remotion", "build", "index.js");
+  const useLocalBundle = await fs.pathExists(localBundle);
+  const serveUrl = useLocalBundle ? localBundle : job.serveUrl;
+
+  if (useLocalBundle) {
+    log(`[${job.jobId}] Using LOCAL BUNDLE: ${serveUrl}`);
+  } else {
+    log(`[${job.jobId}] Using remote serveUrl: ${serveUrl}`);
+  }
+
   // Build Remotion render command with GPU flags
   const cmd = [
     `npx remotion render`,
-    `"${job.serveUrl}"`,
+    `"${serveUrl}"`,
     `"${job.compositionId}"`,
     `"${outputPath}"`,
     `--props="${propsPath}"`,
@@ -122,8 +134,8 @@ async function renderVideo(job: RenderJob): Promise<string> {
     `--gl=${REMOTION_GL}`,
     `--chrome-mode=${REMOTION_CHROME_MODE}`,
     `--log=verbose`,
-    // Concurrency: use more CPU cores for faster rendering
-    `--concurrency=${Math.min(4, os.cpus().length)}`,
+    // Concurrency: safe for 8GB VRAM
+    `--concurrency=2`,
   ].join(" ");
 
   log(`[${job.jobId}] Starting render: ${cmd}`);
