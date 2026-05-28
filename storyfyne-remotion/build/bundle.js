@@ -2806,8 +2806,10 @@ const defaultProps = {
 const ExplainerVideo = ({
   scenes,
   primaryColor,
+  secondaryColor,
   bgColor,
   textColor,
+  accentColor,
   mood
 }) => {
   var _a;

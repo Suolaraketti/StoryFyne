@@ -87,8 +87,10 @@ export const defaultProps: ExplainerVideoProps = {
 export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
   scenes,
   primaryColor,
+  secondaryColor,
   bgColor,
   textColor,
+  accentColor,
   mood,
 }) => {
   const frame = useCurrentFrame();
