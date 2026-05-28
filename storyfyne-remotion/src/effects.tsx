@@ -373,56 +373,58 @@ export const CinematicMaster: React.FC<{
   mood: CinematicMood;
   frame: number;
   intensity?: number;
-}> = ({ mood, frame, intensity = 1 }) => {
+}> = ({ mood, frame, intensity = 0.7 }) => {
   const configs: Record<CinematicMood, React.ReactNode> = {
     clean: (
       <>
-        <VignettePulse intensity={0.25 * intensity} pulseSpeed={0.02} />
-        <FilmDust density={15} scratchChance={0.005} />
+        {/* Clean = almost nothing. A whisper of vignette. */}
+        <VignettePulse intensity={0.15 * intensity} pulseSpeed={0.015} />
       </>
     ),
     dramatic: (
       <>
-        <VignettePulse intensity={0.55 * intensity} pulseSpeed={0.04} />
-        <LensFlare intensity={0.5 * intensity} sweepDuration={90} />
-        <LightLeak color="#ff6b35" corner="top-left" intensity={0.2 * intensity} />
-        <FilmDust density={25} scratchChance={0.015} />
+        {/* Dramatic = one strong effect + subtle accent. Never everything at once. */}
+        <VignettePulse intensity={0.4 * intensity} pulseSpeed={0.03} />
+        <LensFlare intensity={0.35 * intensity} sweepDuration={120} delay={30} />
+        <FilmDust density={12} scratchChance={0.008} />
       </>
     ),
     retro: (
       <>
-        <Scanlines intensity={0.12 * intensity} />
-        <VignettePulse intensity={0.45 * intensity} pulseSpeed={0.03} />
-        <LightLeak color="#ffaa00" corner="top-right" intensity={0.3 * intensity} />
-        <FilmDust density={40} scratchChance={0.025} />
+        {/* Retro = scanlines + warm leak. Dust is very light. */}
+        <Scanlines intensity={0.06 * intensity} />
+        <VignettePulse intensity={0.3 * intensity} pulseSpeed={0.02} />
+        <LightLeak color="#ffaa00" corner="top-right" intensity={0.18 * intensity} driftSpeed={0.15} />
+        <FilmDust density={20} scratchChance={0.012} />
       </>
     ),
     cyber: (
       <>
-        <Scanlines intensity={0.06 * intensity} />
-        <HolographicShimmer intensity={0.25 * intensity} speed={1.5} />
-        <GlitchEffect frame={frame} intensity={4 * intensity} triggerFrame={0} duration={8} />
-        <VignettePulse intensity={0.35 * intensity} pulseSpeed={0.05} />
+        {/* Cyber = ONE glitch moment, subtle shimmer, light scanlines */}
+        <Scanlines intensity={0.03 * intensity} />
+        <HolographicShimmer intensity={0.12 * intensity} speed={0.8} />
+        <GlitchEffect frame={frame} intensity={2 * intensity} triggerFrame={15} duration={6} />
+        <VignettePulse intensity={0.2 * intensity} pulseSpeed={0.04} />
       </>
     ),
     warm: (
       <>
-        <LightLeak color="#ff8c42" corner="top-left" intensity={0.35 * intensity} driftSpeed={0.2} />
-        <LightLeak color="#ffcc00" corner="bottom-right" intensity={0.2 * intensity} driftSpeed={0.15} />
-        <VignettePulse intensity={0.3 * intensity} pulseSpeed={0.025} />
-        <FilmDust density={20} scratchChance={0.01} />
+        {/* Warm = single light leak, gentle vignette. No dust. */}
+        <LightLeak color="#ff8c42" corner="top-left" intensity={0.2 * intensity} driftSpeed={0.15} />
+        <VignettePulse intensity={0.18 * intensity} pulseSpeed={0.02} />
       </>
     ),
     cold: (
       <>
-        <LightLeak color="#00d4ff" corner="top-right" intensity={0.25 * intensity} driftSpeed={0.25} />
-        <VignettePulse intensity={0.35 * intensity} pulseSpeed={0.03} />
-        <FilmDust density={20} scratchChance={0.008} />
+        {/* Cold = single blue leak, crisp vignette. No dust. */}
+        <LightLeak color="#00d4ff" corner="top-right" intensity={0.15 * intensity} driftSpeed={0.2} />
+        <VignettePulse intensity={0.22 * intensity} pulseSpeed={0.025} />
       </>
     ),
     minimal: (
       <>
-        <VignettePulse intensity={0.15 * intensity} pulseSpeed={0.015} />
+        {/* Minimal = nearly invisible vignette only */}
+        <VignettePulse intensity={0.08 * intensity} pulseSpeed={0.01} />
       </>
     ),
   };

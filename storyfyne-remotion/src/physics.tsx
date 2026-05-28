@@ -98,7 +98,7 @@ export const ConstellationNetwork: React.FC<{
   fps: number;
   colors?: string[];
   connectionDistance?: number;
-}> = ({ nodeCount = 30, frame, fps, colors = ["#0ea5e9", "#6366f1"], connectionDistance = 150 }) => {
+}> = ({ nodeCount = 20, frame, fps, colors = ["#0ea5e920", "#6366f120"], connectionDistance = 150 }) => {
   const { width, height } = useVideoConfig();
 
   const nodes = React.useMemo(() => {

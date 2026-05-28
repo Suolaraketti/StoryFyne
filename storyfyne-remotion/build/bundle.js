@@ -739,42 +739,35 @@ const VignettePulse = ({ intensity = 0.4, pulseSpeed = 0.03 }) => {
     }
   );
 };
-const CinematicMaster = ({ mood, frame, intensity = 1 }) => {
+const CinematicMaster = ({ mood, frame, intensity = 0.7 }) => {
   const configs = {
-    clean: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.25 * intensity, pulseSpeed: 0.02 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 15, scratchChance: 5e-3 })
-    ] }),
+    clean: /* @__PURE__ */ (0,jsx_runtime.jsx)(jsx_runtime.Fragment, { children: /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.15 * intensity, pulseSpeed: 0.015 }) }),
     dramatic: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.55 * intensity, pulseSpeed: 0.04 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(LensFlare, { intensity: 0.5 * intensity, sweepDuration: 90 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ff6b35", corner: "top-left", intensity: 0.2 * intensity }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 25, scratchChance: 0.015 })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.4 * intensity, pulseSpeed: 0.03 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LensFlare, { intensity: 0.35 * intensity, sweepDuration: 120, delay: 30 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 12, scratchChance: 8e-3 })
     ] }),
     retro: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(Scanlines, { intensity: 0.12 * intensity }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.45 * intensity, pulseSpeed: 0.03 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ffaa00", corner: "top-right", intensity: 0.3 * intensity }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 40, scratchChance: 0.025 })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(Scanlines, { intensity: 0.06 * intensity }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.3 * intensity, pulseSpeed: 0.02 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ffaa00", corner: "top-right", intensity: 0.18 * intensity, driftSpeed: 0.15 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 20, scratchChance: 0.012 })
     ] }),
     cyber: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(Scanlines, { intensity: 0.06 * intensity }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(HolographicShimmer, { intensity: 0.25 * intensity, speed: 1.5 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(GlitchEffect, { frame, intensity: 4 * intensity, triggerFrame: 0, duration: 8 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.35 * intensity, pulseSpeed: 0.05 })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(Scanlines, { intensity: 0.03 * intensity }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(HolographicShimmer, { intensity: 0.12 * intensity, speed: 0.8 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(GlitchEffect, { frame, intensity: 2 * intensity, triggerFrame: 15, duration: 6 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.2 * intensity, pulseSpeed: 0.04 })
     ] }),
     warm: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ff8c42", corner: "top-left", intensity: 0.35 * intensity, driftSpeed: 0.2 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ffcc00", corner: "bottom-right", intensity: 0.2 * intensity, driftSpeed: 0.15 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.3 * intensity, pulseSpeed: 0.025 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 20, scratchChance: 0.01 })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#ff8c42", corner: "top-left", intensity: 0.2 * intensity, driftSpeed: 0.15 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.18 * intensity, pulseSpeed: 0.02 })
     ] }),
     cold: /* @__PURE__ */ (0,jsx_runtime.jsxs)(jsx_runtime.Fragment, { children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#00d4ff", corner: "top-right", intensity: 0.25 * intensity, driftSpeed: 0.25 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.35 * intensity, pulseSpeed: 0.03 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(FilmDust, { density: 20, scratchChance: 8e-3 })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(LightLeak, { color: "#00d4ff", corner: "top-right", intensity: 0.15 * intensity, driftSpeed: 0.2 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.22 * intensity, pulseSpeed: 0.025 })
     ] }),
-    minimal: /* @__PURE__ */ (0,jsx_runtime.jsx)(jsx_runtime.Fragment, { children: /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.15 * intensity, pulseSpeed: 0.015 }) })
+    minimal: /* @__PURE__ */ (0,jsx_runtime.jsx)(jsx_runtime.Fragment, { children: /* @__PURE__ */ (0,jsx_runtime.jsx)(VignettePulse, { intensity: 0.08 * intensity, pulseSpeed: 0.01 }) })
   };
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(jsx_runtime.Fragment, { children: configs[mood] || configs.clean });
 };

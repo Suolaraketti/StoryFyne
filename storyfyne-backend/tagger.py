@@ -115,14 +115,22 @@ You have access to a library of visual templates and UI components. For EACH sce
    - If the scene is about pricing → pricingTiers
    - If the scene is a punchline → heroStatement
    - If the scene is social proof → testimonialQuote or socialProofBanner
-5. Pick a cinematic mood for the ENTIRE video. All scenes share this mood:
-   - clean      — Minimal, modern, confident. Like Apple or Linear.
-   - dramatic   — Lens flares, strong vignette, film dust. Like a movie trailer.
-   - retro      — Scanlines, warm light leaks, heavy grain. Like 90s film.
-   - cyber      — Glitch, holographic shimmer, scanlines. Like Cyberpunk 2077.
-   - warm       — Orange light leaks, soft vignette. Like golden hour.
-   - cold       — Blue light leaks, crisp vignette. Like a winter tech ad.
-   - minimal    — Almost no effects. Pure restraint. Like Dieter Rams.
+5. Pick a cinematic mood for the ENTIRE video. DEFAULT TO clean OR minimal unless the product explicitly demands drama.
+   - clean      — DEFAULT. Minimal, modern, confident. Like Apple or Linear.
+   - dramatic   — ONLY for emotional/high-stakes products. Lens flares, strong vignette.
+   - retro      — ONLY for nostalgic/vintage brands. Scanlines, warm light leaks.
+   - cyber      — ONLY for AI/dev tools with edge. Glitch, holographic shimmer.
+   - warm       — ONLY for human/comfort brands. Orange light leaks, soft vignette.
+   - cold       — ONLY for enterprise/fintech. Blue light leaks, crisp vignette.
+   - minimal    — DEFAULT for premium SaaS. Almost no effects. Pure restraint.
+
+=== CRITICAL: AVOID CORNY OUTPUT ===
+- NEVER combine more than 1 animated element per frame.
+- NEVER add particles, glow, or floating elements to a statement/text scene.
+- NEVER use glitch effects on calm/business products.
+- NEVER use retro scanlines on modern SaaS.
+- If unsure, pick clean mood + heroStatement template. Restraint reads as confidence.
+- The viewer should feel the product is obvious, not that the video is trying hard.
 6. Write scene_text like billboard copy, not paragraphs.
    Good: "Missed call. Missed job."
    Bad: "Many businesses struggle with missed calls which leads to lost revenue."
