@@ -581,8 +581,29 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                     ].map((c) => (
                       <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <input type="color" value={c.value} onChange={e => c.setter(e.target.value)} disabled={isLoading}
-                          style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid var(--border-medium)', padding: 2, background: 'var(--bg-input)', cursor: 'pointer' }} />
-                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{c.label}</span>
+                          style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border-medium)', padding: 1, background: 'var(--bg-input)', cursor: 'pointer', flexShrink: 0 }} />
+                        <input
+                          type="text"
+                          value={c.value}
+                          onChange={e => c.setter(e.target.value)}
+                          disabled={isLoading}
+                          maxLength={7}
+                          style={{
+                            width: '70px',
+                            padding: '6px 8px',
+                            fontSize: '12px',
+                            fontFamily: 'monospace',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border-medium)',
+                            background: 'var(--bg-input)',
+                            color: 'var(--text-primary)',
+                            outline: 'none',
+                            textTransform: 'uppercase',
+                          }}
+                          onFocus={e => Object.assign(e.target.style, { borderColor: 'rgba(99,102,241,0.4)', boxShadow: '0 0 0 3px rgba(99,102,241,0.1)' })}
+                          onBlur={e => { e.target.style.borderColor = 'var(--border-medium)'; e.target.style.boxShadow = 'none'; }}
+                        />
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{c.label}</span>
                       </div>
                     ))}
                   </div>
