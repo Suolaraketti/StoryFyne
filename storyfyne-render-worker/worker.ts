@@ -112,15 +112,15 @@ async function renderVideo(job: RenderJob): Promise<string> {
   const outputPath = path.join(jobDir, job.outputFileName);
 
   // Use local bundle if available (has the new premium code)
-  // Otherwise fall back to remote serveUrl
-  const localBundle = path.resolve(__dirname, "..", "storyfyne-remotion", "build", "index.js");
+  // __dirname is dist/ so go up 2 levels to reach project root
+  const localBundle = path.resolve(__dirname, "..", "..", "storyfyne-remotion", "build", "index.html");
   const useLocalBundle = await fs.pathExists(localBundle);
   const serveUrl = useLocalBundle ? localBundle : job.serveUrl;
 
   if (useLocalBundle) {
-    log(`[${job.jobId}] Using LOCAL BUNDLE: ${serveUrl}`);
+    log(`[${job.jobId}] ✓ USING LOCAL PREMIUM BUNDLE: ${serveUrl}`);
   } else {
-    log(`[${job.jobId}] Using remote serveUrl: ${serveUrl}`);
+    log(`[${job.jobId}] ✗ Local bundle not found at ${localBundle}, falling back to remote serveUrl: ${serveUrl}`);
   }
 
   // Build Remotion render command with GPU flags
