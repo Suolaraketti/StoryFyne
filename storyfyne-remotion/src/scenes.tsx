@@ -8,6 +8,7 @@ import {
   getEntrance, getExit, getSpringProgress, TRANSITION_FRAMES,
   DEFAULT_SPRING, SNAPPY_SPRING,
 } from "./animations";
+import { PhoneFrame, ChatBubble, NotificationCard, CalendarBlock, StatusPill } from "./ui-mockups";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -136,8 +137,8 @@ export const StatementScene: React.FC<SceneProps> = ({
 };
 
 // ─── 2. EVIDENCE ────────────────────────────────────────────────────
-// Clean UI card showing the product in action. One data point.
-// Used for: proof beats, UI screenshots as evidence.
+// Clean UI card OR phone mockup showing the product in action.
+// Used for: proof beats. One data point. One device screen.
 
 export const EvidenceScene: React.FC<SceneProps> = ({
   scene, primaryColor, textColor, frame, fps, duration,
@@ -145,7 +146,97 @@ export const EvidenceScene: React.FC<SceneProps> = ({
   const entrance = getEntrance(frame, fps, 0);
   const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
   const cardS = getSpringProgress(frame, fps, 8, DEFAULT_SPRING);
+  const textLower = scene.text.toLowerCase();
 
+  // Detect what kind of evidence to show
+  const isPhoneMockup =
+    textLower.includes("call") ||
+    textLower.includes("answer") ||
+    textLower.includes("chat") ||
+    textLower.includes("message") ||
+    textLower.includes("book") ||
+    textLower.includes("calendar") ||
+    textLower.includes("notify") ||
+    textLower.includes("qualif") ||
+    textLower.includes("lead");
+
+  if (isPhoneMockup) {
+    return (
+      <AbsoluteFill
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          opacity: entrance.opacity * exit.opacity,
+          transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+          willChange: "transform, opacity",
+        }}
+      >
+        <PhoneFrame frame={frame} fps={fps} primaryColor={primaryColor}>
+          {/* Notification */}
+          {(textLower.includes("call") || textLower.includes("answer")) && (
+            <NotificationCard
+              title="Incoming Call"
+              body={scene.subtext || "AI is answering..."}
+              frame={frame}
+              fps={fps}
+              delay={10}
+              icon="📞"
+            />
+          )}
+
+          {/* Chat bubbles */}
+          {(textLower.includes("chat") || textLower.includes("qualif") || textLower.includes("answer")) && (
+            <div style={{ marginTop: 80, padding: "0 4px" }}>
+              <ChatBubble
+                text={scene.subtext || "Hi, I'd like to book a service call."}
+                frame={frame}
+                fps={fps}
+                delay={20}
+                direction="left"
+              />
+              <ChatBubble
+                text="Absolutely. What type of service do you need?"
+                frame={frame}
+                fps={fps}
+                delay={35}
+                direction="right"
+                primaryColor={primaryColor}
+              />
+            </div>
+          )}
+
+          {/* Status pills at bottom */}
+          <div style={{ position: "absolute", bottom: 20, left: 14, right: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {textLower.includes("answer") && (
+              <StatusPill label="Answered" frame={frame} fps={fps} delay={50} variant="success" />
+            )}
+            {textLower.includes("qualif") && (
+              <StatusPill label="Qualified" frame={frame} fps={fps} delay={60} variant="accent" primaryColor={primaryColor} />
+            )}
+            {textLower.includes("book") && (
+              <StatusPill label="Booked" frame={frame} fps={fps} delay={70} variant="success" />
+            )}
+          </div>
+
+          {/* Calendar */}
+          {textLower.includes("book") && (
+            <div style={{ marginTop: 60, padding: "0 4px" }}>
+              <CalendarBlock
+                time="Today, 2:00 PM"
+                title={scene.subtext || "Service call booked"}
+                frame={frame}
+                fps={fps}
+                delay={30}
+                primaryColor={primaryColor}
+              />
+            </div>
+          )}
+        </PhoneFrame>
+      </AbsoluteFill>
+    );
+  }
+
+  // Fallback: clean evidence card
   return (
     <AbsoluteFill
       style={{
@@ -157,7 +248,6 @@ export const EvidenceScene: React.FC<SceneProps> = ({
         willChange: "transform, opacity",
       }}
     >
-      {/* Card */}
       <div
         style={{
           background: "#ffffff",
@@ -171,7 +261,6 @@ export const EvidenceScene: React.FC<SceneProps> = ({
           willChange: "transform, opacity",
         }}
       >
-        {/* Card label */}
         <div
           style={{
             fontFamily: FONT,
@@ -185,8 +274,6 @@ export const EvidenceScene: React.FC<SceneProps> = ({
         >
           {scene.subtext || " "}
         </div>
-
-        {/* Main text / value */}
         <div
           style={{
             fontFamily: FONT,

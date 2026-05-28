@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 43823:
+/***/ 9366:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -792,13 +792,302 @@ const CinematicOverlay = () => {
 
 // EXTERNAL MODULE: ./node_modules/react/index.js
 var react = __webpack_require__(96540);
+;// ./src/ui-mockups.tsx
+
+
+
+
+const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const PhoneFrame = ({ children, frame, fps, primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, 0, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        width: 340,
+        height: 680,
+        background: "#ffffff",
+        borderRadius: 48,
+        boxShadow: "0 32px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04)",
+        padding: "14px 14px 20px",
+        position: "relative",
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [60, 0])}px) scale(${(0,esm.interpolate)(s, [0, 1], [0.92, 1])})`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              width: 100,
+              height: 28,
+              background: "#000000",
+              borderRadius: 20,
+              margin: "0 auto 12px"
+            }
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              width: "100%",
+              height: "calc(100% - 40px)",
+              background: "#f8f9fa",
+              borderRadius: 36,
+              overflow: "hidden",
+              position: "relative"
+            },
+            children
+          }
+        )
+      ]
+    }
+  );
+};
+const ChatBubble = ({ text, frame, fps, delay = 0, direction = "left", primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  const isRight = direction === "right";
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    "div",
+    {
+      style: {
+        display: "flex",
+        justifyContent: isRight ? "flex-end" : "flex-start",
+        marginBottom: 8,
+        padding: "0 14px",
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [20, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        "div",
+        {
+          style: {
+            maxWidth: "78%",
+            padding: "12px 16px",
+            borderRadius: isRight ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+            background: isRight ? primaryColor : "#e9ecef",
+            color: isRight ? "#ffffff" : "#111111",
+            fontFamily: FONT,
+            fontSize: 15,
+            fontWeight: 400,
+            lineHeight: 1.4
+          },
+          children: text
+        }
+      )
+    }
+  );
+};
+const NotificationCard = ({ title, body, frame, fps, delay = 0, icon = "\u{1F4DE}" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        position: "absolute",
+        top: 12,
+        left: 12,
+        right: 12,
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        borderRadius: 18,
+        padding: "14px 16px",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [-30, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              background: "#f0f0f0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 20,
+              flexShrink: 0
+            },
+            children: icon
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { minWidth: 0 }, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            "div",
+            {
+              style: {
+                fontFamily: FONT,
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#111111",
+                marginBottom: 2
+              },
+              children: title
+            }
+          ),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            "div",
+            {
+              style: {
+                fontFamily: FONT,
+                fontSize: 12,
+                fontWeight: 400,
+                color: "#666666",
+                lineHeight: 1.3
+              },
+              children: body
+            }
+          )
+        ] })
+      ]
+    }
+  );
+};
+const CalendarBlock = ({ time, title, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        margin: "0 14px 10px",
+        padding: "14px 16px",
+        background: "#ffffff",
+        borderRadius: 14,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        borderLeft: `4px solid ${primaryColor}`,
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateX(${(0,esm.interpolate)(s, [0, 1], [-20, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              fontFamily: FONT,
+              fontSize: 12,
+              fontWeight: 600,
+              color: primaryColor,
+              marginBottom: 4,
+              letterSpacing: "0.02em"
+            },
+            children: time
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              fontFamily: FONT,
+              fontSize: 15,
+              fontWeight: 600,
+              color: "#111111"
+            },
+            children: title
+          }
+        )
+      ]
+    }
+  );
+};
+const StatusPill = ({ label, frame, fps, delay = 0, variant = "success", primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  const colors = {
+    success: { bg: "#dcfce7", text: "#166534", dot: "#22c55e" },
+    neutral: { bg: "#f3f4f6", text: "#374151", dot: "#9ca3af" },
+    accent: { bg: `${primaryColor}15`, text: primaryColor, dot: primaryColor }
+  };
+  const c = colors[variant];
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "6px 12px",
+        background: c.bg,
+        borderRadius: 100,
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `scale(${(0,esm.interpolate)(s, [0, 1], [0.8, 1])})`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 7, height: 7, borderRadius: "50%", background: c.dot } }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "span",
+          {
+            style: {
+              fontFamily: FONT,
+              fontSize: 12,
+              fontWeight: 600,
+              color: c.text,
+              letterSpacing: "0.01em"
+            },
+            children: label
+          }
+        )
+      ]
+    }
+  );
+};
+const ListRow = ({ icon, label, frame, fps, delay = 0, highlight = false, primaryColor = "#0ea5e9" }) => {
+  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "14px 16px",
+        margin: "0 14px",
+        background: highlight ? `${primaryColor}08` : "transparent",
+        borderRadius: 12,
+        opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateX(${interpolate(s, [0, 1], [-16, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ jsx("span", { style: { fontSize: 20, width: 24, textAlign: "center" }, children: icon }),
+        /* @__PURE__ */ jsx(
+          "span",
+          {
+            style: {
+              fontFamily: FONT,
+              fontSize: 15,
+              fontWeight: 500,
+              color: "#111111",
+              flex: 1
+            },
+            children: label
+          }
+        ),
+        /* @__PURE__ */ jsx("span", { style: { color: "#c1c1c1", fontSize: 14 }, children: "\u203A" })
+      ]
+    }
+  );
+};
+
 ;// ./src/scenes.tsx
 
 
 
 
 
-const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+const scenes_FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const cardShadow = "0 4px 24px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)";
 const cardRadius = 20;
 const SceneWrapper = ({ frame, fps, duration, direction = "left", children }) => {
@@ -846,7 +1135,7 @@ const StatementScene = ({
           "div",
           {
             style: {
-              fontFamily: FONT,
+              fontFamily: scenes_FONT,
               fontSize: line.length < 15 ? "110px" : line.length < 30 ? "92px" : "76px",
               fontWeight: 800,
               lineHeight: 1.05,
@@ -869,7 +1158,7 @@ const StatementScene = ({
         "div",
         {
           style: {
-            fontFamily: FONT,
+            fontFamily: scenes_FONT,
             fontSize: scene.text.length < 15 ? "120px" : scene.text.length < 30 ? "96px" : "78px",
             fontWeight: 800,
             lineHeight: 1.05,
@@ -894,6 +1183,74 @@ const EvidenceScene = ({
   const entrance = animations_getEntrance(frame, fps, 0);
   const exit = animations_getExit(frame, duration, "right", animations_TRANSITION_FRAMES, fps);
   const cardS = animations_getSpringProgress(frame, fps, 8, animations_DEFAULT_SPRING);
+  const textLower = scene.text.toLowerCase();
+  const isPhoneMockup = textLower.includes("call") || textLower.includes("answer") || textLower.includes("chat") || textLower.includes("message") || textLower.includes("book") || textLower.includes("calendar") || textLower.includes("notify") || textLower.includes("qualif") || textLower.includes("lead");
+  if (isPhoneMockup) {
+    return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      esm.AbsoluteFill,
+      {
+        style: {
+          justifyContent: "center",
+          alignItems: "center",
+          opacity: entrance.opacity * exit.opacity,
+          transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+          willChange: "transform, opacity"
+        },
+        children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(PhoneFrame, { frame, fps, primaryColor, children: [
+          (textLower.includes("call") || textLower.includes("answer")) && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            NotificationCard,
+            {
+              title: "Incoming Call",
+              body: scene.subtext || "AI is answering...",
+              frame,
+              fps,
+              delay: 10,
+              icon: "\u{1F4DE}"
+            }
+          ),
+          (textLower.includes("chat") || textLower.includes("qualif") || textLower.includes("answer")) && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { marginTop: 80, padding: "0 4px" }, children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsx)(
+              ChatBubble,
+              {
+                text: scene.subtext || "Hi, I'd like to book a service call.",
+                frame,
+                fps,
+                delay: 20,
+                direction: "left"
+              }
+            ),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)(
+              ChatBubble,
+              {
+                text: "Absolutely. What type of service do you need?",
+                frame,
+                fps,
+                delay: 35,
+                direction: "right",
+                primaryColor
+              }
+            )
+          ] }),
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { position: "absolute", bottom: 20, left: 14, right: 14, display: "flex", gap: 8, flexWrap: "wrap" }, children: [
+            textLower.includes("answer") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Answered", frame, fps, delay: 50, variant: "success" }),
+            textLower.includes("qualif") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Qualified", frame, fps, delay: 60, variant: "accent", primaryColor }),
+            textLower.includes("book") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Booked", frame, fps, delay: 70, variant: "success" })
+          ] }),
+          textLower.includes("book") && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 60, padding: "0 4px" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            CalendarBlock,
+            {
+              time: "Today, 2:00 PM",
+              title: scene.subtext || "Service call booked",
+              frame,
+              fps,
+              delay: 30,
+              primaryColor
+            }
+          ) })
+        ] })
+      }
+    );
+  }
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
     esm.AbsoluteFill,
     {
@@ -924,7 +1281,7 @@ const EvidenceScene = ({
               "div",
               {
                 style: {
-                  fontFamily: FONT,
+                  fontFamily: scenes_FONT,
                   fontSize: 13,
                   fontWeight: 600,
                   color: primaryColor,
@@ -939,7 +1296,7 @@ const EvidenceScene = ({
               "div",
               {
                 style: {
-                  fontFamily: FONT,
+                  fontFamily: scenes_FONT,
                   fontSize: scene.text.length < 25 ? "52px" : "40px",
                   fontWeight: 700,
                   lineHeight: 1.15,
@@ -1014,7 +1371,7 @@ const FlowScene = ({
                       "div",
                       {
                         style: {
-                          fontFamily: FONT,
+                          fontFamily: scenes_FONT,
                           fontSize: 15,
                           fontWeight: 600,
                           color: primaryColor,
@@ -1032,7 +1389,7 @@ const FlowScene = ({
                       "div",
                       {
                         style: {
-                          fontFamily: FONT,
+                          fontFamily: scenes_FONT,
                           fontSize: step.length < 15 ? "28px" : "22px",
                           fontWeight: 700,
                           lineHeight: 1.2,
@@ -1097,7 +1454,7 @@ const MetricScene = ({
           "div",
           {
             style: {
-              fontFamily: FONT,
+              fontFamily: scenes_FONT,
               fontSize: "140px",
               fontWeight: 800,
               lineHeight: 1,
@@ -1112,7 +1469,7 @@ const MetricScene = ({
           "div",
           {
             style: {
-              fontFamily: FONT,
+              fontFamily: scenes_FONT,
               fontSize: "32px",
               fontWeight: 500,
               lineHeight: 1.3,
@@ -1157,7 +1514,7 @@ const LockupScene = ({
           "div",
           {
             style: {
-              fontFamily: FONT,
+              fontFamily: scenes_FONT,
               fontSize: "64px",
               fontWeight: 800,
               lineHeight: 1.1,
@@ -1184,7 +1541,7 @@ const LockupScene = ({
           "div",
           {
             style: {
-              fontFamily: FONT,
+              fontFamily: scenes_FONT,
               fontSize: "24px",
               fontWeight: 500,
               color: primaryColor,
@@ -56097,7 +56454,7 @@ var z = /*#__PURE__*/Object.freeze({
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	__webpack_require__(96507);
-/******/ 	__webpack_require__(43823);
+/******/ 	__webpack_require__(9366);
 /******/ 	__webpack_require__(63610);
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __webpack_require__(66456);
