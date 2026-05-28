@@ -1447,7 +1447,7 @@ async def _process_explainer(
 
     composition_id = "ExplainerVideoMobile" if aspect_ratio == "9:16" else REMOTION_COMPOSITION_ID
     # Extract mood from Claude response if present
-    mood = scenes_data.get("mood", "clean") if isinstance(scenes_data, dict) else "clean"
+    mood = scene_data.get("mood", "clean") if isinstance(scene_data, dict) else "clean"
 
     input_props = {
         "scenes": scene_audios,
