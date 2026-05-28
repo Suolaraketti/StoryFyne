@@ -5,13 +5,15 @@ import { zColor } from "@remotion/zod-types";
 import { TRANSITION_FRAMES } from "./animations";
 import { Backgrounds, getBackgroundForSceneType } from "./backgrounds";
 import { TransitionOverlay, getTransitionForIndex, TransitionType } from "./transitions";
-import { LogoOverlay, ProgressBar, SceneCounter, LowerThirdBar, ChapterMarker, CinematicOverlay } from "./overlays";
+import { CinematicOverlay } from "./overlays";
 import { sceneComponentMap, SceneData } from "./scenes";
 
 // ─── Schema ─────────────────────────────────────────────────────────
 
 const sceneSchema = z.object({
   type: z.enum([
+    "statement", "evidence", "flow", "metric", "lockup",
+    // Legacy fallbacks
     "title", "problem", "solution", "feature", "benefit",
     "process", "stats", "socialProof", "comparison", "cta",
   ]),
@@ -29,8 +31,8 @@ export const explainerVideoSchema = z.object({
   logoUrl: z.string().optional().default(""),
   primaryColor: zColor().optional().default("#4f46e5"),
   secondaryColor: zColor().optional().default("#0ea5e9"),
-  bgColor: zColor().optional().default("#0f172a"),
-  textColor: zColor().optional().default("#f8fafc"),
+  bgColor: zColor().optional().default("#f8f9fa"),
+  textColor: zColor().optional().default("#111111"),
   accentColor: zColor().optional().default("#6366f1"),
 });
 
@@ -39,19 +41,26 @@ export type ExplainerVideoProps = z.infer<typeof explainerVideoSchema>;
 export const defaultProps: ExplainerVideoProps = {
   scenes: [
     {
-      type: "title",
-      text: "Welcome to Storyfyne Explainer",
-      subtext: "Turn ideas into motion graphics",
-      visualDirection: "Opening title card",
+      type: "statement",
+      text: "Missed call. Missed job.",
+      visualDirection: "Bold statement text",
+      audioUrl: "",
+      durationInFrames: 120,
+      imageUrl: "",
+    },
+    {
+      type: "evidence",
+      text: "AI answers every call.",
+      subtext: "The reveal",
+      visualDirection: "Clean product card",
       audioUrl: "",
       durationInFrames: 150,
       imageUrl: "",
     },
     {
-      type: "feature",
-      text: "We turn your ideas into motion graphics",
-      subtext: "Professional videos in minutes",
-      visualDirection: "Motion text reveal",
+      type: "flow",
+      text: "Call answered → Lead qualified → Job booked",
+      visualDirection: "Step flow cards",
       audioUrl: "",
       durationInFrames: 180,
       imageUrl: "",
@@ -59,23 +68,20 @@ export const defaultProps: ExplainerVideoProps = {
   ],
   aspectRatio: "16:9",
   logoUrl: "",
-  primaryColor: "#4f46e5",
-  secondaryColor: "#0ea5e9",
-  bgColor: "#0f172a",
-  textColor: "#f8fafc",
-  accentColor: "#6366f1",
+  primaryColor: "#0ea5e9",
+  secondaryColor: "#6366f1",
+  bgColor: "#f8f9fa",
+  textColor: "#111111",
+  accentColor: "#0ea5e9",
 };
 
 // ─── Main Component ─────────────────────────────────────────────────
 
 export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
   scenes,
-  logoUrl,
   primaryColor,
-  secondaryColor,
   bgColor,
   textColor,
-  accentColor,
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -104,17 +110,14 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
     ? getTransitionForIndex(activeTransition)
     : "wipe";
 
-  // Current scene for overlays
-  const currentSceneIndex = sceneSchedule.findIndex(({ from, duration }) =>
-    frame >= from && frame < from + duration - TRANSITION_FRAMES / 2
+  // Background selection based on currently dominant scene
+  const currentSceneIdx = sceneSchedule.findIndex(({ from, duration }) =>
+    frame >= from && frame < from + duration
   );
-  const effectiveSceneIndex = Math.max(0, currentSceneIndex >= 0 ? currentSceneIndex : scenes.length - 1);
+  const effectiveIdx = Math.max(0, currentSceneIdx >= 0 ? currentSceneIdx : scenes.length - 1);
 
-  const overallProgress = frame / Math.max(totalFrames - 1, 1);
-
-  // Background selection based on dominant scene type
-  const dominantBgType = getBackgroundForSceneType(scenes[effectiveSceneIndex]?.type || "gradientMesh");
-  const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.gradientMesh;
+  const dominantBgType = getBackgroundForSceneType(scenes[effectiveIdx]?.type || "cleanLight");
+  const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.cleanLight;
 
   return (
     <AbsoluteFill style={{ backgroundColor: bgColor }}>
@@ -122,8 +125,6 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
       <BackgroundComponent
         bgColor={bgColor}
         primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
-        accentColor={accentColor}
       />
 
       {/* Scenes with overlap transitions (visual only) */}
@@ -186,29 +187,7 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
         </AbsoluteFill>
       )}
 
-      {/* Persistent overlays */}
-      <LogoOverlay logoUrl={logoUrl} primaryColor={primaryColor} />
-
-      <SceneCounter
-        current={effectiveSceneIndex}
-        total={scenes.length}
-        textColor={textColor}
-      />
-
-      {scenes[effectiveSceneIndex] && (
-        <LowerThirdBar
-          text={scenes[effectiveSceneIndex].visualDirection || scenes[effectiveSceneIndex].type}
-          primaryColor={primaryColor}
-        />
-      )}
-
-      <ProgressBar
-        progress={overallProgress}
-        primaryColor={primaryColor}
-        secondaryColor={secondaryColor}
-      />
-
-      {/* Cinematic film grain + vignette */}
+      {/* Subtle film grain texture */}
       <CinematicOverlay />
     </AbsoluteFill>
   );

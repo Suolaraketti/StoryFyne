@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 19143:
+/***/ 43823:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -17,10 +17,10 @@ var dist_esm = __webpack_require__(70761);
 ;// ./src/animations.ts
 
 
-const TRANSITION_FRAMES = 30;
+const animations_TRANSITION_FRAMES = 30;
 const animations_DEFAULT_SPRING = { damping: 14, stiffness: 90, mass: 1, overshootClamping: false };
 const BOUNCY_SPRING = { damping: 10, stiffness: 120, mass: 0.8, overshootClamping: false };
-const GENTLE_SPRING = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
+const animations_GENTLE_SPRING = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
 const SNAPPY_SPRING = { damping: 18, stiffness: 180, mass: 0.6, overshootClamping: false };
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -37,13 +37,13 @@ function animations_getSpringProgress(frame, fps, delay = 0, config = animations
     config
   });
 }
-function getFadeIn(frame, duration = 15, delay = 0) {
-  return (0,esm.interpolate)(frame, [delay, delay + duration], [0, 1], {
+function animations_getFadeIn(frame, duration = 15, delay = 0) {
+  return interpolate(frame, [delay, delay + duration], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
 }
-function getFadeOut(frame, duration, outDuration = TRANSITION_FRAMES, delay = 0) {
+function getFadeOut(frame, duration, outDuration = animations_TRANSITION_FRAMES, delay = 0) {
   const start = delay + duration - outDuration;
   return interpolate(frame, [start, start + outDuration], [1, 0], {
     extrapolateLeft: "clamp",
@@ -53,19 +53,19 @@ function getFadeOut(frame, duration, outDuration = TRANSITION_FRAMES, delay = 0)
 function getSlideIn(frame, fps, delay = 0, fromY = 60, fromX = 0, config = animations_DEFAULT_SPRING) {
   const s = animations_getSpringProgress(frame, fps, delay, config);
   return {
-    y: (0,esm.interpolate)(s, [0, 1], [fromY, 0]),
-    x: (0,esm.interpolate)(s, [0, 1], [fromX, 0]),
-    opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" })
+    y: interpolate(s, [0, 1], [fromY, 0]),
+    x: interpolate(s, [0, 1], [fromX, 0]),
+    opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" })
   };
 }
 function getScaleIn(frame, fps, delay = 0, config = BOUNCY_SPRING) {
   const s = animations_getSpringProgress(frame, fps, delay, config);
   return {
-    scale: (0,esm.interpolate)(s, [0, 1], [0.85, 1]),
-    opacity: (0,esm.interpolate)(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" })
+    scale: interpolate(s, [0, 1], [0.85, 1]),
+    opacity: interpolate(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" })
   };
 }
-function getEntrance(frame, fps, delay = 0, config = animations_DEFAULT_SPRING) {
+function animations_getEntrance(frame, fps, delay = 0, config = animations_DEFAULT_SPRING) {
   const s = animations_getSpringProgress(frame, fps, delay, config);
   return {
     opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
@@ -73,7 +73,7 @@ function getEntrance(frame, fps, delay = 0, config = animations_DEFAULT_SPRING) 
     scale: (0,esm.interpolate)(s, [0, 1], [0.92, 1])
   };
 }
-function getExit(frame, duration, direction = "left", outDuration = TRANSITION_FRAMES, fps = 30) {
+function animations_getExit(frame, duration, direction = "left", outDuration = animations_TRANSITION_FRAMES, fps = 30) {
   const start = duration - outDuration;
   const s = (0,esm.spring)({
     frame: Math.max(0, frame - start),
@@ -96,7 +96,7 @@ function getExit(frame, duration, direction = "left", outDuration = TRANSITION_F
 }
 function getCounter(frame, fps, target, delay = 0, duration = 45) {
   const t = clamp((frame - delay) / duration, 0, 1);
-  const eased = esm.Easing.out(esm.Easing.cubic)(t);
+  const eased = Easing.out(Easing.cubic)(t);
   return Math.round(eased * target);
 }
 function getFloat(frame, fps, amplitude = 10, speed = 1) {
@@ -105,7 +105,7 @@ function getFloat(frame, fps, amplitude = 10, speed = 1) {
 function getPulse(frame, fps, speed = 1.5) {
   return Math.sin(frame / fps * Math.PI * 2 * speed) * 0.3 + 0.7;
 }
-function animations_getTypewriterProgress(frame, delay = 0, charsPerFrame = 0.4) {
+function getTypewriterProgress(frame, delay = 0, charsPerFrame = 0.4) {
   return Math.max(0, Math.floor((frame - delay) * charsPerFrame));
 }
 function getStrokeDraw(frame, fps, pathLength, delay = 0, duration = 30) {
@@ -123,12 +123,12 @@ function getParallax(frame, factor = 0.5) {
   return frame * factor;
 }
 function getKenBurns(frame, duration, fromScale = 1, toScale = 1.08) {
-  return (0,esm.interpolate)(frame, [0, duration], [fromScale, toScale], {
+  return interpolate(frame, [0, duration], [fromScale, toScale], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp"
   });
 }
-function animations_getScrambleReveal(frame, fps, text, delay = 0, duration = 40) {
+function getScrambleReveal(frame, fps, text, delay = 0, duration = 40) {
   const t = clamp((frame - delay) / duration, 0, 1);
   const eased = Easing.out(Easing.cubic)(t);
   const revealed = Math.floor(eased * text.length);
@@ -140,7 +140,7 @@ function animations_getScrambleReveal(frame, fps, text, delay = 0, duration = 40
     return "";
   }).join("");
 }
-function animations_getHighlightProgress(frame, fps, delay = 0, duration = 20) {
+function getHighlightProgress(frame, fps, delay = 0, duration = 20) {
   const s = animations_getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
   return interpolate(s, [0, 1], [0, 100], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 }
@@ -150,240 +150,55 @@ function getFlipRotation(frame, fps, delay = 0, duration = 25) {
   return interpolate(eased, [0, 1], [90, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 }
 
-// EXTERNAL MODULE: ./node_modules/react/index.js
-var react = __webpack_require__(96540);
 ;// ./src/backgrounds.tsx
 
 
 
-
-
-const GradientMesh = ({ bgColor, primaryColor, secondaryColor, accentColor }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { durationInFrames } = (0,esm.useVideoConfig)();
-  const t = frame / Math.max(durationInFrames, 1);
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { backgroundColor: bgColor, overflow: "hidden" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      "div",
-      {
-        style: {
-          position: "absolute",
-          width: 900,
-          height: 900,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${primaryColor}14 0%, transparent 65%)`,
-          left: -150 + Math.sin(t * 2 * Math.PI) * 200,
-          top: -200 + Math.cos(t * 1.5 * Math.PI) * 150,
-          willChange: "transform",
-          transform: `rotate(${t * 15}deg)`
-        }
-      }
-    ),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      "div",
-      {
-        style: {
-          position: "absolute",
-          width: 700,
-          height: 700,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${secondaryColor}0d 0%, transparent 65%)`,
-          right: -100 + Math.cos(t * 1.8 * Math.PI) * 180,
-          bottom: -150 + Math.sin(t * 2.2 * Math.PI) * 120,
-          willChange: "transform",
-          transform: `rotate(${-t * 12}deg)`
-        }
-      }
-    ),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      "div",
-      {
-        style: {
-          position: "absolute",
-          width: 500,
-          height: 500,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${accentColor}0a 0%, transparent 65%)`,
-          left: 30 + Math.sin(t * 3 * Math.PI + 1) * 250,
-          bottom: 20 + Math.cos(t * 2.5 * Math.PI + 2) * 200,
-          willChange: "transform"
-        }
-      }
-    ),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      "div",
-      {
-        style: {
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `linear-gradient(${primaryColor}06 1px, transparent 1px), linear-gradient(90deg, ${primaryColor}06 1px, transparent 1px)`,
-          backgroundSize: "80px 80px",
-          maskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
-          WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)"
-        }
-      }
-    )
-  ] });
-};
-const DotGrid = ({ bgColor, dotColor = "rgba(255,255,255,0.06)", spacing = 50, dotSize = 2 }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const floatY = getFloat(frame, 30, 8, 0.3);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { backgroundColor: bgColor, overflow: "hidden" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    "div",
+const CleanLight = ({ bgColor }) => {
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
     {
       style: {
-        position: "absolute",
-        inset: -40,
-        backgroundImage: `radial-gradient(circle, ${dotColor} ${dotSize}px, transparent ${dotSize}px)`,
-        backgroundSize: `${spacing}px ${spacing}px`,
-        willChange: "transform",
-        transform: `translateY(${floatY}px)`
+        backgroundColor: bgColor
       }
     }
-  ) });
+  );
 };
-const LineWave = ({ bgColor, lineColor = "rgba(255,255,255,0.04)", lineCount = 8 }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { width, height } = (0,esm.useVideoConfig)();
-  const lines = (0,react.useMemo)(() => {
-    return Array.from({ length: lineCount }).map((_, i) => ({
-      y: height / (lineCount + 1) * (i + 1),
-      amplitude: 30 + i * 8,
-      frequency: 3e-3 + i * 5e-4,
-      speed: 0.02 + i * 5e-3,
-      phase: i * 1.2
-    }));
-  }, [lineCount, height]);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { backgroundColor: bgColor }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("svg", { width, height, style: { position: "absolute", inset: 0 }, children: lines.map((line, i) => {
-    const points = [];
-    for (let x = 0; x <= width; x += 10) {
-      const y = line.y + Math.sin(x * line.frequency + frame * line.speed + line.phase) * line.amplitude;
-      points.push(`${x},${y}`);
-    }
-    return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      "polyline",
-      {
-        points: points.join(" "),
-        fill: "none",
-        stroke: lineColor,
-        strokeWidth: 1.5,
-        strokeLinecap: "round",
-        opacity: 0.5 + i / lineCount * 0.5
-      },
-      i
-    );
-  }) }) });
-};
-const ParticleField = ({ bgColor, particleColor = "rgba(255,255,255,0.4)", count = 25 }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { width, height } = (0,esm.useVideoConfig)();
-  const particles = (0,react.useMemo)(() => {
-    return Array.from({ length: count }).map((_, i) => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      size: 2 + Math.random() * 4,
-      speedX: (Math.random() - 0.5) * 0.3,
-      speedY: -0.2 - Math.random() * 0.4,
-      opacity: 0.15 + Math.random() * 0.35,
-      phase: Math.random() * Math.PI * 2
-    }));
-  }, [count, width, height]);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { backgroundColor: bgColor, overflow: "hidden" }, children: particles.map((p, i) => {
-    const x = (p.x + frame * p.speedX + Math.sin(frame * 0.01 + p.phase) * 20) % (width + 40) - 20;
-    const y = (p.y + frame * p.speedY) % (height + 40) - 20;
-    const pulse = Math.sin(frame * 0.03 + p.phase) * 0.3 + 0.7;
-    return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      "div",
-      {
-        style: {
-          position: "absolute",
-          left: x,
-          top: y,
-          width: p.size,
-          height: p.size,
-          borderRadius: "50%",
-          backgroundColor: particleColor,
-          opacity: p.opacity * pulse,
-          willChange: "transform"
-        }
-      },
-      i
-    );
-  }) });
-};
-const GeometricPattern = ({ bgColor, shapeColor = "rgba(255,255,255,0.03)" }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { width, height } = (0,esm.useVideoConfig)();
-  const rotation = getRotation(frame, 30, 0.05);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { backgroundColor: bgColor, overflow: "hidden" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    "div",
+const SoftGradient = ({ bgColor, primaryColor }) => {
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
     {
       style: {
-        position: "absolute",
-        left: "50%",
-        top: "50%",
-        width: Math.max(width, height) * 1.5,
-        height: Math.max(width, height) * 1.5,
-        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-        willChange: "transform"
-      },
-      children: Array.from({ length: 6 }).map((_, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        "div",
-        {
-          style: {
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            width: 200 + i * 180,
-            height: 200 + i * 180,
-            border: `1px solid ${shapeColor}`,
-            transform: `translate(-50%, -50%) rotate(${i * 15}deg)`,
-            borderRadius: i % 2 === 0 ? "30%" : "50%"
-          }
-        },
-        i
-      ))
-    }
-  ) });
-};
-const RadialSpotlight = ({ bgColor, spotlightColor }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const t = frame / 300;
-  const x = 50 + Math.sin(t * Math.PI * 2) * 30;
-  const y = 50 + Math.cos(t * Math.PI * 1.5) * 25;
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { backgroundColor: bgColor }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    "div",
-    {
-      style: {
-        position: "absolute",
-        inset: 0,
-        background: `radial-gradient(circle at ${x}% ${y}%, ${spotlightColor}15 0%, transparent 50%)`
+        background: `linear-gradient(165deg, ${bgColor} 0%, ${bgColor} 60%, ${primaryColor}08 100%)`
       }
     }
-  ) });
+  );
 };
 const Backgrounds = {
-  gradientMesh: GradientMesh,
-  dotGrid: DotGrid,
-  lineWave: LineWave,
-  particleField: ParticleField,
-  geometric: GeometricPattern,
-  radialSpotlight: RadialSpotlight
+  cleanLight: CleanLight,
+  softGradient: SoftGradient
 };
 const getBackgroundForSceneType = (type) => {
-  const map = {
-    title: "gradientMesh",
-    problem: "dotGrid",
-    solution: "gradientMesh",
-    feature: "lineWave",
-    benefit: "particleField",
-    process: "geometric",
-    stats: "radialSpotlight",
-    socialProof: "gradientMesh",
-    comparison: "dotGrid",
-    cta: "gradientMesh"
-  };
-  return map[type] || "gradientMesh";
+  switch (type) {
+    case "statement":
+    case "title":
+    case "problem":
+    case "solution":
+      return "cleanLight";
+    case "evidence":
+    case "feature":
+    case "benefit":
+    case "flow":
+    case "process":
+      return "softGradient";
+    case "metric":
+    case "stats":
+    case "lockup":
+    case "cta":
+      return "cleanLight";
+    default:
+      return "cleanLight";
+  }
 };
 
 ;// ./src/transitions.tsx
@@ -657,12 +472,12 @@ const TransitionOverlay = ({ type, progress, primaryColor, secondaryColor }) => 
 
 
 const LogoOverlay = ({ logoUrl, primaryColor, delay = 0, position = "topLeft", size = 52 }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { fps } = (0,esm.useVideoConfig)();
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   if (!logoUrl || logoUrl.trim().length === 0) return null;
-  const s = animations_getSpringProgress(frame, fps, delay, { damping: 16, stiffness: 110, mass: 1, overshootClamping: false });
-  const opacity = (0,esm.interpolate)(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" });
-  const y = (0,esm.interpolate)(s, [0, 1], [-20, 0]);
+  const s = getSpringProgress(frame, fps, delay, { damping: 16, stiffness: 110, mass: 1, overshootClamping: false });
+  const opacity = interpolate(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" });
+  const y = interpolate(s, [0, 1], [-20, 0]);
   const positions = {
     topLeft: { top: 32, left: 40 },
     topRight: { top: 32, right: 40 },
@@ -670,7 +485,7 @@ const LogoOverlay = ({ logoUrl, primaryColor, delay = 0, position = "topLeft", s
     bottomRight: { bottom: 32, right: 40 },
     center: { top: "50%", left: "50%", transform: "translate(-50%, -50%)" }
   };
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       style: {
@@ -685,7 +500,7 @@ const LogoOverlay = ({ logoUrl, primaryColor, delay = 0, position = "topLeft", s
         ...positions[position]
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        /* @__PURE__ */ jsx(
           "div",
           {
             style: {
@@ -700,8 +515,8 @@ const LogoOverlay = ({ logoUrl, primaryColor, delay = 0, position = "topLeft", s
             }
           }
         ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          esm.Img,
+        /* @__PURE__ */ jsx(
+          Img,
           {
             src: logoUrl,
             style: {
@@ -718,11 +533,11 @@ const LogoOverlay = ({ logoUrl, primaryColor, delay = 0, position = "topLeft", s
   );
 };
 const ProgressBar = ({ progress, primaryColor, secondaryColor, thickness = 3 }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { fps } = (0,esm.useVideoConfig)();
-  const s = animations_getSpringProgress(frame, fps, 0, GENTLE_SPRING);
-  const fillWidth = (0,esm.interpolate)(s, [0, 1], [0, progress * 100]);
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const s = getSpringProgress(frame, fps, 0, GENTLE_SPRING);
+  const fillWidth = interpolate(s, [0, 1], [0, progress * 100]);
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       style: {
@@ -735,7 +550,7 @@ const ProgressBar = ({ progress, primaryColor, secondaryColor, thickness = 3 }) 
         zIndex: 50
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        /* @__PURE__ */ jsx(
           "div",
           {
             style: {
@@ -748,7 +563,7 @@ const ProgressBar = ({ progress, primaryColor, secondaryColor, thickness = 3 }) 
             }
           }
         ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        /* @__PURE__ */ jsx(
           "div",
           {
             style: {
@@ -769,9 +584,9 @@ const ProgressBar = ({ progress, primaryColor, secondaryColor, thickness = 3 }) 
   );
 };
 const SceneCounter = ({ current, total, textColor, delay = 5 }) => {
-  const frame = (0,esm.useCurrentFrame)();
+  const frame = useCurrentFrame();
   const fade = getFadeIn(frame, 12, delay);
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       style: {
@@ -796,13 +611,13 @@ const SceneCounter = ({ current, total, textColor, delay = 5 }) => {
   );
 };
 const LowerThirdBar = ({ text, primaryColor, delay = 5 }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { fps } = (0,esm.useVideoConfig)();
-  const barS = animations_getSpringProgress(frame, fps, delay, { damping: 16, stiffness: 120, mass: 1, overshootClamping: false });
-  const textS = animations_getSpringProgress(frame, fps, animations_getStaggerDelay(0, delay, 10), animations_DEFAULT_SPRING);
-  const barScaleX = (0,esm.interpolate)(barS, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const textOpacity = (0,esm.interpolate)(textS, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const barS = getSpringProgress(frame, fps, delay, { damping: 16, stiffness: 120, mass: 1, overshootClamping: false });
+  const textS = getSpringProgress(frame, fps, getStaggerDelay(0, delay, 10), DEFAULT_SPRING);
+  const barScaleX = interpolate(barS, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const textOpacity = interpolate(textS, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       style: {
@@ -812,7 +627,7 @@ const LowerThirdBar = ({ text, primaryColor, delay = 5 }) => {
         zIndex: 50
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        /* @__PURE__ */ jsx(
           "div",
           {
             style: {
@@ -827,7 +642,7 @@ const LowerThirdBar = ({ text, primaryColor, delay = 5 }) => {
             }
           }
         ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        /* @__PURE__ */ jsx(
           "p",
           {
             style: {
@@ -975,1080 +790,133 @@ const CinematicOverlay = () => {
   );
 };
 
-;// ./src/text-animations.tsx
-
-
-
-
-
-const WordReveal = ({ text, delay = 0, stagger = 3, style, fps: propFps, config = animations_DEFAULT_SPRING }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { fps: videoFps } = (0,esm.useVideoConfig)();
-  const fps = propFps || videoFps;
-  const words = (0,react.useMemo)(() => text.split(" "), [text]);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { display: "inline-flex", flexWrap: "wrap", gap: "0.25em", ...style }, children: words.map((word, i) => {
-    const s = animations_getSpringProgress(frame, fps, animations_getStaggerDelay(i, delay, stagger), config);
-    return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      "span",
-      {
-        style: {
-          display: "inline-block",
-          opacity: (0,esm.interpolate)(s, [0, 0.5, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-          transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [18, 0])}px)`,
-          willChange: "transform, opacity"
-        },
-        children: word
-      },
-      i
-    );
-  }) });
-};
-const CharReveal = ({ text, delay = 0, stagger = 2, style, fps: propFps }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { fps: videoFps } = (0,esm.useVideoConfig)();
-  const fps = propFps || videoFps;
-  const chars = (0,react.useMemo)(() => text.split(""), [text]);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { display: "inline", ...style }, children: chars.map((char, i) => {
-    if (char === " ") return /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { children: "\xA0" }, i);
-    const s = animations_getSpringProgress(frame, fps, delay + i * stagger, SNAPPY_SPRING);
-    return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      "span",
-      {
-        style: {
-          display: "inline-block",
-          opacity: (0,esm.interpolate)(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-          transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [14, 0])}px) scale(${(0,esm.interpolate)(s, [0, 1], [0.85, 1])})`,
-          willChange: "transform, opacity"
-        },
-        children: char
-      },
-      i
-    );
-  }) });
-};
-const Typewriter = ({ text, delay = 0, charsPerFrame = 0.5, cursorBlink = true, cursorColor = "currentColor", style }) => {
-  const frame = useCurrentFrame();
-  const visible = getTypewriterProgress(frame, delay, charsPerFrame);
-  const showCursor = cursorBlink && Math.floor(frame / 8) % 2 === 0;
-  return /* @__PURE__ */ jsxs("span", { style: { display: "inline", ...style }, children: [
-    text.slice(0, visible),
-    showCursor && /* @__PURE__ */ jsx("span", { style: { color: cursorColor, opacity: 0.7 }, children: "|" })
-  ] });
-};
-const TextHighlight = ({ text, delay = 0, highlightColor = "#4f46e520", textStyle, fps: propFps }) => {
-  const frame = useCurrentFrame();
-  const { fps: videoFps } = useVideoConfig();
-  const fps = propFps || videoFps;
-  const progress = getHighlightProgress(frame, fps, delay, 25);
-  return /* @__PURE__ */ jsxs("span", { style: { position: "relative", display: "inline" }, children: [
-    /* @__PURE__ */ jsx(
-      "span",
-      {
-        style: {
-          position: "absolute",
-          left: 0,
-          top: "10%",
-          height: "80%",
-          width: `${progress}%`,
-          backgroundColor: highlightColor,
-          borderRadius: 4,
-          zIndex: -1,
-          transition: "none"
-        }
-      }
-    ),
-    /* @__PURE__ */ jsx("span", { style: { ...textStyle }, children: text })
-  ] });
-};
-const ScrambleReveal = ({ text, delay = 0, duration = 40, style, fps: propFps }) => {
-  const frame = useCurrentFrame();
-  const { fps: videoFps } = useVideoConfig();
-  const fps = propFps || videoFps;
-  const scrambled = getScrambleReveal(frame, fps, text, delay, duration);
-  return /* @__PURE__ */ jsx("span", { style: { display: "inline", fontVariantNumeric: "tabular-nums", ...style }, children: scrambled });
-};
-const StaggeredLines = ({ lines, delay = 0, stagger = 8, lineStyle, containerStyle }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  return /* @__PURE__ */ jsx("div", { style: { display: "flex", flexDirection: "column", gap: "0.3em", ...containerStyle }, children: lines.map((line, i) => {
-    const s = getSpringProgress(frame, fps, getStaggerDelay(i, delay, stagger), DEFAULT_SPRING);
-    return /* @__PURE__ */ jsx(
-      "div",
-      {
-        style: {
-          opacity: interpolate(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-          transform: `translateX(${interpolate(s, [0, 1], [-40, 0])}px)`,
-          willChange: "transform, opacity",
-          ...lineStyle
-        },
-        children: line
-      },
-      i
-    );
-  }) });
-};
-const AnimatedNumber = ({ value, suffix = "", prefix = "", delay = 0, duration = 45, style }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const t = Math.max(0, Math.min(1, (frame - delay) / duration));
-  const eased = 1 - Math.pow(1 - t, 3);
-  const displayValue = Math.round(eased * value);
-  return /* @__PURE__ */ jsxs("span", { style: { fontVariantNumeric: "tabular-nums", ...style }, children: [
-    prefix,
-    displayValue.toLocaleString(),
-    suffix
-  ] });
-};
-const BouncyText = ({ text, delay = 0, style, fps: propFps }) => {
-  const frame = (0,esm.useCurrentFrame)();
-  const { fps: videoFps } = (0,esm.useVideoConfig)();
-  const fps = propFps || videoFps;
-  const s = animations_getSpringProgress(frame, fps, delay, BOUNCY_SPRING);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    "span",
-    {
-      style: {
-        display: "inline-block",
-        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-        transform: `scale(${(0,esm.interpolate)(s, [0, 0.6, 1], [0.5, 1.08, 1])})`,
-        willChange: "transform, opacity",
-        ...style
-      },
-      children: text
-    }
-  );
-};
-const MaskReveal = ({ text, delay = 0, duration = 20, direction = "left", style }) => {
-  const frame = useCurrentFrame();
-  const progress = interpolate(frame, [delay, delay + duration], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
-  const clipPaths = {
-    left: `inset(0 ${100 - progress * 100}% 0 0)`,
-    right: `inset(0 0 0 ${100 - progress * 100}%)`,
-    up: `inset(${100 - progress * 100}% 0 0 0)`,
-    down: `inset(0 0 ${100 - progress * 100}% 0)`
-  };
-  return /* @__PURE__ */ jsx(
-    "span",
-    {
-      style: {
-        display: "inline-block",
-        clipPath: clipPaths[direction],
-        willChange: "clip-path",
-        ...style
-      },
-      children: text
-    }
-  );
-};
-const ShimmerText = ({ text, delay = 0, duration = 60, shimmerColor = "rgba(255,255,255,0.3)", style }) => {
-  const frame = useCurrentFrame();
-  const progress = interpolate(frame, [delay, delay + duration], [-1, 2], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp"
-  });
-  return /* @__PURE__ */ jsx(
-    "span",
-    {
-      style: {
-        display: "inline-block",
-        backgroundImage: `linear-gradient(90deg, transparent, ${shimmerColor}, transparent)`,
-        backgroundSize: "200% 100%",
-        backgroundPosition: `${progress * 100}% 0`,
-        WebkitBackgroundClip: "text",
-        backgroundClip: "text",
-        color: "transparent",
-        ...style
-      },
-      children: text
-    }
-  );
-};
-
+// EXTERNAL MODULE: ./node_modules/react/index.js
+var react = __webpack_require__(96540);
 ;// ./src/scenes.tsx
 
 
 
 
 
-
-const FONT_HEADING = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-const FONT_BODY = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-const FONT_QUOTE = 'Georgia, "Times New Roman", serif';
-const TitleScene = ({
+const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const cardShadow = "0 4px 24px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)";
+const cardRadius = 20;
+const SceneWrapper = ({ frame, fps, duration, direction = "left", children }) => {
+  const entrance = getEntrance(frame, fps, 0);
+  const exit = getExit(frame, duration, direction, TRANSITION_FRAMES, fps);
+  return /* @__PURE__ */ jsx(
+    AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateY(${entrance.y + exit.y}px) translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children
+    }
+  );
+};
+const StatementScene = ({
   scene,
-  primaryColor,
-  secondaryColor,
   textColor,
   frame,
   fps,
   duration
 }) => {
-  const entrance = getEntrance(frame, fps, 0);
-  const subEntrance = getSlideIn(frame, fps, 12, 30);
-  const lineS = animations_getSpringProgress(frame, fps, 20, SNAPPY_SPRING);
-  const exit = getExit(frame, duration, "left", TRANSITION_FRAMES, fps);
-  const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 160], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "down", animations_TRANSITION_FRAMES, fps);
+  const lines = scene.text.split(". ").filter(Boolean);
+  const isMultiLine = lines.length > 1 && scene.text.length > 30;
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
     esm.AbsoluteFill,
     {
       style: {
         justifyContent: "center",
         alignItems: "center",
+        padding: "0 8%",
         opacity: entrance.opacity * exit.opacity,
         transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
         willChange: "transform, opacity"
       },
-      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center", maxWidth: "78%", zIndex: 2 }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "h1",
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { textAlign: "center", maxWidth: "90%" }, children: isMultiLine ? lines.map((line, i) => {
+        const s = animations_getSpringProgress(frame, fps, i * 6, SNAPPY_SPRING);
+        return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+          "div",
           {
             style: {
-              fontFamily: FONT_HEADING,
-              fontSize: "82px",
-              fontWeight: 900,
-              lineHeight: 1.08,
+              fontFamily: FONT,
+              fontSize: line.length < 15 ? "110px" : line.length < 30 ? "92px" : "76px",
+              fontWeight: 800,
+              lineHeight: 1.05,
               color: textColor,
-              margin: "0 0 18px 0",
+              letterSpacing: "-0.035em",
               textWrap: "balance",
-              letterSpacing: "-0.03em"
-            },
-            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(WordReveal, { text: scene.text, delay: 5, stagger: 4 })
-          }
-        ),
-        scene.subtext && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "p",
-          {
-            style: {
-              fontFamily: FONT_BODY,
-              fontSize: "28px",
-              fontWeight: 400,
-              lineHeight: 1.4,
-              color: `${textColor}90`,
-              margin: "0 0 26px 0",
-              opacity: subEntrance.opacity,
-              transform: `translateY(${subEntrance.y}px)`,
-              willChange: "transform, opacity"
-            },
-            children: scene.subtext
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              height: 5,
-              width: lineWidth,
-              background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`,
-              borderRadius: 3,
-              margin: "0 auto",
-              boxShadow: `0 0 20px ${primaryColor}40`
-            }
-          }
-        )
-      ] })
-    }
-  );
-};
-const ProblemScene = ({
-  scene,
-  primaryColor,
-  textColor,
-  accentColor,
-  frame,
-  fps,
-  duration
-}) => {
-  const entrance = getEntrance(frame, fps, 0, GENTLE_SPRING);
-  const exit = getExit(frame, duration, "down", TRANSITION_FRAMES, fps);
-  const floatY = getFloat(frame, fps, 6, 0.4);
-  const problems = scene.text.split(/[.\n]/).filter((s) => s.trim().length > 3).slice(0, 3);
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: entrance.opacity * exit.opacity,
-        transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
-        willChange: "transform, opacity"
-      },
-      children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: 500,
-              height: 500,
-              transform: `translate(-50%, -50%) translateY(${floatY}px)`,
-              borderRadius: "50%",
-              border: `1px solid ${accentColor}15`,
-              willChange: "transform"
-            }
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              width: 700,
-              height: 700,
-              transform: `translate(-50%, -50%)`,
-              borderRadius: "50%",
-              border: `1px solid ${accentColor}08`
-            }
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { maxWidth: "68%", textAlign: "center", zIndex: 2 }, children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-            "div",
-            {
-              style: {
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 20,
-                opacity: getFadeIn(frame, 15, 0)
-              },
-              children: [
-                /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 8, height: 8, borderRadius: "50%", backgroundColor: accentColor } }),
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "span",
-                  {
-                    style: {
-                      fontFamily: FONT_BODY,
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: accentColor,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase"
-                    },
-                    children: "The Problem"
-                  }
-                )
-              ]
-            }
-          ),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            "h2",
-            {
-              style: {
-                fontFamily: FONT_HEADING,
-                fontSize: "56px",
-                fontWeight: 800,
-                lineHeight: 1.15,
-                color: textColor,
-                margin: "0 0 28px 0",
-                textWrap: "balance",
-                letterSpacing: "-0.02em"
-              },
-              children: /* @__PURE__ */ (0,jsx_runtime.jsx)(WordReveal, { text: scene.subtext || scene.text, delay: 5, stagger: 4 })
-            }
-          ),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: 14, alignItems: "center" }, children: problems.map((problem, i) => {
-            const s = animations_getSpringProgress(frame, fps, animations_getStaggerDelay(i, 20, 8), animations_DEFAULT_SPRING);
-            return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-              "div",
-              {
-                style: {
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "14px 22px",
-                  backgroundColor: `${accentColor}08`,
-                  borderRadius: 10,
-                  borderLeft: `3px solid ${accentColor}60`,
-                  opacity: (0,esm.interpolate)(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                  transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [20, 0])}px)`,
-                  willChange: "transform, opacity",
-                  maxWidth: "90%"
-                },
-                children: [
-                  /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { color: accentColor, fontSize: 18, fontWeight: 700, flexShrink: 0 }, children: "\xD7" }),
-                  /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                    "span",
-                    {
-                      style: {
-                        fontFamily: FONT_BODY,
-                        fontSize: "20px",
-                        fontWeight: 500,
-                        lineHeight: 1.4,
-                        color: `${textColor}cc`,
-                        textAlign: "left"
-                      },
-                      children: problem.trim()
-                    }
-                  )
-                ]
-              },
-              i
-            );
-          }) })
-        ] })
-      ]
-    }
-  );
-};
-const SolutionScene = ({
-  scene,
-  primaryColor,
-  secondaryColor,
-  textColor,
-  frame,
-  fps,
-  duration
-}) => {
-  const entrance = getScaleIn(frame, fps, 0, BOUNCY_SPRING);
-  const subEntrance = getSlideIn(frame, fps, 15, 40);
-  const exit = getExit(frame, duration, "up", TRANSITION_FRAMES, fps);
-  const lineS = animations_getSpringProgress(frame, fps, 25, SNAPPY_SPRING);
-  const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 200], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const glowPulse = getPulse(frame, fps, 1.2);
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: entrance.opacity * exit.opacity,
-        transform: `scale(${entrance.scale * exit.scale})`,
-        willChange: "transform, opacity"
-      },
-      children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              position: "absolute",
-              width: 500,
-              height: 500,
-              borderRadius: "50%",
-              background: `radial-gradient(circle, ${primaryColor}${Math.round(glowPulse * 30).toString(16).padStart(2, "0")} 0%, transparent 65%)`,
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)"
-            }
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center", maxWidth: "76%", zIndex: 2 }, children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-            "div",
-            {
-              style: {
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 16,
-                opacity: getFadeIn(frame, 12, 0)
-              },
-              children: [
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "div",
-                  {
-                    style: {
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor: primaryColor,
-                      boxShadow: `0 0 10px ${primaryColor}60`
-                    }
-                  }
-                ),
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "span",
-                  {
-                    style: {
-                      fontFamily: FONT_BODY,
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: primaryColor,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase"
-                    },
-                    children: "The Solution"
-                  }
-                )
-              ]
-            }
-          ),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            "h1",
-            {
-              style: {
-                fontFamily: FONT_HEADING,
-                fontSize: "76px",
-                fontWeight: 900,
-                lineHeight: 1.08,
-                color: textColor,
-                margin: "0 0 18px 0",
-                textWrap: "balance",
-                letterSpacing: "-0.03em"
-              },
-              children: /* @__PURE__ */ (0,jsx_runtime.jsx)(BouncyText, { text: scene.text, delay: 5 })
-            }
-          ),
-          scene.subtext && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            "p",
-            {
-              style: {
-                fontFamily: FONT_BODY,
-                fontSize: "26px",
-                fontWeight: 400,
-                lineHeight: 1.5,
-                color: `${textColor}88`,
-                margin: "0 0 28px 0",
-                opacity: subEntrance.opacity,
-                transform: `translateY(${subEntrance.y}px)`,
-                willChange: "transform, opacity"
-              },
-              children: scene.subtext
-            }
-          ),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            "div",
-            {
-              style: {
-                height: 5,
-                width: lineWidth,
-                background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`,
-                borderRadius: 3,
-                margin: "0 auto",
-                boxShadow: `0 0 20px ${primaryColor}50`
-              }
-            }
-          )
-        ] })
-      ]
-    }
-  );
-};
-const FeatureScene = ({
-  scene,
-  primaryColor,
-  secondaryColor,
-  textColor,
-  frame,
-  fps,
-  duration
-}) => {
-  const textEntrance = getEntrance(frame, fps, 0);
-  const imgEntrance = getScaleIn(frame, fps, 8);
-  const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
-  const hasImage = scene.imageUrl && scene.imageUrl.trim().length > 0;
-  const kenBurns = getKenBurns(frame, duration);
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        flexDirection: hasImage ? "row" : "column",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: hasImage ? "0 70px" : "0",
-        gap: hasImage ? 50 : 0,
-        opacity: exit.opacity,
-        transform: `translateX(${exit.x}px)`,
-        willChange: "transform, opacity"
-      },
-      children: [
-        hasImage && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              flex: 1,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              opacity: imgEntrance.opacity,
-              transform: `scale(${imgEntrance.scale})`,
-              willChange: "transform, opacity"
-            },
-            children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-              "div",
-              {
-                style: {
-                  borderRadius: 20,
-                  overflow: "hidden",
-                  boxShadow: `0 25px 70px rgba(0,0,0,0.45), 0 0 0 1px ${primaryColor}15`,
-                  border: `2px solid ${primaryColor}1a`,
-                  maxWidth: "92%",
-                  position: "relative"
-                },
-                children: [
-                  /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                    esm.Img,
-                    {
-                      src: scene.imageUrl || "",
-                      style: {
-                        width: "100%",
-                        maxHeight: 480,
-                        objectFit: "cover",
-                        display: "block",
-                        transform: `scale(${kenBurns})`,
-                        willChange: "transform"
-                      }
-                    }
-                  ),
-                  /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                    "div",
-                    {
-                      style: {
-                        position: "absolute",
-                        inset: 0,
-                        background: `linear-gradient(180deg, transparent 60%, ${primaryColor}12 100%)`,
-                        pointerEvents: "none"
-                      }
-                    }
-                  )
-                ]
-              }
-            )
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-          "div",
-          {
-            style: {
-              flex: hasImage ? 1 : void 0,
-              maxWidth: hasImage ? "48%" : "72%",
-              opacity: textEntrance.opacity,
-              transform: `translateY(${textEntrance.y}px) scale(${textEntrance.scale})`,
-              zIndex: 2,
-              willChange: "transform, opacity"
+              opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+              transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [30, 0])}px)`,
+              willChange: "transform, opacity",
+              marginBottom: i < lines.length - 1 ? 12 : 0
             },
             children: [
-              /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                "h2",
-                {
-                  style: {
-                    fontFamily: FONT_HEADING,
-                    fontSize: hasImage ? "50px" : "62px",
-                    fontWeight: 800,
-                    lineHeight: 1.12,
-                    color: textColor,
-                    margin: "0 0 16px 0",
-                    textWrap: "balance",
-                    letterSpacing: "-0.02em"
-                  },
-                  children: /* @__PURE__ */ (0,jsx_runtime.jsx)(WordReveal, { text: scene.text, delay: 5, stagger: 3 })
-                }
-              ),
-              scene.subtext && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                "p",
-                {
-                  style: {
-                    fontFamily: FONT_BODY,
-                    fontSize: "22px",
-                    fontWeight: 400,
-                    lineHeight: 1.5,
-                    color: `${textColor}80`,
-                    margin: "0 0 22px 0"
-                  },
-                  children: scene.subtext
-                }
-              ),
-              /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                "div",
-                {
-                  style: {
-                    height: 4,
-                    width: 90,
-                    background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`,
-                    borderRadius: 2,
-                    boxShadow: `0 0 12px ${primaryColor}30`
-                  }
-                }
-              )
+              line,
+              i < lines.length - 1 ? "" : ""
             ]
-          }
-        )
-      ]
+          },
+          i
+        );
+      }) : /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        "div",
+        {
+          style: {
+            fontFamily: FONT,
+            fontSize: scene.text.length < 15 ? "120px" : scene.text.length < 30 ? "96px" : "78px",
+            fontWeight: 800,
+            lineHeight: 1.05,
+            color: textColor,
+            letterSpacing: "-0.035em",
+            textWrap: "balance"
+          },
+          children: scene.text
+        }
+      ) })
     }
   );
 };
-const BenefitScene = ({
+const EvidenceScene = ({
   scene,
   primaryColor,
-  secondaryColor,
   textColor,
   frame,
   fps,
   duration
 }) => {
-  const titleEntrance = getSlideIn(frame, fps, 0, -40);
-  const exit = getExit(frame, duration, "left", TRANSITION_FRAMES, fps);
-  const rawItems = scene.text.split(/[.\n•]/).filter((s) => s.trim().length > 2).slice(0, 4);
-  const items = rawItems.length > 0 ? rawItems : [scene.text];
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "right", animations_TRANSITION_FRAMES, fps);
+  const cardS = animations_getSpringProgress(frame, fps, 8, animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
     esm.AbsoluteFill,
     {
       style: {
         justifyContent: "center",
         alignItems: "center",
-        padding: "0 70px",
-        opacity: exit.opacity,
-        transform: `translateX(${exit.x}px) scale(${exit.scale})`,
-        willChange: "transform, opacity"
-      },
-      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { maxWidth: "72%", width: "100%" }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "h2",
-          {
-            style: {
-              fontFamily: FONT_HEADING,
-              fontSize: "52px",
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: textColor,
-              margin: "0 0 10px 0",
-              textWrap: "balance",
-              letterSpacing: "-0.02em",
-              opacity: titleEntrance.opacity,
-              transform: `translateY(${titleEntrance.y}px)`,
-              willChange: "transform, opacity"
-            },
-            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(WordReveal, { text: scene.subtext || "Benefits", delay: 0, stagger: 4 })
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              height: 4,
-              width: 100,
-              background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`,
-              borderRadius: 2,
-              marginBottom: 32,
-              opacity: titleEntrance.opacity,
-              transform: `translateY(${titleEntrance.y}px)`,
-              willChange: "transform, opacity"
-            }
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: 16 }, children: items.map((item, i) => {
-          const s = animations_getSpringProgress(frame, fps, animations_getStaggerDelay(i, 15, 7), animations_DEFAULT_SPRING);
-          return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-            "div",
-            {
-              style: {
-                display: "flex",
-                alignItems: "center",
-                gap: 18,
-                padding: "16px 22px",
-                backgroundColor: `${primaryColor}08`,
-                borderRadius: 14,
-                border: `1px solid ${primaryColor}12`,
-                opacity: (0,esm.interpolate)(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                transform: `translateX(${(0,esm.interpolate)(s, [0, 1], [-50, 0])}px)`,
-                boxShadow: `0 4px 20px rgba(0,0,0,0.12)`,
-                willChange: "transform, opacity"
-              },
-              children: [
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "div",
-                  {
-                    style: {
-                      width: 34,
-                      height: 34,
-                      borderRadius: "50%",
-                      background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      transform: `scale(${(0,esm.interpolate)(s, [0, 0.6, 1], [0, 1.15, 1], { extrapolateLeft: "clamp" })})`,
-                      willChange: "transform"
-                    },
-                    children: /* @__PURE__ */ (0,jsx_runtime.jsx)("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "white", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round", children: /* @__PURE__ */ (0,jsx_runtime.jsx)("polyline", { points: "20 6 9 17 4 12" }) })
-                  }
-                ),
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "span",
-                  {
-                    style: {
-                      fontFamily: FONT_BODY,
-                      fontSize: "20px",
-                      fontWeight: 500,
-                      lineHeight: 1.4,
-                      color: textColor
-                    },
-                    children: item.trim()
-                  }
-                )
-              ]
-            },
-            i
-          );
-        }) })
-      ] })
-    }
-  );
-};
-const ProcessScene = ({
-  scene,
-  primaryColor,
-  secondaryColor,
-  textColor,
-  frame,
-  fps,
-  duration
-}) => {
-  const entrance = getEntrance(frame, fps, 0);
-  const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
-  const steps = scene.text.split(/[.\n]/).filter((s) => s.trim().length > 3).slice(0, 4);
-  const stepLabels = ["Step 1", "Step 2", "Step 3", "Step 4"];
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "0 60px",
+        padding: "0 10%",
         opacity: entrance.opacity * exit.opacity,
-        transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
-        willChange: "transform, opacity"
-      },
-      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { maxWidth: "80%", width: "100%" }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "h2",
-          {
-            style: {
-              fontFamily: FONT_HEADING,
-              fontSize: "50px",
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: textColor,
-              margin: "0 0 36px 0",
-              textWrap: "balance",
-              letterSpacing: "-0.02em",
-              textAlign: "center"
-            },
-            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(WordReveal, { text: scene.subtext || "How It Works", delay: 0, stagger: 4 })
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", gap: 20, justifyContent: "center" }, children: steps.map((step, i) => {
-          const s = animations_getSpringProgress(frame, fps, animations_getStaggerDelay(i, 12, 10), BOUNCY_SPRING);
-          const lineProgress = animations_getSpringProgress(frame, fps, animations_getStaggerDelay(i, 18, 10), animations_DEFAULT_SPRING);
-          return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 0 }, children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-              "div",
-              {
-                style: {
-                  width: 220,
-                  padding: "24px 20px",
-                  backgroundColor: `${primaryColor}08`,
-                  borderRadius: 16,
-                  border: `1px solid ${primaryColor}12`,
-                  textAlign: "center",
-                  opacity: (0,esm.interpolate)(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                  transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [40, 0])}px) scale(${(0,esm.interpolate)(s, [0, 1], [0.9, 1])})`,
-                  willChange: "transform, opacity",
-                  boxShadow: `0 8px 30px rgba(0,0,0,0.15)`
-                },
-                children: [
-                  /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                    "div",
-                    {
-                      style: {
-                        width: 44,
-                        height: 44,
-                        borderRadius: "50%",
-                        background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        margin: "0 auto 12px auto",
-                        fontFamily: FONT_HEADING,
-                        fontSize: 18,
-                        fontWeight: 800,
-                        color: "white"
-                      },
-                      children: i + 1
-                    }
-                  ),
-                  /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                    "span",
-                    {
-                      style: {
-                        fontFamily: FONT_BODY,
-                        fontSize: "15px",
-                        fontWeight: 500,
-                        lineHeight: 1.4,
-                        color: textColor
-                      },
-                      children: step.trim()
-                    }
-                  )
-                ]
-              }
-            ),
-            i < steps.length - 1 && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-              "div",
-              {
-                style: {
-                  width: 30,
-                  height: 2,
-                  backgroundColor: `${primaryColor}30`,
-                  opacity: (0,esm.interpolate)(lineProgress, [0, 1], [0, 1], { extrapolateLeft: "clamp" }),
-                  willChange: "opacity"
-                }
-              }
-            )
-          ] }, i);
-        }) })
-      ] })
-    }
-  );
-};
-const StatsScene = ({
-  scene,
-  primaryColor,
-  secondaryColor,
-  textColor,
-  frame,
-  fps,
-  duration
-}) => {
-  const entrance = getEntrance(frame, fps, 0);
-  const exit = getExit(frame, duration, "up", TRANSITION_FRAMES, fps);
-  const numberMatches = scene.text.match(/(\d+(?:[,.]\d+)?)\s*(%|x|X|times|hours?|minutes?|days?|weeks?|months?|years?|K|M|B)?/gi) || [];
-  const labels = scene.text.replace(/(\d+(?:[,.]\d+)?)\s*(%|x|X|times|hours?|minutes?|days?|weeks?|months?|years?|K|M|B)?/gi, "|").split("|").filter((s) => s.trim().length > 2);
-  const stats = [];
-  for (let i = 0; i < Math.max(numberMatches.length, labels.length); i++) {
-    const match = numberMatches[i] || "";
-    const numStr = match.replace(/[^\d.]/g, "");
-    const value = numStr ? parseFloat(numStr) : 0;
-    const suffix = match.replace(/[\d.]/g, "").trim() || "";
-    const label = labels[i] || (i === 0 ? scene.subtext || "" : "");
-    if (value > 0 || label) {
-      stats.push({ value, suffix, label });
-    }
-  }
-  const displayStats = stats.length > 0 ? stats : [
-    { value: 0, suffix: "", label: scene.text }
-  ];
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: entrance.opacity * exit.opacity,
-        transform: `scale(${entrance.scale * exit.scale})`,
-        willChange: "transform, opacity"
-      },
-      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { maxWidth: "80%", textAlign: "center" }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "h2",
-          {
-            style: {
-              fontFamily: FONT_HEADING,
-              fontSize: "44px",
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: textColor,
-              margin: "0 0 40px 0",
-              textWrap: "balance",
-              letterSpacing: "-0.02em"
-            },
-            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(WordReveal, { text: scene.subtext || "The Numbers", delay: 0, stagger: 4 })
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", gap: 40, justifyContent: "center", flexWrap: "wrap" }, children: displayStats.map((stat, i) => {
-          const s = animations_getSpringProgress(frame, fps, animations_getStaggerDelay(i, 10, 12), BOUNCY_SPRING);
-          const counterValue = stat.value > 0 ? getCounter(frame, fps, stat.value, 15 + i * 8, 40) : 0;
-          return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-            "div",
-            {
-              style: {
-                textAlign: "center",
-                opacity: (0,esm.interpolate)(s, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [30, 0])}px)`,
-                willChange: "transform, opacity"
-              },
-              children: [
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "div",
-                  {
-                    style: {
-                      fontFamily: FONT_HEADING,
-                      fontSize: "72px",
-                      fontWeight: 900,
-                      lineHeight: 1,
-                      background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                      WebkitBackgroundClip: "text",
-                      backgroundClip: "text",
-                      color: "transparent",
-                      marginBottom: 8
-                    },
-                    children: stat.value > 0 ? `${counterValue}${stat.suffix}` : "\u2014"
-                  }
-                ),
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "div",
-                  {
-                    style: {
-                      fontFamily: FONT_BODY,
-                      fontSize: "18px",
-                      fontWeight: 500,
-                      color: `${textColor}80`,
-                      maxWidth: 200
-                    },
-                    children: stat.label
-                  }
-                )
-              ]
-            },
-            i
-          );
-        }) })
-      ] })
-    }
-  );
-};
-const SocialProofScene = ({
-  scene,
-  primaryColor,
-  secondaryColor,
-  textColor,
-  frame,
-  fps,
-  duration
-}) => {
-  var _a;
-  const cardEntrance = getScaleIn(frame, fps, 0, GENTLE_SPRING);
-  const quoteS = animations_getSpringProgress(frame, fps, 5, { damping: 12, stiffness: 80, mass: 1, overshootClamping: false });
-  const textEntrance = getEntrance(frame, fps, 15);
-  const exit = getExit(frame, duration, "right", TRANSITION_FRAMES, fps);
-  const quoteScale = (0,esm.interpolate)(quoteS, [0, 1], [0.3, 1]);
-  const quoteOpacity = (0,esm.interpolate)(quoteS, [0, 0.5, 1], [0, 1, 0.1], { extrapolateLeft: "clamp" });
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: exit.opacity,
-        transform: `translateX(${exit.x}px)`,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
         willChange: "transform, opacity"
       },
       children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(
         "div",
         {
           style: {
-            maxWidth: "68%",
+            background: "#ffffff",
+            borderRadius: cardRadius,
+            boxShadow: cardShadow,
+            padding: "48px 56px",
+            maxWidth: "720px",
             width: "100%",
-            textAlign: "center",
-            position: "relative",
-            opacity: cardEntrance.opacity,
-            transform: `scale(${cardEntrance.scale})`,
+            opacity: (0,esm.interpolate)(cardS, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+            transform: `translateY(${(0,esm.interpolate)(cardS, [0, 1], [40, 0])}px)`,
             willChange: "transform, opacity"
           },
           children: [
@@ -2056,82 +924,30 @@ const SocialProofScene = ({
               "div",
               {
                 style: {
-                  fontFamily: FONT_QUOTE,
-                  fontSize: "200px",
-                  lineHeight: 1,
+                  fontFamily: FONT,
+                  fontSize: 13,
+                  fontWeight: 600,
                   color: primaryColor,
-                  position: "absolute",
-                  top: -70,
-                  left: -10,
-                  opacity: quoteOpacity,
-                  transform: `scale(${quoteScale})`,
-                  userSelect: "none",
-                  pointerEvents: "none"
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  marginBottom: 20
                 },
-                children: "\u201C"
+                children: scene.subtext || " "
               }
             ),
             /* @__PURE__ */ (0,jsx_runtime.jsx)(
-              "blockquote",
-              {
-                style: {
-                  fontFamily: FONT_QUOTE,
-                  fontSize: "40px",
-                  fontWeight: 400,
-                  lineHeight: 1.5,
-                  color: textColor,
-                  fontStyle: "italic",
-                  margin: "0 0 26px 0",
-                  opacity: textEntrance.opacity,
-                  transform: `translateY(${textEntrance.y}px)`,
-                  willChange: "transform, opacity"
-                },
-                children: /* @__PURE__ */ (0,jsx_runtime.jsx)(CharReveal, { text: scene.text, delay: 10, stagger: 2 })
-              }
-            ),
-            scene.subtext && /* @__PURE__ */ (0,jsx_runtime.jsxs)(
               "div",
               {
                 style: {
-                  opacity: (0,esm.interpolate)(animations_getSpringProgress(frame, fps, 25, animations_DEFAULT_SPRING), [0, 1], [0, 1], { extrapolateLeft: "clamp" }),
-                  transform: `translateY(${(0,esm.interpolate)(animations_getSpringProgress(frame, fps, 25, animations_DEFAULT_SPRING), [0, 1], [20, 0])}px)`,
-                  willChange: "transform, opacity"
+                  fontFamily: FONT,
+                  fontSize: scene.text.length < 25 ? "52px" : "40px",
+                  fontWeight: 700,
+                  lineHeight: 1.15,
+                  color: textColor,
+                  letterSpacing: "-0.02em",
+                  textWrap: "balance"
                 },
-                children: [
-                  /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                    "div",
-                    {
-                      style: {
-                        width: 48,
-                        height: 48,
-                        borderRadius: "50%",
-                        background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                        margin: "0 auto 10px auto",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "20px",
-                        fontWeight: 700,
-                        color: "white",
-                        fontFamily: FONT_HEADING
-                      },
-                      children: ((_a = scene.subtext[0]) == null ? void 0 : _a.toUpperCase()) || "U"
-                    }
-                  ),
-                  /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                    "p",
-                    {
-                      style: {
-                        fontFamily: FONT_BODY,
-                        fontSize: "17px",
-                        fontWeight: 600,
-                        color: textColor,
-                        margin: "0 0 3px 0"
-                      },
-                      children: scene.subtext
-                    }
-                  )
-                ]
+                children: scene.text
               }
             )
           ]
@@ -2140,24 +956,192 @@ const SocialProofScene = ({
     }
   );
 };
-const ComparisonScene = ({
+const FlowScene = ({
   scene,
   primaryColor,
-  secondaryColor,
   textColor,
-  accentColor,
   frame,
   fps,
   duration
 }) => {
-  var _a, _b;
-  const entrance = getEntrance(frame, fps, 0);
-  const exit = getExit(frame, duration, "left", TRANSITION_FRAMES, fps);
-  const parts = scene.text.split(/(?:vs|versus|compared to|before|after)/i);
-  const beforeText = ((_a = parts[0]) == null ? void 0 : _a.trim()) || "Before";
-  const afterText = ((_b = parts[1]) == null ? void 0 : _b.trim()) || scene.subtext || "After";
-  const beforeS = animations_getSpringProgress(frame, fps, 5, animations_DEFAULT_SPRING);
-  const afterS = animations_getSpringProgress(frame, fps, 20, BOUNCY_SPRING);
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "up", animations_TRANSITION_FRAMES, fps);
+  const steps = scene.text.split(/[→\-\>]/).map((s) => s.trim()).filter(Boolean);
+  const stepCount = steps.length || 1;
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 6%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        "div",
+        {
+          style: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 16,
+            width: "100%",
+            maxWidth: "1100px"
+          },
+          children: steps.map((step, i) => {
+            const s = animations_getSpringProgress(frame, fps, i * 10, animations_DEFAULT_SPRING);
+            const isLast = i === steps.length - 1;
+            return /* @__PURE__ */ (0,jsx_runtime.jsxs)(react.Fragment, { children: [
+              /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+                "div",
+                {
+                  style: {
+                    background: "#ffffff",
+                    borderRadius: 16,
+                    boxShadow: cardShadow,
+                    padding: "28px 32px",
+                    minWidth: 140,
+                    textAlign: "center",
+                    opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+                    transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [30, 0])}px) scale(${(0,esm.interpolate)(s, [0, 1], [0.92, 1])})`,
+                    willChange: "transform, opacity",
+                    flex: 1
+                  },
+                  children: [
+                    /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+                      "div",
+                      {
+                        style: {
+                          fontFamily: FONT,
+                          fontSize: 15,
+                          fontWeight: 600,
+                          color: primaryColor,
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                          marginBottom: 8
+                        },
+                        children: [
+                          "Step ",
+                          i + 1
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                      "div",
+                      {
+                        style: {
+                          fontFamily: FONT,
+                          fontSize: step.length < 15 ? "28px" : "22px",
+                          fontWeight: 700,
+                          lineHeight: 1.2,
+                          color: textColor,
+                          letterSpacing: "-0.01em",
+                          textWrap: "balance"
+                        },
+                        children: step
+                      }
+                    )
+                  ]
+                }
+              ),
+              !isLast && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+                "div",
+                {
+                  style: {
+                    width: 32,
+                    height: 2,
+                    background: primaryColor,
+                    opacity: (0,esm.interpolate)(s, [0, 1], [0, 0.35]),
+                    flexShrink: 0
+                  }
+                }
+              )
+            ] }, i);
+          })
+        }
+      )
+    }
+  );
+};
+const MetricScene = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "left", animations_TRANSITION_FRAMES, fps);
+  const numMatch = scene.text.match(/([$€£]?[\d,.]+[KMBkmb]?)/);
+  const numberStr = numMatch ? numMatch[1] : "0";
+  const label = scene.text.replace(numberStr, "").trim();
+  const targetNum = parseFloat(numberStr.replace(/[$€£,]/g, "").replace(/K/i, "000").replace(/M/i, "000000"));
+  const countS = animations_getSpringProgress(frame, fps, 0, SNAPPY_SPRING);
+  const displayed = Math.round((0,esm.interpolate)(countS, [0, 1], [0, targetNum], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
+  const formatted = numberStr.startsWith("$") ? `$${displayed.toLocaleString()}` : displayed.toLocaleString();
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              fontFamily: FONT,
+              fontSize: "140px",
+              fontWeight: 800,
+              lineHeight: 1,
+              color: primaryColor,
+              letterSpacing: "-0.04em",
+              fontVariantNumeric: "tabular-nums"
+            },
+            children: formatted
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              fontFamily: FONT,
+              fontSize: "32px",
+              fontWeight: 500,
+              lineHeight: 1.3,
+              color: `${textColor}88`,
+              marginTop: 16,
+              letterSpacing: "-0.01em"
+            },
+            children: label
+          }
+        )
+      ] })
+    }
+  );
+};
+const LockupScene = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "down", animations_TRANSITION_FRAMES, fps);
+  const lineS = animations_getSpringProgress(frame, fps, 20, SNAPPY_SPRING);
+  const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 140], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const isUrl = scene.text.includes(".") && !scene.text.includes(" ");
+  const mainText = isUrl ? scene.subtext || "Get started" : scene.text;
+  const urlText = isUrl ? scene.text : scene.subtext || "";
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
     esm.AbsoluteFill,
     {
@@ -2168,313 +1152,68 @@ const ComparisonScene = ({
         transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
         willChange: "transform, opacity"
       },
-      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { maxWidth: "75%", textAlign: "center" }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "h2",
-          {
-            style: {
-              fontFamily: FONT_HEADING,
-              fontSize: "48px",
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: textColor,
-              margin: "0 0 36px 0",
-              textWrap: "balance"
-            },
-            children: /* @__PURE__ */ (0,jsx_runtime.jsx)(WordReveal, { text: scene.subtext || "Before vs After", delay: 0, stagger: 4 })
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", gap: 30, justifyContent: "center", alignItems: "stretch" }, children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-            "div",
-            {
-              style: {
-                flex: 1,
-                maxWidth: 400,
-                padding: "32px 28px",
-                backgroundColor: `${accentColor}08`,
-                borderRadius: 16,
-                border: `1px solid ${accentColor}18`,
-                opacity: (0,esm.interpolate)(beforeS, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                transform: `translateX(${(0,esm.interpolate)(beforeS, [0, 1], [-40, 0])}px)`,
-                willChange: "transform, opacity"
-              },
-              children: [
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "div",
-                  {
-                    style: {
-                      fontFamily: FONT_BODY,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: accentColor,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      marginBottom: 12
-                    },
-                    children: "Before"
-                  }
-                ),
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "div",
-                  {
-                    style: {
-                      fontFamily: FONT_BODY,
-                      fontSize: "22px",
-                      fontWeight: 500,
-                      color: `${textColor}90`,
-                      lineHeight: 1.5
-                    },
-                    children: beforeText
-                  }
-                )
-              ]
-            }
-          ),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            "div",
-            {
-              style: {
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: getFadeIn(frame, 15, 15)
-              },
-              children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                "div",
-                {
-                  style: {
-                    width: 44,
-                    height: 44,
-                    borderRadius: "50%",
-                    background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: FONT_HEADING,
-                    fontSize: 14,
-                    fontWeight: 800,
-                    color: "white"
-                  },
-                  children: "VS"
-                }
-              )
-            }
-          ),
-          /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-            "div",
-            {
-              style: {
-                flex: 1,
-                maxWidth: 400,
-                padding: "32px 28px",
-                backgroundColor: `${primaryColor}0a`,
-                borderRadius: 16,
-                border: `1px solid ${primaryColor}20`,
-                opacity: (0,esm.interpolate)(afterS, [0, 0.4, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                transform: `translateX(${(0,esm.interpolate)(afterS, [0, 1], [40, 0])}px)`,
-                willChange: "transform, opacity",
-                boxShadow: `0 8px 30px ${primaryColor}10`
-              },
-              children: [
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "div",
-                  {
-                    style: {
-                      fontFamily: FONT_BODY,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: primaryColor,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      marginBottom: 12
-                    },
-                    children: "After"
-                  }
-                ),
-                /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                  "div",
-                  {
-                    style: {
-                      fontFamily: FONT_BODY,
-                      fontSize: "22px",
-                      fontWeight: 600,
-                      color: textColor,
-                      lineHeight: 1.5
-                    },
-                    children: afterText
-                  }
-                )
-              ]
-            }
-          )
-        ] })
-      ] })
-    }
-  );
-};
-const CTAScene = ({
-  scene,
-  primaryColor,
-  secondaryColor,
-  textColor,
-  accentColor,
-  frame,
-  fps,
-  duration
-}) => {
-  const headlineS = animations_getSpringProgress(frame, fps, 0, BOUNCY_SPRING);
-  const subEntrance = getSlideIn(frame, fps, 10, 30);
-  const buttonEntrance = getScaleIn(frame, fps, 20);
-  const exit = getExit(frame, duration, "up", TRANSITION_FRAMES, fps);
-  const pulse = getPulse(frame, fps, 1.5);
-  const particles = (0,react.useMemo)(() => {
-    return Array.from({ length: 10 }).map((_, i) => ({
-      angle: i / 10 * Math.PI * 2,
-      speed: 40 + Math.random() * 50,
-      size: 3 + Math.random() * 4,
-      delay: Math.random() * 8
-    }));
-  }, []);
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: exit.opacity,
-        transform: `translateY(${exit.y}px) scale(${exit.scale})`,
-        willChange: "transform, opacity"
-      },
-      children: [
+      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)(
           "div",
           {
             style: {
-              position: "absolute",
-              width: 600,
-              height: 600,
-              borderRadius: "50%",
-              background: `radial-gradient(circle, ${primaryColor}15 0%, transparent 65%)`,
-              top: "50%",
-              left: "50%",
-              transform: `translate(-50%, -50%) scale(${1 + Math.sin(frame / fps * 1.5) * 0.08})`,
-              willChange: "transform"
+              fontFamily: FONT,
+              fontSize: "64px",
+              fontWeight: 800,
+              lineHeight: 1.1,
+              color: textColor,
+              letterSpacing: "-0.03em",
+              marginBottom: 20
+            },
+            children: mainText
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              height: 3,
+              width: lineWidth,
+              background: primaryColor,
+              borderRadius: 2,
+              margin: "0 auto 20px"
             }
           }
         ),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center", maxWidth: "68%", zIndex: 2 }, children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            "h1",
-            {
-              style: {
-                fontFamily: FONT_HEADING,
-                fontSize: "70px",
-                fontWeight: 900,
-                lineHeight: 1.08,
-                color: textColor,
-                margin: "0 0 18px 0",
-                textWrap: "balance",
-                letterSpacing: "-0.03em",
-                opacity: (0,esm.interpolate)(headlineS, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                transform: `translateY(${(0,esm.interpolate)(headlineS, [0, 1], [35, 0])}px) scale(${(0,esm.interpolate)(headlineS, [0, 1], [0.9, 1])})`,
-                willChange: "transform, opacity"
-              },
-              children: /* @__PURE__ */ (0,jsx_runtime.jsx)(WordReveal, { text: scene.text, delay: 0, stagger: 5 })
-            }
-          ),
-          scene.subtext && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            "p",
-            {
-              style: {
-                fontFamily: FONT_BODY,
-                fontSize: "24px",
-                fontWeight: 400,
-                lineHeight: 1.5,
-                color: `${textColor}85`,
-                margin: "0 0 36px 0",
-                opacity: subEntrance.opacity,
-                transform: `translateY(${subEntrance.y}px)`,
-                willChange: "transform, opacity"
-              },
-              children: scene.subtext
-            }
-          ),
-          /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { position: "relative", display: "inline-block" }, children: [
-            particles.map((p, i) => {
-              const localFrame = Math.max(0, frame - 30 - p.delay);
-              const dist = Math.min(localFrame * (p.speed / 30), 90 + i * 5);
-              const px = Math.cos(p.angle) * dist;
-              const py = Math.sin(p.angle) * dist;
-              const pOpacity = (0,esm.interpolate)(localFrame, [0, 8, 20, 35], [0, 0.8, 0.5, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-              return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-                "div",
-                {
-                  style: {
-                    position: "absolute",
-                    width: p.size,
-                    height: p.size,
-                    borderRadius: "50%",
-                    background: i % 2 === 0 ? primaryColor : secondaryColor,
-                    left: "50%",
-                    top: "50%",
-                    marginLeft: px - p.size / 2,
-                    marginTop: py - p.size / 2,
-                    opacity: pOpacity,
-                    boxShadow: `0 0 ${p.size * 2}px ${i % 2 === 0 ? primaryColor : secondaryColor}70`,
-                    pointerEvents: "none",
-                    willChange: "transform, opacity"
-                  }
-                },
-                i
-              );
-            }),
-            /* @__PURE__ */ (0,jsx_runtime.jsxs)(
-              "div",
-              {
-                style: {
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "18px 44px",
-                  borderRadius: 14,
-                  background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                  fontFamily: FONT_BODY,
-                  fontSize: "22px",
-                  fontWeight: 700,
-                  color: "white",
-                  boxShadow: `0 8px 35px ${primaryColor}${Math.round(pulse * 55).toString(16).padStart(2, "0")}, 0 0 50px ${primaryColor}18`,
-                  opacity: buttonEntrance.opacity,
-                  transform: `scale(${buttonEntrance.scale})`,
-                  cursor: "default",
-                  willChange: "transform, opacity"
-                },
-                children: [
-                  scene.visualDirection || "Get Started",
-                  /* @__PURE__ */ (0,jsx_runtime.jsxs)("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round", children: [
-                    /* @__PURE__ */ (0,jsx_runtime.jsx)("line", { x1: "5", y1: "12", x2: "19", y2: "12" }),
-                    /* @__PURE__ */ (0,jsx_runtime.jsx)("polyline", { points: "12 5 19 12 12 19" })
-                  ] })
-                ]
-              }
-            )
-          ] })
-        ] })
-      ]
+        urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              fontFamily: FONT,
+              fontSize: "24px",
+              fontWeight: 500,
+              color: primaryColor,
+              letterSpacing: "0.02em"
+            },
+            children: urlText
+          }
+        )
+      ] })
     }
   );
 };
 const sceneComponentMap = {
-  title: TitleScene,
-  problem: ProblemScene,
-  solution: SolutionScene,
-  feature: FeatureScene,
-  benefit: BenefitScene,
-  process: ProcessScene,
-  stats: StatsScene,
-  socialProof: SocialProofScene,
-  comparison: ComparisonScene,
-  cta: CTAScene
+  statement: StatementScene,
+  evidence: EvidenceScene,
+  flow: FlowScene,
+  metric: MetricScene,
+  lockup: LockupScene,
+  // Legacy fallbacks
+  title: StatementScene,
+  problem: StatementScene,
+  solution: StatementScene,
+  feature: EvidenceScene,
+  benefit: EvidenceScene,
+  process: FlowScene,
+  stats: MetricScene,
+  socialProof: EvidenceScene,
+  comparison: EvidenceScene,
+  cta: LockupScene
 };
 
 ;// ./src/ExplainerVideo.tsx
@@ -2490,6 +1229,12 @@ const sceneComponentMap = {
 
 const sceneSchema = lib.z.object({
   type: lib.z.enum([
+    "statement",
+    "evidence",
+    "flow",
+    "metric",
+    "lockup",
+    // Legacy fallbacks
     "title",
     "problem",
     "solution",
@@ -2514,26 +1259,33 @@ const explainerVideoSchema = lib.z.object({
   logoUrl: lib.z.string().optional().default(""),
   primaryColor: (0,dist_esm.zColor)().optional().default("#4f46e5"),
   secondaryColor: (0,dist_esm.zColor)().optional().default("#0ea5e9"),
-  bgColor: (0,dist_esm.zColor)().optional().default("#0f172a"),
-  textColor: (0,dist_esm.zColor)().optional().default("#f8fafc"),
+  bgColor: (0,dist_esm.zColor)().optional().default("#f8f9fa"),
+  textColor: (0,dist_esm.zColor)().optional().default("#111111"),
   accentColor: (0,dist_esm.zColor)().optional().default("#6366f1")
 });
 const defaultProps = {
   scenes: [
     {
-      type: "title",
-      text: "Welcome to Storyfyne Explainer",
-      subtext: "Turn ideas into motion graphics",
-      visualDirection: "Opening title card",
+      type: "statement",
+      text: "Missed call. Missed job.",
+      visualDirection: "Bold statement text",
+      audioUrl: "",
+      durationInFrames: 120,
+      imageUrl: ""
+    },
+    {
+      type: "evidence",
+      text: "AI answers every call.",
+      subtext: "The reveal",
+      visualDirection: "Clean product card",
       audioUrl: "",
       durationInFrames: 150,
       imageUrl: ""
     },
     {
-      type: "feature",
-      text: "We turn your ideas into motion graphics",
-      subtext: "Professional videos in minutes",
-      visualDirection: "Motion text reveal",
+      type: "flow",
+      text: "Call answered \u2192 Lead qualified \u2192 Job booked",
+      visualDirection: "Step flow cards",
       audioUrl: "",
       durationInFrames: 180,
       imageUrl: ""
@@ -2541,20 +1293,17 @@ const defaultProps = {
   ],
   aspectRatio: "16:9",
   logoUrl: "",
-  primaryColor: "#4f46e5",
-  secondaryColor: "#0ea5e9",
-  bgColor: "#0f172a",
-  textColor: "#f8fafc",
-  accentColor: "#6366f1"
+  primaryColor: "#0ea5e9",
+  secondaryColor: "#6366f1",
+  bgColor: "#f8f9fa",
+  textColor: "#111111",
+  accentColor: "#0ea5e9"
 };
 const ExplainerVideo = ({
   scenes,
-  logoUrl,
   primaryColor,
-  secondaryColor,
   bgColor,
-  textColor,
-  accentColor
+  textColor
 }) => {
   var _a;
   const frame = (0,esm.useCurrentFrame)();
@@ -2562,37 +1311,34 @@ const ExplainerVideo = ({
   const totalFrames = durationInFrames;
   let accumulated = 0;
   const sceneSchedule = scenes.map((scene, i) => {
-    const from = i === 0 ? 0 : accumulated - TRANSITION_FRAMES;
-    accumulated += scene.durationInFrames - (i > 0 ? TRANSITION_FRAMES : 0);
+    const from = i === 0 ? 0 : accumulated - animations_TRANSITION_FRAMES;
+    accumulated += scene.durationInFrames - (i > 0 ? animations_TRANSITION_FRAMES : 0);
     return { scene, from, duration: scene.durationInFrames };
   });
   const activeTransition = sceneSchedule.findIndex(({ from, duration }) => {
     const end = from + duration;
-    return frame >= end - TRANSITION_FRAMES && frame < end && frame < totalFrames;
+    return frame >= end - animations_TRANSITION_FRAMES && frame < end && frame < totalFrames;
   });
-  const transitionProgress = activeTransition >= 0 ? (frame - (sceneSchedule[activeTransition].from + sceneSchedule[activeTransition].duration - TRANSITION_FRAMES)) / TRANSITION_FRAMES : -1;
+  const transitionProgress = activeTransition >= 0 ? (frame - (sceneSchedule[activeTransition].from + sceneSchedule[activeTransition].duration - animations_TRANSITION_FRAMES)) / animations_TRANSITION_FRAMES : -1;
   const transitionType = activeTransition >= 0 ? getTransitionForIndex(activeTransition) : "wipe";
-  const currentSceneIndex = sceneSchedule.findIndex(
-    ({ from, duration }) => frame >= from && frame < from + duration - TRANSITION_FRAMES / 2
+  const currentSceneIdx = sceneSchedule.findIndex(
+    ({ from, duration }) => frame >= from && frame < from + duration
   );
-  const effectiveSceneIndex = Math.max(0, currentSceneIndex >= 0 ? currentSceneIndex : scenes.length - 1);
-  const overallProgress = frame / Math.max(totalFrames - 1, 1);
-  const dominantBgType = getBackgroundForSceneType(((_a = scenes[effectiveSceneIndex]) == null ? void 0 : _a.type) || "gradientMesh");
-  const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.gradientMesh;
+  const effectiveIdx = Math.max(0, currentSceneIdx >= 0 ? currentSceneIdx : scenes.length - 1);
+  const dominantBgType = getBackgroundForSceneType(((_a = scenes[effectiveIdx]) == null ? void 0 : _a.type) || "cleanLight");
+  const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.cleanLight;
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { backgroundColor: bgColor }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsx)(
       BackgroundComponent,
       {
         bgColor,
-        primaryColor,
-        secondaryColor,
-        accentColor
+        primaryColor
       }
     ),
     sceneSchedule.map(({ scene, from, duration }, i) => {
       const SceneComponent = sceneComponentMap[scene.type] || sceneComponentMap.feature;
       const zIndex = i;
-      return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from, durationInFrames: duration + TRANSITION_FRAMES, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", inset: 0, zIndex }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from, durationInFrames: duration + animations_TRANSITION_FRAMES, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", inset: 0, zIndex }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
         SceneComponent,
         {
           scene,
@@ -2610,7 +1356,7 @@ const ExplainerVideo = ({
     sceneSchedule.map(({ scene, from, duration }, i) => {
       if (!scene.audioUrl) return null;
       const isLast = i === scenes.length - 1;
-      const audioDuration = isLast ? duration : Math.max(1, duration - TRANSITION_FRAMES);
+      const audioDuration = isLast ? duration : Math.max(1, duration - animations_TRANSITION_FRAMES);
       const fadeFrames = Math.min(10, Math.floor(audioDuration / 4));
       return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from, durationInFrames: audioDuration, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
         esm.Audio,
@@ -2636,30 +1382,6 @@ const ExplainerVideo = ({
         secondaryColor
       }
     ) }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(LogoOverlay, { logoUrl, primaryColor }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      SceneCounter,
-      {
-        current: effectiveSceneIndex,
-        total: scenes.length,
-        textColor
-      }
-    ),
-    scenes[effectiveSceneIndex] && /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      LowerThirdBar,
-      {
-        text: scenes[effectiveSceneIndex].visualDirection || scenes[effectiveSceneIndex].type,
-        primaryColor
-      }
-    ),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(
-      ProgressBar,
-      {
-        progress: overallProgress,
-        primaryColor,
-        secondaryColor
-      }
-    ),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicOverlay, {})
   ] });
 };
@@ -57375,7 +56097,7 @@ var z = /*#__PURE__*/Object.freeze({
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	__webpack_require__(96507);
-/******/ 	__webpack_require__(19143);
+/******/ 	__webpack_require__(43823);
 /******/ 	__webpack_require__(63610);
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __webpack_require__(66456);
