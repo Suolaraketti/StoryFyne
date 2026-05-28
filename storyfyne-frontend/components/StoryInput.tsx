@@ -173,6 +173,53 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
     }
   };
 
+  const getVisualPlan = (template: string, type: string) => {
+    const plans: Record<string, string> = {
+      heroStatement: 'Massive bold centered text. No decoration. One sentence dominates the frame. Clean entrance/exit.',
+      phoneDemo: 'Phone frame in center showing a notification, chat bubble, or calendar block. Contextual UI mockup.',
+      browserDashboard: 'Browser window frame with dashboard cards, stat bars, or search UI. Simulated SaaS interface.',
+      statsGrid: '2–3 large metric numbers with labels. Numbers animate upward. Clean grid layout.',
+      testimonialQuote: 'Quote text centered with subtle attribution. Minimal card, no avatar.',
+      beforeAfter: 'Split layout: old state on left, new state on right. Arrow between.',
+      workflowSteps: '3-step flow: A → B → C with connecting arrows and step cards.',
+      pricingTiers: 'Pricing cards side by side with feature lists. Highlighted tier.',
+      featureHighlight: 'Single feature with icon + description card. Spotlight layout.',
+      typewriterCommand: 'Terminal-style text typing out a command or query. Cursor blink.',
+      socialProofBanner: 'Scrolling company logos or review stars banner. Trust signal.',
+      calendarBooking: 'Calendar grid with a selected date block. Booking CTA.',
+      revenueCounter: 'Big animated revenue/counter number. Dollar sign. Rising value.',
+      brandLockup: 'Logo + brand name + URL centered. Final scene. Hold longer.',
+    };
+    return plans[template] || 'Clean text scene with minimal motion. One thought per frame.';
+  };
+
+  const updateSceneText = (idx: number, newText: string) => {
+    setExplainerScenes(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], scene_text: newText };
+      return next;
+    });
+  };
+
+  const moveScene = (idx: number, dir: number) => {
+    setExplainerScenes(prev => {
+      const next = [...prev];
+      const newIdx = idx + dir;
+      if (newIdx < 0 || newIdx >= next.length) return prev;
+      [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+      return next;
+    });
+  };
+
+  const deleteScene = (idx: number) => {
+    setExplainerScenes(prev => {
+      if (prev.length <= 1) return prev;
+      const next = [...prev];
+      next.splice(idx, 1);
+      return next;
+    });
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -683,69 +730,121 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
               </button>
             )}
             {isExplainer && showExplainerPreview && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>Review scenes, then generate:</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '320px', overflowY: 'auto', padding: '4px' }}>
-                  {explainerScenes.map((scene, idx) => (
-                    <div key={idx} style={{
-                      background: 'linear-gradient(180deg, rgba(99,102,241,0.06) 0%, rgba(99,102,241,0.02) 100%)',
-                      border: '1px solid rgba(99,102,241,0.15)',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '14px',
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '11px', color: '#818cf8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Scene {idx + 1}</span>
-                        <span style={{ fontSize: '10px', color: 'var(--text-faint)', background: 'rgba(255,255,255,0.04)', padding: '2px 8px', borderRadius: '100px', textTransform: 'uppercase' }}>{scene.type || 'feature'}</span>
-                      </div>
-                      <div style={{ fontSize: '14px', color: 'var(--text-primary)', marginBottom: '6px', lineHeight: 1.5 }}>{scene.scene_text}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{scene.visual_direction}</div>
-                    </div>
-                  ))}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 700, color: '#a5b4fc', letterSpacing: '0.02em' }}>
+                    Scene Script & Visual Plan
+                  </label>
+                  <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>
+                    {explainerScenes.length} scenes · editable
+                  </span>
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '480px', overflowY: 'auto', padding: '4px' }}>
+                  {explainerScenes.map((scene, idx) => {
+                    const tpl = scene.template || 'heroStatement';
+                    const visualPlan = getVisualPlan(tpl, scene.type || 'statement');
+                    return (
+                      <motion.div
+                        key={idx}
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.04 }}
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(99,102,241,0.07) 0%, rgba(15,23,42,0.4) 100%)',
+                          border: '1px solid rgba(99,102,241,0.18)',
+                          borderRadius: 'var(--radius-lg)',
+                          padding: '16px',
+                          backdropFilter: 'blur(8px)',
+                        }}
+                      >
+                        {/* Scene header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{
+                              fontSize: '10px', fontWeight: 800, color: '#c7d2fe',
+                              background: 'rgba(99,102,241,0.25)',
+                              padding: '3px 10px', borderRadius: '100px',
+                              textTransform: 'uppercase', letterSpacing: '0.06em',
+                            }}>Scene {idx + 1}</span>
+                            <span style={{
+                              fontSize: '10px', color: 'var(--text-faint)',
+                              background: 'rgba(255,255,255,0.04)', padding: '3px 8px',
+                              borderRadius: '100px', textTransform: 'uppercase', letterSpacing: '0.04em',
+                            }}>{tpl}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button type="button" onClick={() => moveScene(idx, -1)} disabled={idx === 0 || isLoading}
+                              style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '11px' }}>↑</button>
+                            <button type="button" onClick={() => moveScene(idx, 1)} disabled={idx === explainerScenes.length - 1 || isLoading}
+                              style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '11px' }}>↓</button>
+                            <button type="button" onClick={() => deleteScene(idx)} disabled={isLoading || explainerScenes.length <= 1}
+                              style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.15)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', cursor: 'pointer', fontSize: '11px' }}>×</button>
+                          </div>
+                        </div>
+
+                        {/* Voice script — editable */}
+                        <div style={{ marginBottom: '10px' }}>
+                          <div style={{ fontSize: '10px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Voice Script</div>
+                          <textarea
+                            value={scene.scene_text || ''}
+                            onChange={e => updateSceneText(idx, e.target.value)}
+                            disabled={isLoading}
+                            rows={2}
+                            style={{
+                              width: '100%', padding: '10px 12px', fontSize: '14px', lineHeight: 1.5,
+                              borderRadius: 'var(--radius-md)', border: '1px solid rgba(99,102,241,0.15)',
+                              background: 'rgba(0,0,0,0.2)', color: 'var(--text-primary)',
+                              outline: 'none', resize: 'vertical', fontFamily: 'inherit',
+                            }}
+                            onFocus={e => { e.target.style.borderColor = 'rgba(99,102,241,0.4)'; e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.1)'; }}
+                            onBlur={e => { e.target.style.borderColor = 'rgba(99,102,241,0.15)'; e.target.style.boxShadow = 'none'; }}
+                          />
+                        </div>
+
+                        {/* Visual plan */}
+                        <div style={{
+                          background: 'rgba(99,102,241,0.04)',
+                          borderRadius: 'var(--radius-md)',
+                          padding: '10px 12px',
+                          border: '1px solid rgba(99,102,241,0.08)',
+                        }}>
+                          <div style={{ fontSize: '10px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Visual Plan</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>{visualPlan}</div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Action bar */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                   <button type="button" onClick={handlePreviewExplainer} disabled={isPreviewingExplainer}
                     style={{ padding: '8px 16px', fontSize: '13px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                     Regenerate
                   </button>
+
                   {/* Render Quality Toggle */}
                   <div style={{ display: 'flex', gap: 0, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', overflow: 'hidden' }}>
-                    <button
-                      type="button"
-                      onClick={() => setExplainerRenderQuality('standard')}
-                      disabled={isLoading}
-                      style={{
-                        padding: '8px 14px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        border: 'none',
+                    <button type="button" onClick={() => setExplainerRenderQuality('standard')} disabled={isLoading}
+                      style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 600, border: 'none',
                         background: explainerRenderQuality === 'standard' ? '#6366f1' : 'var(--bg-elevated)',
                         color: explainerRenderQuality === 'standard' ? '#fff' : 'var(--text-secondary)',
-                        cursor: isLoading ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      Standard
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setExplainerRenderQuality('premium')}
-                      disabled={isLoading}
-                      style={{
-                        padding: '8px 14px',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        border: 'none',
+                        cursor: isLoading ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>Standard</button>
+                    <button type="button" onClick={() => setExplainerRenderQuality('premium')} disabled={isLoading}
+                      style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 600, border: 'none',
                         background: explainerRenderQuality === 'premium' ? '#6366f1' : 'var(--bg-elevated)',
                         color: explainerRenderQuality === 'premium' ? '#fff' : 'var(--text-secondary)',
-                        cursor: isLoading ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      Premium (GPU)
-                    </button>
+                        cursor: isLoading ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>Premium (GPU)</button>
                   </div>
+
+                  <div style={{ flex: 1 }} />
+
                   <button type="submit" disabled={isLoading || explainerScenes.length === 0}
-                    style={{ padding: '10px 24px', fontSize: '14px', fontWeight: 600, borderRadius: 'var(--radius-md)', border: 'none', background: isLoading ? '#333' : '#6366f1', color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
+                    style={{ padding: '10px 24px', fontSize: '14px', fontWeight: 600, borderRadius: 'var(--radius-md)', border: 'none',
+                      background: isLoading ? '#333' : 'linear-gradient(135deg, #6366f1, #818cf8)',
+                      color: '#fff', cursor: isLoading ? 'not-allowed' : 'pointer', boxShadow: isLoading ? 'none' : '0 4px 20px rgba(99,102,241,0.25)' }}>
                     {isLoading ? 'Generating...' : 'Generate Explainer Video'}
                   </button>
                 </div>

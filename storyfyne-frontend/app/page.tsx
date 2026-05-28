@@ -269,6 +269,7 @@ export default function Home() {
           accent_color: accentColor,
           image_urls: imageUrls,
           render_quality: renderQuality,
+          scenes_json: scenesJson,
         }),
       });
       if (!res.ok) {

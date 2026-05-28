@@ -115,6 +115,7 @@ class ExplainerRequest(BaseModel):
     template: str = "modern"
     image_urls: list[str] = []
     render_quality: str = "standard"  # "standard" = Lambda, "premium" = GPU worker
+    scenes_json: str = ""  # Optional pre-built scenes JSON (from preview/edit)
 
 
 class PreviewExplainerResponse(BaseModel):
@@ -1342,27 +1343,35 @@ async def _process_explainer(
     template: str = "modern",
     image_urls: list[str] = None,
     render_quality: str = "standard",
+    prebuilt_scenes: list[dict] = None,
 ):
     """Background task: break text into scenes, generate audio, render via Remotion Lambda."""
     start_time = time.time()
     slug = slugify(title)
     logger.info(f"[story {story_id}] EXPLAINER START | title={title!r} | voice={voice_id} | ratio={aspect_ratio} | chars={len(text)}")
 
-    # Step 1: Scene breakdown
-    update_job_progress(story_id, "tagging", "Breaking script into scenes with Claude...")
-    try:
-        scene_json_text = await tag_text_with_claude(text, explainer_mode=True)
-        scene_data = json.loads(scene_json_text)
-        scenes = scene_data.get("scenes", [])
-        if not scenes:
-            raise ValueError("No scenes returned by Claude")
-        logger.info(f"[story {story_id}] SCENE BREAKDOWN | {len(scenes)} scenes")
-        for i, s in enumerate(scenes):
-            logger.info(f"[story {story_id}]   scene {i+1}: type={s.get('type','?')} | text={s.get('scene_text','')[:60]!r}")
-    except Exception as e:
-        logger.warning(f"[story {story_id}] SCENE BREAKDOWN FAILED | {e}")
-        scenes = [{"scene_text": text, "visual_direction": "Full text narration"}]
-        update_job_progress(story_id, "tagging", f"Scene breakdown failed, using single scene. {str(e)}")
+    # Step 1: Scene breakdown (use prebuilt if provided, otherwise call Claude)
+    if prebuilt_scenes:
+        logger.info(f"[story {story_id}] USING PREBUILT SCENES | {len(prebuilt_scenes)} scenes from preview")
+        scenes = prebuilt_scenes
+        scene_data = {"mood": "clean", "scenes": scenes}
+        update_job_progress(story_id, "tagging", f"Using {len(scenes)} pre-built scenes from preview...")
+    else:
+        update_job_progress(story_id, "tagging", "Breaking script into scenes with Claude...")
+        try:
+            scene_json_text = await tag_text_with_claude(text, explainer_mode=True)
+            scene_data = json.loads(scene_json_text)
+            scenes = scene_data.get("scenes", [])
+            if not scenes:
+                raise ValueError("No scenes returned by Claude")
+            logger.info(f"[story {story_id}] SCENE BREAKDOWN | {len(scenes)} scenes")
+            for i, s in enumerate(scenes):
+                logger.info(f"[story {story_id}]   scene {i+1}: type={s.get('type','?')} | text={s.get('scene_text','')[:60]!r}")
+        except Exception as e:
+            logger.warning(f"[story {story_id}] SCENE BREAKDOWN FAILED | {e}")
+            scenes = [{"scene_text": text, "visual_direction": "Full text narration"}]
+            scene_data = {"mood": "clean", "scenes": scenes}
+            update_job_progress(story_id, "tagging", f"Scene breakdown failed, using single scene. {str(e)}")
 
     # Step 2: Generate per-scene audio
     update_job_progress(story_id, "generating", f"Synthesizing audio for {len(scenes)} scenes...")
@@ -1703,6 +1712,17 @@ async def process_explainer(request: ExplainerRequest):
     })
     invalidate_cache()
 
+    # Parse optional prebuilt scenes
+    prebuilt_scenes = None
+    if request.scenes_json:
+        try:
+            parsed = json.loads(request.scenes_json)
+            if isinstance(parsed, list) and len(parsed) > 0:
+                prebuilt_scenes = parsed
+                logger.info(f"[story {story_id}] RECEIVED PREBUILT SCENES | {len(prebuilt_scenes)} scenes")
+        except Exception as e:
+            logger.warning(f"[story {story_id}] FAILED TO PARSE scenes_json | {e}")
+
     # Kick off background task
     async def _wrapped_task():
         try:
@@ -1723,6 +1743,7 @@ async def process_explainer(request: ExplainerRequest):
                 template=request.template,
                 image_urls=request.image_urls,
                 render_quality=request.render_quality,
+                prebuilt_scenes=prebuilt_scenes,
             )
         except Exception as e:
             import traceback
