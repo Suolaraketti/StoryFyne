@@ -1404,13 +1404,14 @@ async def _process_explainer(
         duration_seconds = duration_ms / 1000
         total_duration_seconds += duration_seconds
 
-        scene_type = scene.get("type", "feature")
-        valid_types = ("title", "problem", "solution", "feature", "benefit", "process", "stats", "socialProof", "comparison", "cta")
+        scene_type = scene.get("type", "evidence")
+        valid_types = ("statement", "evidence", "flow", "metric", "lockup", "title", "problem", "solution", "feature", "benefit", "process", "stats", "socialProof", "comparison", "cta")
         if scene_type not in valid_types:
-            scene_type = "feature"
+            scene_type = "evidence"
 
         scene_audios.append({
             "type": scene_type,
+            "template": scene.get("template", ""),
             "text": scene_text,
             "visualDirection": scene.get("visual_direction", ""),
             "audioUrl": audio_url,

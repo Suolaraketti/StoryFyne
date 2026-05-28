@@ -7,6 +7,7 @@ import { Backgrounds, getBackgroundForSceneType } from "./backgrounds";
 import { TransitionOverlay, getTransitionForIndex, TransitionType } from "./transitions";
 import { CinematicOverlay } from "./overlays";
 import { sceneComponentMap, SceneData } from "./scenes";
+import { templateComponentMap } from "./templates";
 
 // ─── Schema ─────────────────────────────────────────────────────────
 
@@ -20,6 +21,7 @@ const sceneSchema = z.object({
   text: z.string(),
   subtext: z.string().optional().default(""),
   visualDirection: z.string().optional().default(""),
+  template: z.string().optional().default(""),
   audioUrl: z.string(),
   durationInFrames: z.number().min(1),
   imageUrl: z.string().optional().default(""),
@@ -42,6 +44,7 @@ export const defaultProps: ExplainerVideoProps = {
   scenes: [
     {
       type: "statement",
+      template: "heroStatement",
       text: "Missed call. Missed job.",
       visualDirection: "Bold statement text",
       audioUrl: "",
@@ -50,6 +53,7 @@ export const defaultProps: ExplainerVideoProps = {
     },
     {
       type: "evidence",
+      template: "phoneDemo",
       text: "AI answers every call.",
       subtext: "The reveal",
       visualDirection: "Clean product card",
@@ -59,6 +63,7 @@ export const defaultProps: ExplainerVideoProps = {
     },
     {
       type: "flow",
+      template: "workflowSteps",
       text: "Call answered → Lead qualified → Job booked",
       visualDirection: "Step flow cards",
       audioUrl: "",
@@ -129,7 +134,9 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
 
       {/* Scenes with overlap transitions (visual only) */}
       {sceneSchedule.map(({ scene, from, duration }, i) => {
-        const SceneComponent = sceneComponentMap[scene.type] || sceneComponentMap.feature;
+        const SceneComponent = scene.template && templateComponentMap[scene.template]
+      ? templateComponentMap[scene.template]
+      : sceneComponentMap[scene.type] || sceneComponentMap.statement;
         const zIndex = i;
 
         return (

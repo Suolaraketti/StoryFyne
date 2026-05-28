@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 9366:
+/***/ 72030:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -21,7 +21,7 @@ const animations_TRANSITION_FRAMES = 30;
 const animations_DEFAULT_SPRING = { damping: 14, stiffness: 90, mass: 1, overshootClamping: false };
 const BOUNCY_SPRING = { damping: 10, stiffness: 120, mass: 0.8, overshootClamping: false };
 const animations_GENTLE_SPRING = { damping: 20, stiffness: 70, mass: 1.2, overshootClamping: false };
-const SNAPPY_SPRING = { damping: 18, stiffness: 180, mass: 0.6, overshootClamping: false };
+const animations_SNAPPY_SPRING = { damping: 18, stiffness: 180, mass: 0.6, overshootClamping: false };
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 const lerp = (a, b, t) => a + (b - a) * t;
 const smoothstep = (t) => t * t * (3 - 2 * t);
@@ -141,7 +141,7 @@ function getScrambleReveal(frame, fps, text, delay = 0, duration = 40) {
   }).join("");
 }
 function getHighlightProgress(frame, fps, delay = 0, duration = 20) {
-  const s = animations_getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
   return interpolate(s, [0, 1], [0, 100], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 }
 function getFlipRotation(frame, fps, delay = 0, duration = 25) {
@@ -797,7 +797,9 @@ var react = __webpack_require__(96540);
 
 
 
+
 const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const MONO = '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", monospace';
 const PhoneFrame = ({ children, frame, fps, primaryColor = "#0ea5e9" }) => {
   const s = animations_getSpringProgress(frame, fps, 0, animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
@@ -808,7 +810,7 @@ const PhoneFrame = ({ children, frame, fps, primaryColor = "#0ea5e9" }) => {
         height: 680,
         background: "#ffffff",
         borderRadius: 48,
-        boxShadow: "0 32px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04)",
+        boxShadow: "0 32px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04)",
         padding: "14px 14px 20px",
         position: "relative",
         opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
@@ -816,38 +818,64 @@ const PhoneFrame = ({ children, frame, fps, primaryColor = "#0ea5e9" }) => {
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              width: 100,
-              height: 28,
-              background: "#000000",
-              borderRadius: 20,
-              margin: "0 auto 12px"
-            }
-          }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              width: "100%",
-              height: "calc(100% - 40px)",
-              background: "#f8f9fa",
-              borderRadius: 36,
-              overflow: "hidden",
-              position: "relative"
-            },
-            children
-          }
-        )
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 100, height: 28, background: "#000", borderRadius: 20, margin: "0 auto 12px" } }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: "100%", height: "calc(100% - 40px)", background: "#f8f9fa", borderRadius: 36, overflow: "hidden", position: "relative" }, children })
       ]
     }
   );
 };
+const BrowserFrame = ({ children, frame, fps, url = "app.example.com", primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, 0, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        width: 900,
+        maxWidth: "90vw",
+        background: "#ffffff",
+        borderRadius: 16,
+        boxShadow: "0 24px 64px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
+        overflow: "hidden",
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [40, 0])}px) scale(${(0,esm.interpolate)(s, [0, 1], [0.95, 1])})`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", background: "#f5f5f5", borderBottom: "1px solid #e5e5e5" }, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", gap: 6 }, children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#ff5f56" } }),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#ffbd2e" } }),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#27c93f" } })
+          ] }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { flex: 1, background: "#ffffff", borderRadius: 6, padding: "5px 14px", fontFamily: FONT, fontSize: 12, color: "#666", textAlign: "center", border: "1px solid #e5e5e5" }, children: url })
+        ] }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { padding: 24, background: "#fafafa", minHeight: 400 }, children })
+      ]
+    }
+  );
+};
+const TabletFrame = ({ children, frame, fps, primaryColor = "#0ea5e9" }) => {
+  const s = getSpringProgress(frame, fps, 0, DEFAULT_SPRING);
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      style: {
+        width: 720,
+        maxWidth: "90vw",
+        background: "#ffffff",
+        borderRadius: 28,
+        boxShadow: "0 24px 64px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04)",
+        padding: 16,
+        opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${interpolate(s, [0, 1], [40, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ jsx("div", { style: { width: "100%", height: 480, background: "#f8f9fa", borderRadius: 20, overflow: "hidden", position: "relative" }, children })
+    }
+  );
+};
 const ChatBubble = ({ text, frame, fps, delay = 0, direction = "left", primaryColor = "#0ea5e9" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
   const isRight = direction === "right";
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
     "div",
@@ -881,6 +909,49 @@ const ChatBubble = ({ text, frame, fps, delay = 0, direction = "left", primaryCo
     }
   );
 };
+const ChatThread = ({ messages, frame, fps, baseDelay = 0, primaryColor = "#0ea5e9" }) => {
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { padding: "16px 0" }, children: messages.map((m, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    ChatBubble,
+    {
+      text: m.text,
+      frame,
+      fps,
+      delay: baseDelay + i * 12,
+      direction: m.direction,
+      primaryColor
+    },
+    i
+  )) });
+};
+const EmailPreview = ({ sender, subject, snippet, frame, fps, delay = 0, unread = true }) => {
+  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      style: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 12,
+        padding: "14px 16px",
+        background: "#ffffff",
+        borderRadius: 12,
+        margin: "0 14px 8px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateX(${interpolate(s, [0, 1], [-20, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ jsx("div", { style: { width: 10, height: 10, borderRadius: "50%", background: unread ? "#0ea5e9" : "transparent", marginTop: 6, flexShrink: 0 } }),
+        /* @__PURE__ */ jsxs("div", { style: { minWidth: 0, flex: 1 }, children: [
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 600, color: "#111", marginBottom: 2 }, children: sender }),
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 13, fontWeight: 500, color: "#333", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: subject }),
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 12, color: "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: snippet })
+        ] })
+      ]
+    }
+  );
+};
 const NotificationCard = ({ title, body, frame, fps, delay = 0, icon = "\u{1F4DE}" }) => {
   const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
@@ -891,9 +962,7 @@ const NotificationCard = ({ title, body, frame, fps, delay = 0, icon = "\u{1F4DE
         top: 12,
         left: 12,
         right: 12,
-        background: "rgba(255,255,255,0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
+        background: "rgba(255,255,255,0.94)",
         borderRadius: 18,
         padding: "14px 16px",
         boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
@@ -905,54 +974,176 @@ const NotificationCard = ({ title, body, frame, fps, delay = 0, icon = "\u{1F4DE
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              background: "#f0f0f0",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 20,
-              flexShrink: 0
-            },
-            children: icon
-          }
-        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 40, height: 40, borderRadius: 10, background: "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }, children: icon }),
         /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { minWidth: 0 }, children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            "div",
-            {
-              style: {
-                fontFamily: FONT,
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#111111",
-                marginBottom: 2
-              },
-              children: title
-            }
-          ),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)(
-            "div",
-            {
-              style: {
-                fontFamily: FONT,
-                fontSize: 12,
-                fontWeight: 400,
-                color: "#666666",
-                lineHeight: 1.3
-              },
-              children: body
-            }
-          )
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "#111", marginBottom: 2 }, children: title }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 12, fontWeight: 400, color: "#666", lineHeight: 1.3 }, children: body })
         ] })
       ]
     }
   );
+};
+const VoiceWaveform = ({ frame, fps, active = true, color = "#0ea5e9", delay = 0 }) => {
+  const barCount = 20;
+  return /* @__PURE__ */ jsx("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 3, height: 40 }, children: Array.from({ length: barCount }).map((_, i) => {
+    const s = getSpringProgress(frame, fps, delay + i * 2, SNAPPY_SPRING);
+    const h = active ? 8 + Math.abs(Math.sin((frame + i * 30) * 0.15)) * 24 : 8;
+    return /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: {
+          width: 3,
+          height: h,
+          background: color,
+          borderRadius: 2,
+          opacity: interpolate(s, [0, 0.5, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+          transform: `scaleY(${interpolate(s, [0, 1], [0.3, 1])})`,
+          willChange: "transform, opacity"
+        }
+      },
+      i
+    );
+  }) });
+};
+const DashboardCard = ({ label, value, trend, trendLabel, frame, fps, delay = 0 }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  const isUp = (trend || 0) >= 0;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        background: "#ffffff",
+        borderRadius: 16,
+        padding: "24px 28px",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+        minWidth: 180,
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [30, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }, children: label }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 36, fontWeight: 700, color: "#111", letterSpacing: "-0.02em", marginBottom: 8 }, children: value }),
+        trend !== void 0 && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 4 }, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)("span", { style: { color: isUp ? "#22c55e" : "#ef4444", fontSize: 13, fontWeight: 600 }, children: [
+            isUp ? "\u2191" : "\u2193",
+            " ",
+            Math.abs(trend),
+            "%"
+          ] }),
+          trendLabel && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: FONT, fontSize: 12, color: "#aaa" }, children: trendLabel })
+        ] })
+      ]
+    }
+  );
+};
+const StatCard = ({ value, label, prefix = "", suffix = "", frame, fps, delay = 0 }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center", opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [20, 0])}px)`, willChange: "transform, opacity" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: FONT, fontSize: "72px", fontWeight: 800, color: "#111", letterSpacing: "-0.03em", lineHeight: 1 }, children: [
+      prefix,
+      value,
+      suffix
+    ] }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: "18px", fontWeight: 500, color: "#888", marginTop: 8 }, children: label })
+  ] });
+};
+const TestimonialCard = ({ quote, name, role, avatar, rating, frame, fps, delay = 0 }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        background: "#ffffff",
+        borderRadius: 20,
+        padding: "36px 40px",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
+        maxWidth: 600,
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [30, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 48, color: "#ddd", lineHeight: 1, marginBottom: 8 }, children: '"' }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 22, fontWeight: 500, color: "#222", lineHeight: 1.5, marginBottom: 24 }, children: quote }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 12 }, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 44, height: 44, borderRadius: "50%", background: "#e5e5e5", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT, fontSize: 16, fontWeight: 600, color: "#666" }, children: avatar || name.charAt(0) }),
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 15, fontWeight: 600, color: "#111" }, children: name }),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 13, color: "#888" }, children: role })
+          ] }),
+          rating !== void 0 && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginLeft: "auto", display: "flex", gap: 2 }, children: Array.from({ length: 5 }).map((_, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 16, color: i < rating ? "#f59e0b" : "#e5e5e5" }, children: "\u2605" }, i)) })
+        ] })
+      ]
+    }
+  );
+};
+const PricingCard = ({ plan, price, period = "/mo", features, highlighted = false, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        background: "#ffffff",
+        borderRadius: 20,
+        padding: "32px 28px",
+        boxShadow: highlighted ? `0 8px 32px ${primaryColor}20` : "0 2px 12px rgba(0,0,0,0.04)",
+        border: highlighted ? `2px solid ${primaryColor}` : "2px solid transparent",
+        minWidth: 240,
+        flex: 1,
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [30, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 13, fontWeight: 700, color: primaryColor, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }, children: plan }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: FONT, fontSize: 40, fontWeight: 800, color: "#111", letterSpacing: "-0.02em" }, children: [
+          price,
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontSize: 16, fontWeight: 500, color: "#888" }, children: period })
+        ] }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }, children: features.map((f, i) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 8, fontFamily: FONT, fontSize: 14, color: "#444" }, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { color: "#22c55e", fontSize: 14 }, children: "\u2713" }),
+          " ",
+          f
+        ] }, i)) })
+      ]
+    }
+  );
+};
+const FeatureCard = ({ icon, title, description, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        background: "#ffffff",
+        borderRadius: 16,
+        padding: "24px",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [20, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 40, height: 40, borderRadius: 10, background: `${primaryColor}12`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, marginBottom: 14 }, children: icon }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 6 }, children: title }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 13, color: "#666", lineHeight: 1.5 }, children: description })
+      ]
+    }
+  );
+};
+const ComparisonCard = ({ beforeLabel, beforeText, afterLabel, afterText, frame, fps, delay = 0 }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", gap: 16, maxWidth: 700, opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [30, 0])}px)`, willChange: "transform, opacity" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, background: "#fef2f2", borderRadius: 16, padding: "28px 24px", border: "1px solid #fecaca" }, children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 11, fontWeight: 700, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }, children: beforeLabel }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 18, fontWeight: 600, color: "#7f1d1d" }, children: beforeText })
+    ] }),
+    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, background: "#f0fdf4", borderRadius: 16, padding: "28px 24px", border: "1px solid #bbf7d0" }, children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 11, fontWeight: 700, color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }, children: afterLabel }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 18, fontWeight: 600, color: "#14532d" }, children: afterText })
+    ] })
+  ] });
 };
 const CalendarBlock = ({ time, title, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
   const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
@@ -971,38 +1162,516 @@ const CalendarBlock = ({ time, title, frame, fps, delay = 0, primaryColor = "#0e
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "div",
-          {
-            style: {
-              fontFamily: FONT,
-              fontSize: 12,
-              fontWeight: 600,
-              color: primaryColor,
-              marginBottom: 4,
-              letterSpacing: "0.02em"
-            },
-            children: time
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: primaryColor, marginBottom: 4, letterSpacing: "0.02em" }, children: time }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 15, fontWeight: 600, color: "#111" }, children: title })
+      ]
+    }
+  );
+};
+const CalendarMonth = ({ month, highlightedDays = [], frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        background: "#ffffff",
+        borderRadius: 16,
+        padding: 20,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `scale(${(0,esm.interpolate)(s, [0, 1], [0.95, 1])})`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 12 }, children: month }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }, children: [
+          ["S", "M", "T", "W", "T", "F", "S"].map((d, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 10, fontWeight: 600, color: "#aaa", textAlign: "center", padding: "4px 0" }, children: d }, `h-${i}`)),
+          days.map((d) => {
+            const isHighlighted = highlightedDays.includes(d);
+            const ds = animations_getSpringProgress(frame, fps, delay + d * 1, animations_SNAPPY_SPRING);
+            return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+              "div",
+              {
+                style: {
+                  fontFamily: FONT,
+                  fontSize: 12,
+                  fontWeight: isHighlighted ? 700 : 400,
+                  color: isHighlighted ? "#fff" : "#444",
+                  textAlign: "center",
+                  padding: "6px 0",
+                  borderRadius: 6,
+                  background: isHighlighted ? primaryColor : "transparent",
+                  opacity: d > 28 ? 0.3 : (0,esm.interpolate)(ds, [0, 0.5, 1], [0, 1, 1], { extrapolateLeft: "clamp" })
+                },
+                children: d
+              },
+              d
+            );
+          })
+        ] })
+      ]
+    }
+  );
+};
+const InvoiceRow = ({ service, amount, status, frame, fps, delay = 0 }) => {
+  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  const statusColors = { paid: "#22c55e", pending: "#f59e0b", failed: "#ef4444" };
+  const statusLabels = { paid: "Paid", pending: "Pending", failed: "Failed" };
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "14px 18px",
+        background: "#ffffff",
+        borderRadius: 12,
+        margin: "0 14px 8px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateX(${interpolate(s, [0, 1], [-16, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 500, color: "#111" }, children: service }),
+        /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: 12 }, children: [
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 700, color: "#111" }, children: amount }),
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 11, fontWeight: 700, color: statusColors[status], background: `${statusColors[status]}12`, padding: "3px 10px", borderRadius: 100, textTransform: "uppercase" }, children: statusLabels[status] })
+        ] })
+      ]
+    }
+  );
+};
+const BarChart = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const max = Math.max(...data.map((d) => d.value));
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", alignItems: "flex-end", gap: 16, height: 160, padding: "0 8px" }, children: data.map((d, i) => {
+    const s = animations_getSpringProgress(frame, fps, delay + i * 4, animations_DEFAULT_SPRING);
+    const h = d.value / max * 120;
+    return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }, children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        "div",
+        {
+          style: {
+            width: "100%",
+            height: h,
+            background: `linear-gradient(180deg, ${primaryColor} 0%, ${primaryColor}80 100%)`,
+            borderRadius: "6px 6px 0 0",
+            opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+            transform: `scaleY(${(0,esm.interpolate)(s, [0, 1], [0, 1])})`,
+            transformOrigin: "bottom",
+            willChange: "transform, opacity"
           }
-        ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        }
+      ),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "#888" }, children: d.label })
+    ] }, i);
+  }) });
+};
+const LineChart = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  const width = 300;
+  const height = 100;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => {
+    const x = i / (data.length - 1) * width;
+    const y = height - (v - min) / range * height;
+    return `${x},${y}`;
+  }).join(" ");
+  const pathProgress = (0,esm.interpolate)(s, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { opacity: pathProgress, willChange: "opacity" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("svg", { width, height: height + 20, viewBox: `0 0 ${width} ${height + 20}`, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("defs", { children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("linearGradient", { id: "lineGrad", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("stop", { offset: "0%", stopColor: primaryColor, stopOpacity: "0.2" }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("stop", { offset: "100%", stopColor: primaryColor, stopOpacity: "0" })
+    ] }) }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("path", { d: `M0,${height} L${points} L${width},${height} Z`, fill: "url(#lineGrad)" }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      "path",
+      {
+        d: `M${points}`,
+        fill: "none",
+        stroke: primaryColor,
+        strokeWidth: 2.5,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        strokeDasharray: 1e3,
+        strokeDashoffset: 1e3 * (1 - pathProgress)
+      }
+    )
+  ] }) });
+};
+const PieChart = ({ segments, frame, fps, delay = 0 }) => {
+  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+  let startAngle = 0;
+  const radius = 60;
+  const cx = 80;
+  const cy = 80;
+  return /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: 20, opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }) }, children: [
+    /* @__PURE__ */ jsx("svg", { width: 160, height: 160, viewBox: "0 0 160 160", children: segments.map((seg, i) => {
+      const angle = seg.value / total * 360;
+      const endAngle = startAngle + angle;
+      const x1 = cx + radius * Math.cos(Math.PI * startAngle / 180);
+      const y1 = cy + radius * Math.sin(Math.PI * startAngle / 180);
+      const x2 = cx + radius * Math.cos(Math.PI * endAngle / 180);
+      const y2 = cy + radius * Math.sin(Math.PI * endAngle / 180);
+      const largeArc = angle > 180 ? 1 : 0;
+      const ds = getSpringProgress(frame, fps, delay + i * 6, SNAPPY_SPRING);
+      startAngle = endAngle;
+      return /* @__PURE__ */ jsx(
+        "path",
+        {
+          d: `M${cx},${cy} L${x1},${y1} A${radius},${radius} 0 ${largeArc},1 ${x2},${y2} Z`,
+          fill: seg.color,
+          opacity: interpolate(ds, [0, 1], [0, 1], { extrapolateLeft: "clamp" })
+        },
+        i
+      );
+    }) }),
+    /* @__PURE__ */ jsx("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: segments.map((seg, i) => /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+      /* @__PURE__ */ jsx("div", { style: { width: 10, height: 10, borderRadius: 3, background: seg.color } }),
+      /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 12, color: "#444" }, children: seg.label })
+    ] }, i)) })
+  ] });
+};
+const ProgressRing = ({ percent, label, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+  const currentPercent = (0,esm.interpolate)(s, [0, 1], [0, percent], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const radius = 50;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - currentPercent / 100 * circumference;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsxs)("svg", { width: 120, height: 120, viewBox: "0 0 120 120", children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("circle", { cx: 60, cy: 60, r: radius, fill: "none", stroke: "#e5e5e5", strokeWidth: 8 }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        "circle",
+        {
+          cx: 60,
+          cy: 60,
+          r: radius,
+          fill: "none",
+          stroke: primaryColor,
+          strokeWidth: 8,
+          strokeLinecap: "round",
+          strokeDasharray: circumference,
+          strokeDashoffset: offset,
+          transform: "rotate(-90 60 60)"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: FONT, fontSize: 22, fontWeight: 700, color: "#111" }, children: [
+      Math.round(currentPercent),
+      "%"
+    ] }),
+    label && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 12, color: "#888" }, children: label })
+  ] });
+};
+const Sparkline = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  const width = 80;
+  const height = 30;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => `${i / (data.length - 1) * width},${height - (v - min) / range * height}`).join(" ");
+  return /* @__PURE__ */ jsx("svg", { width, height, style: { opacity: interpolate(s, [0, 0.5, 1], [0, 1, 1], { extrapolateLeft: "clamp" }) }, children: /* @__PURE__ */ jsx("path", { d: `M${points}`, fill: "none", stroke: primaryColor, strokeWidth: 2, strokeLinecap: "round" }) });
+};
+const TypewriterInput = ({ text, placeholder = "Type something...", frame, fps, delay = 0, speed = 0.3 }) => {
+  const adjustedFrame = Math.max(0, frame - delay);
+  const charsToShow = Math.floor(adjustedFrame * speed);
+  const visibleText = text.slice(0, charsToShow);
+  const cursorOn = Math.floor(frame / 15) % 2 === 0;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        background: "#ffffff",
+        borderRadius: 14,
+        padding: "16px 20px",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        minWidth: 320
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { color: "#aaa", fontSize: 16 }, children: "\u2318" }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: FONT, fontSize: 16, color: visibleText ? "#111" : "#bbb", fontWeight: 400 }, children: visibleText || placeholder }),
+        cursorOn && visibleText.length < text.length && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { display: "inline-block", width: 2, height: 20, background: "#0ea5e9", marginLeft: 2 } })
+      ]
+    }
+  );
+};
+const SearchBar = ({ query, frame, fps, delay = 0 }) => {
+  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      style: {
+        background: "#ffffff",
+        borderRadius: 14,
+        padding: "14px 18px",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        minWidth: 300,
+        opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${interpolate(s, [0, 1], [10, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ jsx("span", { style: { color: "#aaa", fontSize: 16 }, children: "\u{1F50D}" }),
+        /* @__PURE__ */ jsx("span", { style: { fontFamily: FONT, fontSize: 15, color: "#444" }, children: query })
+      ]
+    }
+  );
+};
+const ToggleSwitch = ({ on, label, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  const isOn = interpolate(s, [0, 1], [0, on ? 1 : 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) > 0.5;
+  const thumbX = interpolate(s, [0, 1], [2, on ? 26 : 2], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  return /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
+    /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: {
+          width: 50,
+          height: 28,
+          borderRadius: 14,
+          background: isOn ? primaryColor : "#d1d5db",
+          position: "relative",
+          transition: "none"
+        },
+        children: /* @__PURE__ */ jsx(
           "div",
           {
             style: {
-              fontFamily: FONT,
-              fontSize: 15,
-              fontWeight: 600,
-              color: "#111111"
-            },
-            children: title
+              width: 24,
+              height: 24,
+              borderRadius: "50%",
+              background: "#ffffff",
+              position: "absolute",
+              top: 2,
+              left: thumbX,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.15)"
+            }
           }
         )
+      }
+    ),
+    label && /* @__PURE__ */ jsx("span", { style: { fontFamily: FONT, fontSize: 14, color: "#444" }, children: label })
+  ] });
+};
+const Button = ({ label, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    "div",
+    {
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "14px 32px",
+        background: primaryColor,
+        borderRadius: 100,
+        fontFamily: FONT,
+        fontSize: 15,
+        fontWeight: 600,
+        color: "#ffffff",
+        letterSpacing: "0.01em",
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `scale(${(0,esm.interpolate)(s, [0, 1], [0.9, 1])})`,
+        willChange: "transform, opacity"
+      },
+      children: label
+    }
+  );
+};
+const Slider = ({ value, min = 0, max = 100, label, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  const current = interpolate(s, [0, 1], [min, value], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const percent = (current - min) / (max - min) * 100;
+  return /* @__PURE__ */ jsxs("div", { style: { width: 240 }, children: [
+    label && /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 13, color: "#666", marginBottom: 8 }, children: label }),
+    /* @__PURE__ */ jsxs("div", { style: { height: 6, background: "#e5e5e5", borderRadius: 3, position: "relative" }, children: [
+      /* @__PURE__ */ jsx("div", { style: { height: "100%", width: `${percent}%`, background: primaryColor, borderRadius: 3 } }),
+      /* @__PURE__ */ jsx("div", { style: { position: "absolute", top: -5, left: `calc(${percent}% - 8px)`, width: 16, height: 16, borderRadius: "50%", background: "#ffffff", border: `2px solid ${primaryColor}`, boxShadow: "0 1px 3px rgba(0,0,0,0.15)" } })
+    ] })
+  ] });
+};
+const Stepper = ({ steps, activeStep, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", alignItems: "center", gap: 0 }, children: steps.map((step, i) => {
+    const isActive = i <= activeStep;
+    const s = animations_getSpringProgress(frame, fps, delay + i * 8, animations_DEFAULT_SPRING);
+    return /* @__PURE__ */ (0,jsx_runtime.jsxs)(react.Fragment, { children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          "div",
+          {
+            style: {
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: isActive ? primaryColor : "#e5e5e5",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: FONT,
+              fontSize: 13,
+              fontWeight: 700,
+              color: isActive ? "#fff" : "#888",
+              opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+              transform: `scale(${(0,esm.interpolate)(s, [0, 1], [0.5, 1])})`,
+              willChange: "transform, opacity"
+            },
+            children: i + 1
+          }
+        ),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 11, fontWeight: 600, color: isActive ? "#111" : "#aaa" }, children: step })
+      ] }),
+      i < steps.length - 1 && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 40, height: 2, background: i < activeStep ? primaryColor : "#e5e5e5", margin: "0 8px", marginBottom: 22 } })
+    ] }, i);
+  }) });
+};
+const Timeline = ({ events, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  return /* @__PURE__ */ jsx("div", { style: { display: "flex", flexDirection: "column", gap: 0, padding: "0 14px" }, children: events.map((ev, i) => {
+    const s = getSpringProgress(frame, fps, delay + i * 10, DEFAULT_SPRING);
+    return /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 14, opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateX(${interpolate(s, [0, 1], [-16, 0])}px)`, willChange: "transform, opacity" }, children: [
+      /* @__PURE__ */ jsxs("div", { style: { display: "flex", flexDirection: "column", alignItems: "center" }, children: [
+        /* @__PURE__ */ jsx("div", { style: { width: 10, height: 10, borderRadius: "50%", background: primaryColor } }),
+        i < events.length - 1 && /* @__PURE__ */ jsx("div", { style: { width: 2, flex: 1, background: "#e5e5e5" } })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { style: { paddingBottom: 18 }, children: [
+        /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 11, fontWeight: 600, color: primaryColor, marginBottom: 2 }, children: ev.time }),
+        /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 600, color: "#111" }, children: ev.title }),
+        ev.description && /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 12, color: "#888", marginTop: 2 }, children: ev.description })
+      ] })
+    ] }, i);
+  }) });
+};
+const Breadcrumb = ({ items, frame, fps, delay = 0 }) => {
+  return /* @__PURE__ */ jsx("div", { style: { display: "flex", alignItems: "center", gap: 8, padding: "0 14px" }, children: items.map((item, i) => {
+    const s = getSpringProgress(frame, fps, delay + i * 6, DEFAULT_SPRING);
+    return /* @__PURE__ */ jsxs(React.Fragment, { children: [
+      /* @__PURE__ */ jsx(
+        "span",
+        {
+          style: {
+            fontFamily: FONT,
+            fontSize: 13,
+            fontWeight: i === items.length - 1 ? 600 : 400,
+            color: i === items.length - 1 ? "#111" : "#888",
+            opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" })
+          },
+          children: item
+        }
+      ),
+      i < items.length - 1 && /* @__PURE__ */ jsx("span", { style: { color: "#ccc" }, children: "/" })
+    ] }, i);
+  }) });
+};
+const TabBar = ({ tabs, activeTab, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  return /* @__PURE__ */ jsx("div", { style: { display: "flex", gap: 0, borderBottom: "1px solid #e5e5e5", padding: "0 14px" }, children: tabs.map((tab, i) => {
+    const s = getSpringProgress(frame, fps, delay + i * 4, DEFAULT_SPRING);
+    const isActive = i === activeTab;
+    return /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: {
+          padding: "12px 18px",
+          fontFamily: FONT,
+          fontSize: 14,
+          fontWeight: isActive ? 600 : 400,
+          color: isActive ? primaryColor : "#666",
+          borderBottom: isActive ? `2px solid ${primaryColor}` : "2px solid transparent",
+          marginBottom: -1,
+          opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" })
+        },
+        children: tab
+      },
+      i
+    );
+  }) });
+};
+const Avatar = ({ name, image, online = false, size = 40, frame, fps, delay = 0 }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+  const initials = name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        background: image ? void 0 : "#e5e5e5",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: FONT,
+        fontSize: size * 0.35,
+        fontWeight: 600,
+        color: "#666",
+        position: "relative",
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `scale(${(0,esm.interpolate)(s, [0, 1], [0.5, 1])})`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        image ? /* @__PURE__ */ (0,jsx_runtime.jsx)("img", { src: image, style: { width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" } }) : initials,
+        online && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", bottom: 1, right: 1, width: size * 0.28, height: size * 0.28, borderRadius: "50%", background: "#22c55e", border: "2px solid #fff" } })
+      ]
+    }
+  );
+};
+const RatingStars = ({ rating, frame, fps, delay = 0 }) => {
+  return /* @__PURE__ */ jsx("div", { style: { display: "flex", gap: 2 }, children: Array.from({ length: 5 }).map((_, i) => {
+    const s = getSpringProgress(frame, fps, delay + i * 4, SNAPPY_SPRING);
+    const filled = i < rating;
+    return /* @__PURE__ */ jsx(
+      "div",
+      {
+        style: {
+          fontSize: 18,
+          color: filled ? "#f59e0b" : "#e5e5e5",
+          opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+          transform: `scale(${interpolate(s, [0, 1], [0.3, 1])})`,
+          willChange: "transform, opacity"
+        },
+        children: "\u2605"
+      },
+      i
+    );
+  }) });
+};
+const SocialProofRow = ({ avatars, count, label, frame, fps, delay = 0 }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    "div",
+    {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [10, 0])}px)`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex" }, children: avatars.slice(0, 4).map((a, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginLeft: i > 0 ? -10 : 0, zIndex: 4 - i }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Avatar, { name: a, size: 32, frame, fps, delay: delay + i * 4 }) }, i)) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 700, color: "#111" }, children: count }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 12, color: "#888" }, children: label })
+        ] })
       ]
     }
   );
 };
 const StatusPill = ({ label, frame, fps, delay = 0, variant = "success", primaryColor = "#0ea5e9" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
   const colors = {
     success: { bg: "#dcfce7", text: "#166534", dot: "#22c55e" },
     neutral: { bg: "#f3f4f6", text: "#374151", dot: "#9ca3af" },
@@ -1025,57 +1694,28 @@ const StatusPill = ({ label, frame, fps, delay = 0, variant = "success", primary
       },
       children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 7, height: 7, borderRadius: "50%", background: c.dot } }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(
-          "span",
-          {
-            style: {
-              fontFamily: FONT,
-              fontSize: 12,
-              fontWeight: 600,
-              color: c.text,
-              letterSpacing: "0.01em"
-            },
-            children: label
-          }
-        )
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: FONT, fontSize: 12, fontWeight: 600, color: c.text, letterSpacing: "0.01em" }, children: label })
       ]
     }
   );
 };
-const ListRow = ({ icon, label, frame, fps, delay = 0, highlight = false, primaryColor = "#0ea5e9" }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
-  return /* @__PURE__ */ jsxs(
-    "div",
+const Tag = ({ label, frame, fps, delay = 0 }) => {
+  const s = getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  return /* @__PURE__ */ jsx(
+    "span",
     {
       style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "14px 16px",
-        margin: "0 14px",
-        background: highlight ? `${primaryColor}08` : "transparent",
-        borderRadius: 12,
-        opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-        transform: `translateX(${interpolate(s, [0, 1], [-16, 0])}px)`,
-        willChange: "transform, opacity"
+        display: "inline-flex",
+        padding: "4px 10px",
+        background: "#f3f4f6",
+        borderRadius: 6,
+        fontFamily: FONT,
+        fontSize: 11,
+        fontWeight: 500,
+        color: "#666",
+        opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" })
       },
-      children: [
-        /* @__PURE__ */ jsx("span", { style: { fontSize: 20, width: 24, textAlign: "center" }, children: icon }),
-        /* @__PURE__ */ jsx(
-          "span",
-          {
-            style: {
-              fontFamily: FONT,
-              fontSize: 15,
-              fontWeight: 500,
-              color: "#111111",
-              flex: 1
-            },
-            children: label
-          }
-        ),
-        /* @__PURE__ */ jsx("span", { style: { color: "#c1c1c1", fontSize: 14 }, children: "\u203A" })
-      ]
+      children: label
     }
   );
 };
@@ -1130,7 +1770,7 @@ const StatementScene = ({
         willChange: "transform, opacity"
       },
       children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { textAlign: "center", maxWidth: "90%" }, children: isMultiLine ? lines.map((line, i) => {
-        const s = animations_getSpringProgress(frame, fps, i * 6, SNAPPY_SPRING);
+        const s = animations_getSpringProgress(frame, fps, i * 6, animations_SNAPPY_SPRING);
         return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
           "div",
           {
@@ -1436,7 +2076,7 @@ const MetricScene = ({
   const numberStr = numMatch ? numMatch[1] : "0";
   const label = scene.text.replace(numberStr, "").trim();
   const targetNum = parseFloat(numberStr.replace(/[$€£,]/g, "").replace(/K/i, "000").replace(/M/i, "000000"));
-  const countS = animations_getSpringProgress(frame, fps, 0, SNAPPY_SPRING);
+  const countS = animations_getSpringProgress(frame, fps, 0, animations_SNAPPY_SPRING);
   const displayed = Math.round((0,esm.interpolate)(countS, [0, 1], [0, targetNum], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
   const formatted = numberStr.startsWith("$") ? `$${displayed.toLocaleString()}` : displayed.toLocaleString();
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -1494,7 +2134,7 @@ const LockupScene = ({
 }) => {
   const entrance = animations_getEntrance(frame, fps, 0);
   const exit = animations_getExit(frame, duration, "down", animations_TRANSITION_FRAMES, fps);
-  const lineS = animations_getSpringProgress(frame, fps, 20, SNAPPY_SPRING);
+  const lineS = animations_getSpringProgress(frame, fps, 20, animations_SNAPPY_SPRING);
   const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 140], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const isUrl = scene.text.includes(".") && !scene.text.includes(" ");
   const mainText = isUrl ? scene.subtext || "Get started" : scene.text;
@@ -1573,7 +2213,528 @@ const sceneComponentMap = {
   cta: LockupScene
 };
 
+;// ./src/templates.tsx
+
+
+
+
+
+const templates_FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const HeroStatementTemplate = ({
+  scene,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "down", animations_TRANSITION_FRAMES, fps);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 8%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        "div",
+        {
+          style: {
+            fontFamily: templates_FONT,
+            fontSize: scene.text.length < 20 ? "110px" : scene.text.length < 40 ? "84px" : "68px",
+            fontWeight: 800,
+            lineHeight: 1.05,
+            color: textColor,
+            letterSpacing: "-0.035em",
+            textWrap: "balance",
+            textAlign: "center"
+          },
+          children: scene.text
+        }
+      )
+    }
+  );
+};
+const PhoneDemoTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "right", animations_TRANSITION_FRAMES, fps);
+  const textLower = scene.text.toLowerCase();
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(PhoneFrame, { frame, fps, primaryColor, children: [
+        (textLower.includes("call") || textLower.includes("alert") || textLower.includes("notify")) && /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          NotificationCard,
+          {
+            title: scene.subtext || "Incoming",
+            body: scene.text,
+            frame,
+            fps,
+            delay: 10,
+            icon: "\u{1F4DE}"
+          }
+        ),
+        (textLower.includes("chat") || textLower.includes("ai") || textLower.includes("talk") || textLower.includes("speak")) && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: textLower.includes("call") ? 100 : 20, padding: "0 4px" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          ChatThread,
+          {
+            messages: [
+              { text: scene.subtext || "Hi, I need help with...", direction: "left" },
+              { text: scene.text, direction: "right" }
+            ],
+            frame,
+            fps,
+            baseDelay: 15,
+            primaryColor
+          }
+        ) }),
+        (textLower.includes("book") || textLower.includes("calendar") || textLower.includes("schedule")) && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 20, padding: "0 4px" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+          CalendarBlock,
+          {
+            time: "Today, 2:00 PM",
+            title: scene.text,
+            frame,
+            fps,
+            delay: 15,
+            primaryColor
+          }
+        ) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { position: "absolute", bottom: 20, left: 14, right: 14, display: "flex", gap: 8, flexWrap: "wrap" }, children: [
+          textLower.includes("answer") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Answered", frame, fps, delay: 40, variant: "success" }),
+          textLower.includes("qualif") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Qualified", frame, fps, delay: 50, variant: "accent", primaryColor }),
+          textLower.includes("book") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Booked", frame, fps, delay: 60, variant: "success" })
+        ] })
+      ] })
+    }
+  );
+};
+const BrowserDashboardTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "right", animations_TRANSITION_FRAMES, fps);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 5%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(BrowserFrame, { frame, fps, url: scene.subtext || "dashboard", children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", gap: 16, marginBottom: 20 }, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Calls Answered", value: "2,847", trend: 24, trendLabel: "vs last month", frame, fps, delay: 10 }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Jobs Booked", value: "186", trend: 18, trendLabel: "vs last month", frame, fps, delay: 18 }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Revenue", value: "$47K", trend: 32, trendLabel: "vs last month", frame, fps, delay: 26 })
+        ] }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", gap: 16 }, children: [
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, background: "#fff", borderRadius: 12, padding: 20 }, children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: templates_FONT, fontSize: 13, fontWeight: 600, color: "#888", marginBottom: 12 }, children: "Call Volume" }),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)(BarChart, { data: [{ label: "M", value: 45 }, { label: "T", value: 62 }, { label: "W", value: 38 }, { label: "T", value: 71 }, { label: "F", value: 55 }], frame, fps, delay: 30, primaryColor })
+          ] }),
+          /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, background: "#fff", borderRadius: 12, padding: 20 }, children: [
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: templates_FONT, fontSize: 13, fontWeight: 600, color: "#888", marginBottom: 12 }, children: "Revenue Trend" }),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)(LineChart, { data: [30, 45, 35, 60, 55, 80, 75], frame, fps, delay: 35, primaryColor })
+          ] })
+        ] })
+      ] })
+    }
+  );
+};
+const StatsGridTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "left", animations_TRANSITION_FRAMES, fps);
+  const stats = scene.text.split(",").map((s) => s.trim()).filter(Boolean);
+  const parsed = stats.map((s) => {
+    const match = s.match(/([$€£]?[\d,.]+[KMBkmb]?)(?:\s+)?(.+)?/);
+    return { value: (match == null ? void 0 : match[1]) || s, label: (match == null ? void 0 : match[2]) || "" };
+  });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 60,
+        flexDirection: "row",
+        padding: "0 8%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: parsed.map((stat, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        StatCard,
+        {
+          value: stat.value,
+          label: stat.label,
+          frame,
+          fps,
+          delay: i * 12
+        },
+        i
+      ))
+    }
+  );
+};
+const TestimonialQuoteTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  var _a, _b, _c, _d;
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "down", animations_TRANSITION_FRAMES, fps);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 10%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        TestimonialCard,
+        {
+          quote: scene.text,
+          name: ((_b = (_a = scene.subtext) == null ? void 0 : _a.split("-")[0]) == null ? void 0 : _b.trim()) || "Customer",
+          role: ((_d = (_c = scene.subtext) == null ? void 0 : _c.split("-")[1]) == null ? void 0 : _d.trim()) || "Verified User",
+          rating: 5,
+          frame,
+          fps,
+          delay: 10
+        }
+      )
+    }
+  );
+};
+const BeforeAfterTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "right", animations_TRANSITION_FRAMES, fps);
+  const parts = scene.text.split("vs|versus|\u2192|->").map((s) => s.trim());
+  const before = parts[0] || "Before";
+  const after = parts[1] || "After";
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 10%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        ComparisonCard,
+        {
+          beforeLabel: "Before",
+          beforeText: before,
+          afterLabel: "After",
+          afterText: after,
+          frame,
+          fps,
+          delay: 10
+        }
+      )
+    }
+  );
+};
+const WorkflowStepsTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "up", animations_TRANSITION_FRAMES, fps);
+  const steps = scene.text.split(/[→\-\>]/).map((s) => s.trim()).filter(Boolean);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 6%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Stepper, { steps: steps.slice(0, 4), activeStep: steps.length - 1, frame, fps, delay: 10, primaryColor })
+    }
+  );
+};
+const PricingTiersTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "left", animations_TRANSITION_FRAMES, fps);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 6%",
+        gap: 16,
+        flexDirection: "row",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Starter", price: "$29", period: "/mo", features: ["100 calls/mo", "Basic AI", "Email summaries"], frame, fps, delay: 10, primaryColor }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Pro", price: "$99", period: "/mo", features: ["Unlimited calls", "Custom AI voice", "Calendar sync", "Priority routing"], highlighted: true, frame, fps, delay: 18, primaryColor }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Enterprise", price: "Custom", period: "", features: ["Dedicated agent", "API access", "White-label", "SLA"], frame, fps, delay: 26, primaryColor })
+      ]
+    }
+  );
+};
+const FeatureHighlightTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "right", animations_TRANSITION_FRAMES, fps);
+  const features = [
+    { icon: "\u{1F4DE}", title: "AI Answering", description: "24/7 call handling" },
+    { icon: "\u{1F3AF}", title: "Lead Qualify", description: "Smart filtering" },
+    { icon: "\u{1F4C5}", title: "Auto Booking", description: "Calendar integration" },
+    { icon: "\u{1F4B0}", title: "Revenue Track", description: "Real-time metrics" }
+  ];
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 10%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, maxWidth: 500 }, children: features.map((f, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(FeatureCard, { icon: f.icon, title: f.title, description: f.description, frame, fps, delay: 10 + i * 8, primaryColor }, i)) })
+    }
+  );
+};
+const TypewriterCommandTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "down", animations_TRANSITION_FRAMES, fps);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 10%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(TypewriterInput, { text: scene.text, frame, fps, delay: 10, speed: 0.4 })
+    }
+  );
+};
+const SocialProofBannerTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "left", animations_TRANSITION_FRAMES, fps);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 10%",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+        SocialProofRow,
+        {
+          avatars: ["A", "B", "C", "D"],
+          count: scene.text,
+          label: scene.subtext || "businesses trust us",
+          frame,
+          fps,
+          delay: 10
+        }
+      )
+    }
+  );
+};
+const CalendarBookingTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "up", animations_TRANSITION_FRAMES, fps);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "0 10%",
+        gap: 20,
+        flexDirection: "row",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarMonth, { month: "March 2025", highlightedDays: [15, 16, 17, 18, 22], frame, fps, delay: 10, primaryColor }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarBlock, { time: "Mar 15, 2:00 PM", title: scene.text, frame, fps, delay: 25, primaryColor })
+      ]
+    }
+  );
+};
+const RevenueCounterTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "left", animations_TRANSITION_FRAMES, fps);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateX(${exit.x}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ProgressRing, { percent: 85, label: scene.text, frame, fps, delay: 10, primaryColor })
+    }
+  );
+};
+const BrandLockupTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration
+}) => {
+  const entrance = animations_getEntrance(frame, fps, 0);
+  const exit = animations_getExit(frame, duration, "down", animations_TRANSITION_FRAMES, fps);
+  const lineS = animations_getSpringProgress(frame, fps, 20, animations_DEFAULT_SPRING);
+  const lineWidth = (0,esm.interpolate)(lineS, [0, 1], [0, 140], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+    esm.AbsoluteFill,
+    {
+      style: {
+        justifyContent: "center",
+        alignItems: "center",
+        opacity: entrance.opacity * exit.opacity,
+        transform: `translateY(${entrance.y + exit.y}px) scale(${entrance.scale * exit.scale})`,
+        willChange: "transform, opacity"
+      },
+      children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: templates_FONT, fontSize: "64px", fontWeight: 800, lineHeight: 1.1, color: textColor, letterSpacing: "-0.03em", marginBottom: 20 }, children: scene.subtext || scene.text }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "0 auto 20px" } }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(Button, { label: scene.text.includes(".") ? scene.text : "Get Started \u2192", frame, fps, delay: 30, primaryColor })
+      ] })
+    }
+  );
+};
+const templateComponentMap = {
+  heroStatement: HeroStatementTemplate,
+  phoneDemo: PhoneDemoTemplate,
+  browserDashboard: BrowserDashboardTemplate,
+  statsGrid: StatsGridTemplate,
+  testimonialQuote: TestimonialQuoteTemplate,
+  beforeAfter: BeforeAfterTemplate,
+  workflowSteps: WorkflowStepsTemplate,
+  pricingTiers: PricingTiersTemplate,
+  featureHighlight: FeatureHighlightTemplate,
+  typewriterCommand: TypewriterCommandTemplate,
+  socialProofBanner: SocialProofBannerTemplate,
+  calendarBooking: CalendarBookingTemplate,
+  revenueCounter: RevenueCounterTemplate,
+  brandLockup: BrandLockupTemplate
+};
+
 ;// ./src/ExplainerVideo.tsx
+
 
 
 
@@ -1606,6 +2767,7 @@ const sceneSchema = lib.z.object({
   text: lib.z.string(),
   subtext: lib.z.string().optional().default(""),
   visualDirection: lib.z.string().optional().default(""),
+  template: lib.z.string().optional().default(""),
   audioUrl: lib.z.string(),
   durationInFrames: lib.z.number().min(1),
   imageUrl: lib.z.string().optional().default("")
@@ -1624,6 +2786,7 @@ const defaultProps = {
   scenes: [
     {
       type: "statement",
+      template: "heroStatement",
       text: "Missed call. Missed job.",
       visualDirection: "Bold statement text",
       audioUrl: "",
@@ -1632,6 +2795,7 @@ const defaultProps = {
     },
     {
       type: "evidence",
+      template: "phoneDemo",
       text: "AI answers every call.",
       subtext: "The reveal",
       visualDirection: "Clean product card",
@@ -1641,6 +2805,7 @@ const defaultProps = {
     },
     {
       type: "flow",
+      template: "workflowSteps",
       text: "Call answered \u2192 Lead qualified \u2192 Job booked",
       visualDirection: "Step flow cards",
       audioUrl: "",
@@ -1693,7 +2858,7 @@ const ExplainerVideo = ({
       }
     ),
     sceneSchedule.map(({ scene, from, duration }, i) => {
-      const SceneComponent = sceneComponentMap[scene.type] || sceneComponentMap.feature;
+      const SceneComponent = scene.template && templateComponentMap[scene.template] ? templateComponentMap[scene.template] : sceneComponentMap[scene.type] || sceneComponentMap.statement;
       const zIndex = i;
       return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from, durationInFrames: duration + animations_TRANSITION_FRAMES, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", inset: 0, zIndex }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
         SceneComponent,
@@ -56454,7 +57619,7 @@ var z = /*#__PURE__*/Object.freeze({
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	__webpack_require__(96507);
-/******/ 	__webpack_require__(9366);
+/******/ 	__webpack_require__(72030);
 /******/ 	__webpack_require__(63610);
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __webpack_require__(66456);
