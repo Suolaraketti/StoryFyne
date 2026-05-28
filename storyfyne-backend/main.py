@@ -1476,6 +1476,8 @@ async def _process_explainer(
     video_url = ""
     video_bytes = b""
     polling_error = ""
+    render_id = ""
+    bucket_name = ""
     use_gpu = render_quality == "premium" and GPU_WORKER_URL
 
     if use_gpu:
@@ -1513,8 +1515,6 @@ async def _process_explainer(
             logger.error(f"[story {story_id}] GPU RENDER FAILED | {gpu_err}")
     else:
         # ─── Lambda Path ────────────────────────────────────────────────
-        render_id = ""
-        bucket_name = ""
         try:
             if not RENDER_GATEWAY_URL:
                 raise RuntimeError("RENDER_GATEWAY_URL not configured")
