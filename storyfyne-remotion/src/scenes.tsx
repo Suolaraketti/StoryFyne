@@ -4,7 +4,7 @@
 import React from "react";
 import { AbsoluteFill, interpolate, spring } from "remotion";
 import { getSpringProgress, TRANSITION_FRAMES, SNAPPY_SPRING, DEFAULT_SPRING } from "./animations";
-import { CinematicHeadline, CinematicBody, SceneMotion, useSceneSizes, FONT } from "./scene-core";
+import { CinematicHeadline, CinematicBody, SceneMotion, useSceneSizes, FONT, EntranceStyle } from "./scene-core";
 
 export interface SceneData {
   type: string;
@@ -50,6 +50,7 @@ export interface SceneProps {
   duration: number;
   entranceDirection?: "left" | "right" | "up" | "down";
   exitDirection?: "left" | "right" | "up" | "down";
+  entranceStyle?: EntranceStyle;
   audioMarkers?: number[];
   logoUrl?: string;
 }
@@ -57,11 +58,11 @@ export interface SceneProps {
 // ─── 1. STATEMENT ───────────────────────────────────────────────────
 
 export const StatementScene: React.FC<SceneProps> = ({
-  scene, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <CinematicHeadline text={scene.text} frame={frame} fps={fps} duration={duration} color={textColor} size={sizes.headline} audioMarkers={audioMarkers} />
       </AbsoluteFill>
@@ -72,13 +73,13 @@ export const StatementScene: React.FC<SceneProps> = ({
 // ─── 2. EVIDENCE ────────────────────────────────────────────────────
 
 export const EvidenceScene: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const cardS = spring({ frame: Math.max(0, frame - 8), fps, config: DEFAULT_SPRING });
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{
           background: "#0f0f0f",
@@ -105,13 +106,13 @@ export const EvidenceScene: React.FC<SceneProps> = ({
 // ─── 3. FLOW ────────────────────────────────────────────────────────
 
 export const FlowScene: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const steps = scene.text.split(/[→\-\>]/).map(s => s.trim()).filter(Boolean);
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, width: "100%", maxWidth: "1100px" }}>
           {steps.map((step, i) => {
@@ -150,7 +151,7 @@ export const FlowScene: React.FC<SceneProps> = ({
 // ─── 4. METRIC ──────────────────────────────────────────────────────
 
 export const MetricScene: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const numMatch = scene.text.match(/([$€£]?[\d,.]+[KMBkmb]?)/);
@@ -162,7 +163,7 @@ export const MetricScene: React.FC<SceneProps> = ({
   const formatted = numberStr.startsWith("$") ? `$${displayed.toLocaleString()}` : displayed.toLocaleString();
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontFamily: FONT, fontSize: Math.round(sizes.headline * 1.3), fontWeight: 800, lineHeight: 1, color: primaryColor, letterSpacing: "-0.04em", fontVariantNumeric: "tabular-nums" }}>
@@ -180,7 +181,7 @@ export const MetricScene: React.FC<SceneProps> = ({
 // ─── 5. LOCKUP ──────────────────────────────────────────────────────
 
 export const LockupScene: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const lineS = spring({ frame: Math.max(0, frame - 20), fps, config: SNAPPY_SPRING });
@@ -190,7 +191,7 @@ export const LockupScene: React.FC<SceneProps> = ({
   const urlText = isUrl ? scene.text : (scene.subtext || "");
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontFamily: FONT, fontSize: Math.round(sizes.headline * 0.65), fontWeight: 800, lineHeight: 1.1, color: textColor, letterSpacing: "-0.03em", marginBottom: 24 }}>

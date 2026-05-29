@@ -228,11 +228,14 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
           ? templateComponentMap[scene.template]
           : sceneComponentMap[scene.type] || sceneComponentMap.statement;
 
-        // Alternate entrance/exit directions for variety
+        // Alternate entrance/exit directions + transition flavor for variety
         const entranceDirs: Array<"left" | "right" | "up" | "down"> = ["up", "right", "left", "down"];
         const exitDirs: Array<"left" | "right" | "up" | "down"> = ["down", "left", "right", "up"];
+        const entranceStyles: Array<"rise" | "zoom" | "slide" | "tilt" | "drift"> = ["rise", "zoom", "slide", "tilt", "drift"];
         const entranceDir = entranceDirs[i % entranceDirs.length];
         const exitDir = exitDirs[i % exitDirs.length];
+        // First scene always rises (clean open); last is a calm drift.
+        const entranceStyle = i === 0 ? "rise" : i === scenes.length - 1 ? "drift" : entranceStyles[i % entranceStyles.length];
 
         return (
           <Sequence key={`scene-${i}`} from={from} durationInFrames={visualDuration}>
@@ -249,6 +252,7 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
                 duration={duration}
                 entranceDirection={entranceDir}
                 exitDirection={exitDir}
+                entranceStyle={entranceStyle}
                 audioMarkers={scene.audioMarkers}
                 logoUrl={logoUrl}
               />

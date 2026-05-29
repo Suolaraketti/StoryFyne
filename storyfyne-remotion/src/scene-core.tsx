@@ -237,15 +237,18 @@ export const CinematicBody: React.FC<{
 // Entrance: blur + scale + opacity + translateY stack.
 // Exit: blur INCREASES as it leaves.
 
+export type EntranceStyle = "rise" | "zoom" | "slide" | "tilt" | "drift";
+
 export const SceneMotion: React.FC<{
   frame: number;
   duration: number;
   entranceDirection?: "left" | "right" | "up" | "down";
   exitDirection?: "left" | "right" | "up" | "down";
+  entranceStyle?: EntranceStyle;
   children: React.ReactNode;
   bgChildren?: React.ReactNode;
   audioMarkers?: number[];
-}> = ({ frame, duration, entranceDirection = "up", exitDirection = "down", children, bgChildren, audioMarkers }) => {
+}> = ({ frame, duration, entranceDirection = "up", exitDirection = "down", entranceStyle = "rise", children, bgChildren, audioMarkers }) => {
   const entrance = getCinematicEntrance(frame, 0, 30);
   // Audio-driven: exit starts at last phrase marker instead of fixed offset
   const exitStart = getSyncedExitStart(duration, audioMarkers, TRANSITION_FRAMES);
@@ -264,6 +267,24 @@ export const SceneMotion: React.FC<{
     down: { x: 0, y: -entranceOffset },
   };
   const eDir = entranceMap[entranceDirection];
+
+  // ── Entrance flavor ──────────────────────────────────────────────
+  // Per-scene variety so consecutive beats don't all arrive identically.
+  // `p` is the eased entrance progress (0→1); each style remaps the start.
+  const p = entrance.opacity;
+  const inv = 1 - p;
+  const styleMap: Record<EntranceStyle, { scale: number; rot: number; xMul: number; yMul: number }> = {
+    rise:  { scale: 0.94, rot: 0,    xMul: 1,   yMul: 1 },
+    zoom:  { scale: 0.82, rot: 0,    xMul: 0.3, yMul: 0.3 },
+    slide: { scale: 0.97, rot: 0,    xMul: 2.4, yMul: 2.4 },
+    tilt:  { scale: 0.9,  rot: -3.5, xMul: 1,   yMul: 1.2 },
+    drift: { scale: 1.05, rot: 1.5,  xMul: 0.6, yMul: 0.6 },
+  };
+  const st = styleMap[entranceStyle] || styleMap.rise;
+  const entScale = st.scale + (1 - st.scale) * p;
+  const entRot = st.rot * inv;
+  const exX = exit.x + eDir.x * inv * st.xMul;
+  const exY = entrance.y * (st.yMul) + exit.y + eDir.y * inv * st.yMul;
 
   // Combined opacity (entrance fade in + exit fade out)
   const opacity = entrance.opacity * exit.opacity;
@@ -295,9 +316,10 @@ export const SceneMotion: React.FC<{
           alignItems: "center",
           opacity,
           transform: `
-            translateX(${exit.x + eDir.x * (1 - entrance.opacity)}px)
-            translateY(${entrance.y + exit.y + eDir.y * (1 - entrance.opacity)}px)
-            scale(${entrance.scale * exit.scale * cam.scale * (1 + beatPulse * 0.008)})
+            translateX(${exX}px)
+            translateY(${exY}px)
+            rotate(${entRot}deg)
+            scale(${entScale * exit.scale * cam.scale * (1 + beatPulse * 0.008)})
           `,
           filter: `blur(${entrance.blur + exit.blur}px)`,
           willChange: "transform, opacity, filter",
