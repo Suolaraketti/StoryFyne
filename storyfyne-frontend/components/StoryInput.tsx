@@ -81,11 +81,11 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [showExplainerPreview, setShowExplainerPreview] = useState(false);
   const [isPreviewingExplainer, setIsPreviewingExplainer] = useState(false);
   const [explainerLogoUrl, setExplainerLogoUrl] = useState('');
-  const [explainerPrimaryColor, setExplainerPrimaryColor] = useState('#10a37f');
-  const [explainerSecondaryColor, setExplainerSecondaryColor] = useState('#19c59f');
-  const [explainerBgColor, setExplainerBgColor] = useState('#050505');
+  const [explainerPrimaryColor, setExplainerPrimaryColor] = useState('#2a93f5');
+  const [explainerSecondaryColor, setExplainerSecondaryColor] = useState('#6cbef9');
+  const [explainerBgColor, setExplainerBgColor] = useState('#060912');
   const [explainerTextColor, setExplainerTextColor] = useState('#ffffff');
-  const [explainerAccentColor, setExplainerAccentColor] = useState('#10a37f');
+  const [explainerAccentColor, setExplainerAccentColor] = useState('#1f86f0');
   const [explainerImageUrls, setExplainerImageUrls] = useState<string[]>([]);
   const [explainerRenderQuality, setExplainerRenderQuality] = useState<'standard' | 'premium'>('standard');
   const [pendingImgScene, setPendingImgScene] = useState<number | null>(null);
@@ -198,6 +198,8 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       featureSplit: 'Copy + a tight screenshot detail, side by side. Attach an image below.',
       logoReveal: 'Your brand logo, large and centered. Uses the uploaded logo.',
       logoWall: '“Trusted by” grid of customer logos. Attach logos, or they fall back to names.',
+      aiCall: 'Live AI-call card: pulsing avatar, reactive voice waveform, streaming transcript, outcome chips. No screenshot needed.',
+      callTranscript: 'Clean transcript card — caller/AI turns stream in with a live caret. Great call proof.',
     };
     return plans[template] || 'Clean text scene with minimal motion. One thought per frame.';
   };
@@ -654,6 +656,28 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                 }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Palette size={14} /> Brand Colors
+                  </div>
+                  {/* One-click brand presets */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {[
+                      { name: 'Voice Blue', p: '#2a93f5', s: '#6cbef9', a: '#1f86f0', bg: '#060912' },
+                      { name: 'Indigo', p: '#6366f1', s: '#a5b4fc', a: '#818cf8', bg: '#0a0a14' },
+                      { name: 'Emerald', p: '#10b981', s: '#6ee7b7', a: '#059669', bg: '#04100c' },
+                      { name: 'Violet', p: '#8b5cf6', s: '#c4b5fd', a: '#7c3aed', bg: '#0c0814' },
+                      { name: 'Sunset', p: '#f97316', s: '#fdba74', a: '#ea580c', bg: '#120a06' },
+                      { name: 'Mono', p: '#e5e7eb', s: '#9ca3af', a: '#ffffff', bg: '#0a0a0a' },
+                    ].map(preset => (
+                      <button key={preset.name} type="button" disabled={isLoading}
+                        onClick={() => { setExplainerPrimaryColor(preset.p); setExplainerSecondaryColor(preset.s); setExplainerAccentColor(preset.a); setExplainerBgColor(preset.bg); setExplainerTextColor('#ffffff'); }}
+                        title={preset.name}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '100px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: isLoading ? 'not-allowed' : 'pointer', fontSize: '11px', fontWeight: 600 }}>
+                        <span style={{ display: 'flex' }}>
+                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: preset.p, border: '1.5px solid var(--bg-input)' }} />
+                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: preset.s, marginLeft: -5, border: '1.5px solid var(--bg-input)' }} />
+                        </span>
+                        {preset.name}
+                      </button>
+                    ))}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                     {[

@@ -188,6 +188,15 @@ IMAGE-DRIVEN TEMPLATES (use these when the scene should show the user's REAL pro
 - logoReveal: The brand logo, large and centered. Good as an opener or closer.
 - logoWall: A "trusted by" grid of customer/integration logos. Use for social proof; the editor attaches the logos (or list names in `steps`).
 
+VOICE-AI TEMPLATES (use these when the product is a phone agent, voice assistant, AI receptionist, or call automation — the call itself is the product, so NO screenshot is needed)
+- aiCall: A live AI-call card — pulsing avatar, reactive voice waveform, a 2-line transcript, and outcome chips. THE hero visual for a voice product. Put the caller's first line + the AI's reply in `messages`, and outcomes in `status_pills` (e.g. ["Answered in 0.2s","Qualified","Booked"]).
+- callTranscript: A clean transcript card with speaker turns streaming in. Use for "every call captured / searchable notes" proof. Put 3-4 alternating caller/AI lines in `messages`.
+
+IF THE PRODUCT IS VOICE / CALL / PHONE BASED
+- Use aiCall for the product reveal beat instead of phoneDemo or browserDashboard.
+- Use callTranscript or browserDashboard (dashboard screenshot) for the proof beat.
+- Only reach for screenshot templates (productShowcase/heroImage) when the script explicitly references a dashboard/analytics screen.
+
 PICKING IMAGE TEMPLATES
 - The user attaches their own screenshots/logo to scenes in the editor AFTER you write them. So when the script describes seeing the product, the dashboard, the app, the UI, or "take a look", prefer an image-driven template (productShowcase / heroImage / browserDashboard / phoneDemo) so there is a natural place for their screenshot.
 - For each image-friendly scene you may set "device" to one of: browser, phone, tablet, window, bare (how the screenshot is framed). Default browser; use phone for mobile app shots; bare/window for full-bleed marketing shots.

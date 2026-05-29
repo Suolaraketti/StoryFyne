@@ -18,6 +18,7 @@ import {
   SocialProofRow, StatusPill,
 } from "./ui-mockups";
 import { ScreenshotFrame, ScreenshotStack, LogoLockup, LogoWall, DeviceVariant, ImageFit } from "./media";
+import { AICallPanel, CallTranscriptPanel } from "./voice";
 
 // Collect every usable image off a scene: explicit list first, then single.
 const sceneImages = (scene: SceneProps["scene"]): string[] => {
@@ -973,6 +974,52 @@ export const FeatureSplitTemplate: React.FC<SceneProps> = ({
   );
 };
 
+// AI CALL — the hero visual for a voice-AI product. Copy + a live call panel
+// with a reactive waveform, streaming transcript, and outcome chips.
+export const AICallTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const messages = scene.messages && scene.messages.length > 0
+    ? scene.messages
+    : ["Hi, do you have any openings today?", "Absolutely — I can get you booked for 2 PM."];
+  const pills = scene.statusPills && scene.statusPills.length > 0
+    ? scene.statusPills
+    : ["Answered", "Qualified", "Booked"];
+  const caller = scene.attribution || scene.eyebrow || "Incoming call";
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 40 : 80, width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          <AICallPanel frame={frame} fps={fps} primaryColor={primaryColor} delay={8} caller={caller} callerSub="AI Assistant • Live" messages={messages} pills={pills} audioMarkers={audioMarkers} />
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// CALL TRANSCRIPT — a clean transcript card with speaker turns streaming in.
+export const CallTranscriptTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const src = scene.messages && scene.messages.length > 0
+    ? scene.messages
+    : ["Hi, I need someone to look at a leak today.", "I can help with that. Are mornings or afternoons better?", "Afternoon works.", "Great — you're booked for 2 PM today."];
+  const turns = src.slice(0, 5).map((text, i) => ({ speaker: i % 2 === 1 ? "AI Agent" : "Caller", text }));
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: sizes.isVertical ? 32 : 42, alignItems: "center", width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
+          <CallTranscriptPanel frame={frame} fps={fps} primaryColor={primaryColor} delay={10} title={scene.chartLabel || "Live transcript"} turns={turns} audioMarkers={audioMarkers} />
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
 // LOGO WALL — "trusted by teams" grid of customer/integration logos.
 export const LogoWallTemplate: React.FC<SceneProps> = ({
   scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
@@ -1016,4 +1063,6 @@ export const templateComponentMap: Record<string, React.FC<SceneProps>> = {
   logoReveal: LogoRevealTemplate,
   featureSplit: FeatureSplitTemplate,
   logoWall: LogoWallTemplate,
+  aiCall: AICallTemplate,
+  callTranscript: CallTranscriptTemplate,
 };

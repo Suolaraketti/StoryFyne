@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 56831:
+/***/ 48876:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -2349,7 +2349,188 @@ const BrandMark = ({ logoUrl, frame, fps, delay = 0, primaryColor = "#10a37f", p
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", zIndex: 60, opacity, transform: `translateY(${y}px)`, willChange: "transform, opacity", ...pos[position] }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Img, { src: logoUrl, style: { height: size, width: "auto", maxWidth: 200 * unit, objectFit: "contain", filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.35))" } }) });
 };
 
+;// ./src/voice.tsx
+
+
+
+
+
+
+
+const WaveBars = ({ frame, fps, color, delay = 0, bars = 28, height = 90, audioMarkers }) => {
+  const beat = getAudioPulse(frame, audioMarkers, 12);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: Math.max(2, height * 0.045), height }, children: Array.from({ length: bars }).map((_, i) => {
+    const appear = animations_getSpringProgress(frame, fps, delay + i * 1.2, animations_SNAPPY_SPRING);
+    const center = 1 - Math.abs(i - (bars - 1) / 2) / ((bars - 1) / 2);
+    const wobble = (Math.sin(frame / fps * 7 + i * 0.6) + 1) / 2;
+    const h = height * (0.14 + center * 0.5 * wobble + beat * 0.35 * center);
+    return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      "div",
+      {
+        style: {
+          width: Math.max(3, height * 0.05),
+          height: Math.max(3, h * appear),
+          borderRadius: 99,
+          background: `linear-gradient(180deg, ${color}, ${color}aa)`,
+          opacity: 0.55 + center * 0.45,
+          willChange: "height"
+        }
+      },
+      i
+    );
+  }) });
+};
+const CallAvatar = ({ frame, fps, color, size, label }) => {
+  const rings = [0, 1, 2];
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { position: "relative", width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center" }, children: [
+    rings.map((r) => {
+      const t = (frame / fps * 0.8 + r / rings.length) % 1;
+      return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+        position: "absolute",
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        border: `2px solid ${color}`,
+        opacity: (1 - t) * 0.5,
+        transform: `scale(${1 + t * 1.1})`
+      } }, r);
+    }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      width: size,
+      height: size,
+      borderRadius: "50%",
+      background: `linear-gradient(140deg, ${color}, ${color}99)`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontFamily: theme_FONT,
+      fontWeight: 800,
+      color: "#fff",
+      fontSize: size * 0.4,
+      boxShadow: `0 8px 30px ${color}55`
+    }, children: label || "AI" })
+  ] });
+};
+const Bubble = ({ text, ai = false, frame, fps, delay, color, size }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", justifyContent: ai ? "flex-end" : "flex-start", marginBottom: size * 0.5 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+    maxWidth: "82%",
+    padding: `${size * 0.62}px ${size * 0.85}px`,
+    borderRadius: ai ? `${size}px ${size}px ${size * 0.3}px ${size}px` : `${size}px ${size}px ${size}px ${size * 0.3}px`,
+    background: ai ? `linear-gradient(135deg, ${color}, ${color}cc)` : "rgba(255,255,255,0.08)",
+    border: ai ? "none" : "1px solid rgba(255,255,255,0.1)",
+    color: ai ? "#fff" : "rgba(255,255,255,0.92)",
+    fontFamily: theme_FONT,
+    fontSize: size,
+    fontWeight: 500,
+    lineHeight: 1.4,
+    opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+    transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [16, 0])}px)`,
+    boxShadow: ai ? `0 8px 24px ${color}33` : "none",
+    willChange: "transform, opacity"
+  }, children: text }) });
+};
+const OutcomePill = ({ label, frame, fps, delay, color, size, done = true }) => {
+  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: size * 0.45,
+    padding: `${size * 0.5}px ${size * 0.9}px`,
+    borderRadius: 999,
+    background: done ? `${color}1f` : "rgba(255,255,255,0.06)",
+    border: `1px solid ${done ? color + "55" : "rgba(255,255,255,0.12)"}`,
+    opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+    transform: `scale(${(0,esm.interpolate)(s, [0, 1], [0.8, 1])})`,
+    willChange: "transform, opacity"
+  }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: size * 0.5, height: size * 0.5, borderRadius: "50%", background: color } }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: theme_FONT, fontSize: size * 0.92, fontWeight: 700, color: done ? color : "rgba(255,255,255,0.7)", letterSpacing: "0.01em" }, children: label })
+  ] });
+};
+const AICallPanel = ({ frame, fps, primaryColor, delay = 0, caller = "Incoming call", callerSub = "AI Assistant \u2022 Live", messages = [], pills = [], audioMarkers }) => {
+  const { width: stageW, isVertical, unit } = useStage();
+  const reveal = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  const floatY = animations_getFloat(frame, fps, 5 * unit, 0.3);
+  const panelW = clamp(stageW * (isVertical ? 0.9 : 0.46), 360, 720 * unit);
+  const s = unit;
+  const seconds = Math.floor(Math.max(0, frame - delay) / fps);
+  const timer = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+  const turns = messages.slice(0, 3);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+    width: panelW,
+    padding: 34 * s,
+    borderRadius: 30 * s,
+    background: "linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.025))",
+    border: "1px solid rgba(255,255,255,0.12)",
+    boxShadow: `0 ${40 * s}px ${110 * s}px rgba(0,0,0,0.5), 0 0 ${80 * s}px ${primaryColor}18, inset 0 1px 0 rgba(255,255,255,0.14)`,
+    backdropFilter: "blur(20px)",
+    opacity: (0,esm.interpolate)(reveal, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+    transform: `translateY(${(0,esm.interpolate)(reveal, [0, 1], [50, 0]) + floatY}px) scale(${(0,esm.interpolate)(reveal, [0, 1], [0.94, 1])})`,
+    willChange: "transform, opacity"
+  }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 18 * s, marginBottom: 26 * s }, children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(CallAvatar, { frame, fps, color: primaryColor, size: 64 * s }),
+      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, minWidth: 0 }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 22 * s, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }, children: caller }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 15 * s, fontWeight: 600, color: primaryColor, marginTop: 2 * s }, children: callerSub })
+      ] }),
+      /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 7 * s, fontFamily: theme_FONT, fontSize: 16 * s, fontWeight: 700, color: "rgba(255,255,255,0.75)" }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 8 * s, height: 8 * s, borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px #34d399" } }),
+        timer
+      ] })
+    ] }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { padding: `${10 * s}px 0 ${20 * s}px` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(WaveBars, { frame, fps, color: primaryColor, delay: delay + 6, bars: isVertical ? 22 : 30, height: 84 * s, audioMarkers }) }),
+    turns.length > 0 && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 6 * s }, children: turns.map((m, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(Bubble, { text: m, ai: i % 2 === 1, frame, fps, delay: delay + 18 + i * 14, color: primaryColor, size: 16 * s }, i)) }),
+    pills.length > 0 && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", flexWrap: "wrap", gap: 10 * s, marginTop: 18 * s }, children: pills.slice(0, 3).map((p, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(OutcomePill, { label: p, frame, fps, delay: delay + 40 + i * 10, color: primaryColor, size: 15 * s }, p)) })
+  ] });
+};
+const CallTranscriptPanel = ({ frame, fps, primaryColor, delay = 0, title = "Live transcript", turns = [], audioMarkers }) => {
+  const { width: stageW, isVertical, unit } = useStage();
+  const s = unit;
+  const panelW = clamp(stageW * (isVertical ? 0.92 : 0.56), 380, 880 * unit);
+  const reveal = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+  const rows = turns.slice(0, 5);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+    width: panelW,
+    padding: 30 * s,
+    borderRadius: 26 * s,
+    background: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+    border: "1px solid rgba(255,255,255,0.1)",
+    boxShadow: `0 ${36 * s}px ${100 * s}px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.12)`,
+    backdropFilter: "blur(18px)",
+    opacity: (0,esm.interpolate)(reveal, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+    transform: `translateY(${(0,esm.interpolate)(reveal, [0, 1], [44, 0])}px) scale(${(0,esm.interpolate)(reveal, [0, 1], [0.96, 1])})`,
+    willChange: "transform, opacity"
+  }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10 * s, marginBottom: 22 * s }, children: [
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 9 * s, height: 9 * s, borderRadius: "50%", background: primaryColor, boxShadow: `0 0 10px ${primaryColor}` } }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 15 * s, fontWeight: 800, color: "rgba(255,255,255,0.7)", letterSpacing: "0.12em", textTransform: "uppercase" }, children: title })
+    ] }),
+    rows.map((t, i) => {
+      const rs = animations_getSpringProgress(frame, fps, delay + 12 + i * 16, animations_DEFAULT_SPRING);
+      const isAI = /ai|assistant|agent/i.test(t.speaker);
+      const last = i === rows.length - 1;
+      const caretOn = Math.floor(frame / 15) % 2 === 0;
+      return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+        display: "flex",
+        gap: 14 * s,
+        marginBottom: 16 * s,
+        opacity: (0,esm.interpolate)(rs, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+        transform: `translateX(${(0,esm.interpolate)(rs, [0, 1], [-16, 0])}px)`
+      }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 14 * s, fontWeight: 800, color: isAI ? primaryColor : "rgba(255,255,255,0.5)", minWidth: 86 * s, textTransform: "uppercase", letterSpacing: "0.04em", paddingTop: 2 * s }, children: t.speaker }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: theme_FONT, fontSize: 18 * s, fontWeight: 500, color: "rgba(255,255,255,0.92)", lineHeight: 1.5, flex: 1 }, children: [
+          t.text,
+          last && caretOn && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { display: "inline-block", width: 2 * s, height: 18 * s, background: primaryColor, marginLeft: 3 * s, verticalAlign: "middle" } })
+        ] })
+      ] }, i);
+    })
+  ] });
+};
+
 ;// ./src/templates.tsx
+
 
 
 
@@ -3186,6 +3367,47 @@ const FeatureSplitTemplate = ({
     /* @__PURE__ */ (0,jsx_runtime.jsx)(ScreenshotFrame, { imageUrl: shot, variant: scene.device || "bare", frame, fps, delay: 8, primaryColor, fit: scene.imageFit || "cover", widthFraction: sizes.isVertical ? 0.9 : 0.46 })
   ] }) }) });
 };
+const AICallTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration,
+  entranceDirection,
+  exitDirection,
+  entranceStyle,
+  audioMarkers
+}) => {
+  const sizes = scene_core_useSceneSizes();
+  const messages = scene.messages && scene.messages.length > 0 ? scene.messages : ["Hi, do you have any openings today?", "Absolutely \u2014 I can get you booked for 2 PM."];
+  const pills = scene.statusPills && scene.statusPills.length > 0 ? scene.statusPills : ["Answered", "Qualified", "Booked"];
+  const caller = scene.attribution || scene.eyebrow || "Incoming call";
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 40 : 80, width: "100%" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, align: sizes.isVertical ? "center" : "left", compact: sizes.isVertical, audioMarkers }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(AICallPanel, { frame, fps, primaryColor, delay: 8, caller, callerSub: "AI Assistant \u2022 Live", messages, pills, audioMarkers })
+  ] }) }) });
+};
+const CallTranscriptTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration,
+  entranceDirection,
+  exitDirection,
+  entranceStyle,
+  audioMarkers
+}) => {
+  const sizes = scene_core_useSceneSizes();
+  const src = scene.messages && scene.messages.length > 0 ? scene.messages : ["Hi, I need someone to look at a leak today.", "I can help with that. Are mornings or afternoons better?", "Afternoon works.", "Great \u2014 you're booked for 2 PM today."];
+  const turns = src.slice(0, 5).map((text, i) => ({ speaker: i % 2 === 1 ? "AI Agent" : "Caller", text }));
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: sizes.isVertical ? 32 : 42, alignItems: "center", width: "100%" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, align: "center", compact: true, audioMarkers }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(CallTranscriptPanel, { frame, fps, primaryColor, delay: 10, title: scene.chartLabel || "Live transcript", turns, audioMarkers })
+  ] }) }) });
+};
 const LogoWallTemplate = ({
   scene,
   primaryColor,
@@ -3226,7 +3448,9 @@ const templateComponentMap = {
   screenshotCarousel: ScreenshotCarouselTemplate,
   logoReveal: LogoRevealTemplate,
   featureSplit: FeatureSplitTemplate,
-  logoWall: LogoWallTemplate
+  logoWall: LogoWallTemplate,
+  aiCall: AICallTemplate,
+  callTranscript: CallTranscriptTemplate
 };
 
 ;// ./src/ExplainerVideo.tsx
@@ -3293,11 +3517,11 @@ const explainerVideoSchema = lib.z.object({
   scenes: lib.z.array(sceneSchema),
   aspectRatio: lib.z.string().optional().default("16:9"),
   logoUrl: lib.z.string().optional().default(""),
-  primaryColor: (0,dist_esm.zColor)().optional().default("#10a37f"),
-  secondaryColor: (0,dist_esm.zColor)().optional().default("#19c59f"),
-  bgColor: (0,dist_esm.zColor)().optional().default("#050505"),
+  primaryColor: (0,dist_esm.zColor)().optional().default("#2a93f5"),
+  secondaryColor: (0,dist_esm.zColor)().optional().default("#6cbef9"),
+  bgColor: (0,dist_esm.zColor)().optional().default("#060912"),
   textColor: (0,dist_esm.zColor)().optional().default("#ffffff"),
-  accentColor: (0,dist_esm.zColor)().optional().default("#10a37f"),
+  accentColor: (0,dist_esm.zColor)().optional().default("#1f86f0"),
   mood: lib.z.enum(["clean", "dramatic", "retro", "cyber", "warm", "cold", "minimal"]).optional().default("clean")
 });
 const defaultProps = {
@@ -3401,11 +3625,11 @@ const defaultProps = {
   ],
   aspectRatio: "16:9",
   logoUrl: "",
-  primaryColor: "#10a37f",
-  secondaryColor: "#19c59f",
-  bgColor: "#050505",
+  primaryColor: "#2a93f5",
+  secondaryColor: "#6cbef9",
+  bgColor: "#060912",
   textColor: "#ffffff",
-  accentColor: "#10a37f",
+  accentColor: "#1f86f0",
   mood: "clean"
 };
 const ExplainerVideo = ({
@@ -58203,7 +58427,7 @@ var z = /*#__PURE__*/Object.freeze({
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	__webpack_require__(96507);
-/******/ 	__webpack_require__(56831);
+/******/ 	__webpack_require__(48876);
 /******/ 	__webpack_require__(63610);
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __webpack_require__(66456);

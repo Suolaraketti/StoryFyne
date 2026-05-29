@@ -53,11 +53,11 @@ export const explainerVideoSchema = z.object({
   scenes: z.array(sceneSchema),
   aspectRatio: z.string().optional().default("16:9"),
   logoUrl: z.string().optional().default(""),
-  primaryColor: zColor().optional().default("#10a37f"),
-  secondaryColor: zColor().optional().default("#19c59f"),
-  bgColor: zColor().optional().default("#050505"),
+  primaryColor: zColor().optional().default("#2a93f5"),
+  secondaryColor: zColor().optional().default("#6cbef9"),
+  bgColor: zColor().optional().default("#060912"),
   textColor: zColor().optional().default("#ffffff"),
-  accentColor: zColor().optional().default("#10a37f"),
+  accentColor: zColor().optional().default("#1f86f0"),
   mood: z.enum(["clean", "dramatic", "retro", "cyber", "warm", "cold", "minimal"]).optional().default("clean"),
 });
 
@@ -164,11 +164,11 @@ export const defaultProps: ExplainerVideoProps = {
   ],
   aspectRatio: "16:9",
   logoUrl: "",
-  primaryColor: "#10a37f",
-  secondaryColor: "#19c59f",
-  bgColor: "#050505",
+  primaryColor: "#2a93f5",
+  secondaryColor: "#6cbef9",
+  bgColor: "#060912",
   textColor: "#ffffff",
-  accentColor: "#10a37f",
+  accentColor: "#1f86f0",
   mood: "clean",
 };
 
