@@ -7,6 +7,33 @@ import { interpolate, spring } from "remotion";
 import { getSpringProgress, DEFAULT_SPRING, SNAPPY_SPRING, clamp } from "./animations";
 import { getSyncedDelay, getSyncedStagger } from "./audio-sync";
 
+// ─── Animated Number ────────────────────────────────────────────────
+// Counts a metric up from 0 to its target on entrance, preserving the
+// prefix/suffix and decimal precision. Non-numeric values (e.g. "24/7")
+// render static.
+export const AnimatedNumber: React.FC<{
+  value: string;
+  frame: number;
+  fps: number;
+  delay?: number;
+}> = ({ value, frame, fps, delay = 0 }) => {
+  const m = String(value).match(/^([^0-9-]*)(-?[0-9][0-9,]*(?:\.[0-9]+)?)(.*)$/);
+  // Bail on multi-number / non-countable strings (24/7, 9-5, etc.)
+  if (!m || /[0-9]/.test(m[3])) return <>{value}</>;
+  const [, prefix, numStr, suffix] = m;
+  const hadComma = numStr.includes(",");
+  const decimals = numStr.includes(".") ? numStr.split(".")[1].length : 0;
+  const target = parseFloat(numStr.replace(/,/g, ""));
+  const p = getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  const current = target * p;
+  const formatted = current.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+    useGrouping: hadComma,
+  });
+  return <span style={{ fontVariantNumeric: "tabular-nums" }}>{prefix}{formatted}{suffix}</span>;
+};
+
 import { FONT } from "./theme";
 const MONO = '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", monospace';
 
@@ -346,7 +373,7 @@ export const StatCard: React.FC<{
   return (
     <div style={{ textAlign: "center", opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${interpolate(s, [0, 1], [20, 0])}px)`, willChange: "transform, opacity" }}>
       <div style={{ fontFamily: FONT, fontSize: "72px", fontWeight: 800, color: "#111", letterSpacing: "-0.03em", lineHeight: 1 }}>
-        {prefix}{value}{suffix}
+        {prefix}<AnimatedNumber value={value} frame={frame} fps={fps} delay={delay} />{suffix}
       </div>
       <div style={{ fontFamily: FONT, fontSize: "18px", fontWeight: 500, color: "#888", marginTop: 8 }}>{label}</div>
     </div>

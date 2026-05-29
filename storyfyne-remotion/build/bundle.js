@@ -1218,6 +1218,26 @@ const sceneComponentMap = {
 
 
 
+const AnimatedNumber = ({ value, frame, fps, delay = 0 }) => {
+  const m = String(value).match(/^([^0-9-]*)(-?[0-9][0-9,]*(?:\.[0-9]+)?)(.*)$/);
+  if (!m || /[0-9]/.test(m[3])) return /* @__PURE__ */ (0,jsx_runtime.jsx)(jsx_runtime.Fragment, { children: value });
+  const [, prefix, numStr, suffix] = m;
+  const hadComma = numStr.includes(",");
+  const decimals = numStr.includes(".") ? numStr.split(".")[1].length : 0;
+  const target = parseFloat(numStr.replace(/,/g, ""));
+  const p = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+  const current = target * p;
+  const formatted = current.toLocaleString(void 0, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+    useGrouping: hadComma
+  });
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("span", { style: { fontVariantNumeric: "tabular-nums" }, children: [
+    prefix,
+    formatted,
+    suffix
+  ] });
+};
 
 const MONO = '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", monospace';
 const ui_mockups_PhoneFrame = ({ children, frame, fps, primaryColor = "#0ea5e9" }) => {
@@ -1462,7 +1482,7 @@ const ui_mockups_StatCard = ({ value, label, prefix = "", suffix = "", frame, fp
   return /* @__PURE__ */ jsxs("div", { style: { textAlign: "center", opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${interpolate(s, [0, 1], [20, 0])}px)`, willChange: "transform, opacity" }, children: [
     /* @__PURE__ */ jsxs("div", { style: { fontFamily: FONT, fontSize: "72px", fontWeight: 800, color: "#111", letterSpacing: "-0.03em", lineHeight: 1 }, children: [
       prefix,
-      value,
+      /* @__PURE__ */ jsx(AnimatedNumber, { value, frame, fps, delay }),
       suffix
     ] }),
     /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: "18px", fontWeight: 500, color: "#888", marginTop: 8 }, children: label })
@@ -2631,7 +2651,7 @@ const MetricTile = ({ value, label, frame, fps, delay, primaryColor, textColor }
     opacity: (0,esm.interpolate)(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
     transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [28, 0])}px) scale(${(0,esm.interpolate)(s, [0, 1], [0.96, 1])})`
   }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 64, fontWeight: 850, color: textColor, letterSpacing: "-0.045em", lineHeight: 0.95 }, children: value }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 64, fontWeight: 850, color: textColor, letterSpacing: "-0.045em", lineHeight: 0.95 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(AnimatedNumber, { value, frame, fps, delay }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 16, fontWeight: 600, color: `${textColor}99`, marginTop: 14 }, children: label }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 2, width: 68, borderRadius: 99, background: primaryColor, marginTop: 20, opacity: 0.8 } })
   ] });

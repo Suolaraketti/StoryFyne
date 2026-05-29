@@ -15,7 +15,7 @@ import {
   BarChart, LineChart, ProgressRing,
   TypewriterInput, Button,
   Stepper,
-  SocialProofRow, StatusPill,
+  SocialProofRow, StatusPill, AnimatedNumber,
 } from "./ui-mockups";
 import { ScreenshotFrame, ScreenshotStack, LogoLockup, LogoWall, DeviceVariant, ImageFit } from "./media";
 import { AICallPanel, CallTranscriptPanel } from "./voice";
@@ -158,7 +158,7 @@ const MetricTile: React.FC<{
       opacity: interpolate(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
       transform: `translateY(${interpolate(s, [0, 1], [28, 0])}px) scale(${interpolate(s, [0, 1], [0.96, 1])})`,
     }}>
-      <div style={{ fontFamily: FONT, fontSize: 64, fontWeight: 850, color: textColor, letterSpacing: "-0.045em", lineHeight: 0.95 }}>{value}</div>
+      <div style={{ fontFamily: FONT, fontSize: 64, fontWeight: 850, color: textColor, letterSpacing: "-0.045em", lineHeight: 0.95 }}><AnimatedNumber value={value} frame={frame} fps={fps} delay={delay} /></div>
       <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: `${textColor}99`, marginTop: 14 }}>{label}</div>
       <div style={{ height: 2, width: 68, borderRadius: 99, background: primaryColor, marginTop: 20, opacity: 0.8 }} />
     </GlassPanel>
