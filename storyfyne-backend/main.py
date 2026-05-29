@@ -1462,6 +1462,10 @@ async def _process_explainer(
             "plans": scene.get("plans", []),
             "cta": scene.get("cta", ""),
             "url": scene.get("url", ""),
+            "imageUrl": scene.get("imageUrl", scene.get("image_url", "")),
+            "imageUrls": scene.get("imageUrls", scene.get("image_urls", [])),
+            "imageFit": scene.get("imageFit", scene.get("image_fit", "cover")),
+            "device": scene.get("device", "browser"),
             "audioUrl": audio_url,
             "durationInFrames": max(int(duration_seconds * REMOTION_FPS), 1),
             "audioMarkers": audio_markers,
@@ -1489,10 +1493,15 @@ async def _process_explainer(
     # Step 3: Submit to Render Gateway
     update_job_progress(story_id, "rendering", "Submitting video render to Remotion Lambda...")
 
-    image_list = image_urls or []
-    for idx, sa in enumerate(scene_audios):
-        if idx < len(image_list) and image_list[idx]:
-            sa["imageUrl"] = image_list[idx]
+    # Per-scene images (from the editor) win. Positional image_urls only
+    # backfill scenes that don't already carry their own asset.
+    image_list = [u for u in (image_urls or []) if u]
+    fill_iter = iter(image_list)
+    for sa in scene_audios:
+        if not sa.get("imageUrl") and not sa.get("imageUrls"):
+            nxt = next(fill_iter, "")
+            if nxt:
+                sa["imageUrl"] = nxt
 
     composition_id = "ExplainerVideoMobile" if aspect_ratio == "9:16" else REMOTION_COMPOSITION_ID
     # Extract mood from Claude response if present

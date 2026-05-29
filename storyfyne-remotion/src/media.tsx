@@ -27,7 +27,8 @@ export function useStage() {
 // ─── Reveal Motion ──────────────────────────────────────────────────
 // Shared cinematic arrival for any media element. Scale + lift + blur clear.
 
-function useReveal(frame: number, fps: number, delay: number) {
+// Pure motion helper (no React hooks) — safe to call in loops.
+function revealMotion(frame: number, fps: number, delay: number) {
   const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
   return {
     opacity: interpolate(s, [0, 0.35, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
@@ -72,7 +73,7 @@ export const ScreenshotFrame: React.FC<{
   widthFraction, heightFraction, maxHeightFraction, contentAspect, tilt = 0, float = true, screenBg = "#0b0d12",
 }) => {
   const { width: stageW, height: stageH, isVertical, unit } = useStage();
-  const reveal = useReveal(frame, fps, delay);
+  const reveal = revealMotion(frame, fps, delay);
   const floatY = float ? getFloat(frame, fps, 5 * unit, 0.3) : 0;
   if (!imageUrl) return null;
 
@@ -183,7 +184,7 @@ export const ScreenshotStack: React.FC<{
       {shots.map((src, i) => {
         const mid = (shots.length - 1) / 2;
         const offset = i - mid;
-        const reveal = useReveal(frame, fps, delay + i * 8);
+        const reveal = revealMotion(frame, fps, delay + i * 8);
         const depth = 1 - Math.abs(offset) * 0.06;
         return (
           <div
@@ -237,7 +238,7 @@ export const LogoLockup: React.FC<{
   heightFraction?: number;
 }> = ({ logoUrl, wordmark, frame, fps, delay = 0, primaryColor = "#10a37f", textColor = "#ffffff", heightFraction = 0.18 }) => {
   const { height: stageH, unit } = useStage();
-  const reveal = useReveal(frame, fps, delay);
+  const reveal = revealMotion(frame, fps, delay);
   if (!logoUrl) return null;
   const logoH = clamp(stageH * heightFraction, 60, stageH * 0.34);
 

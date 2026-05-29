@@ -166,8 +166,8 @@ STYLE TARGET
 
 AVAILABLE TEMPLATES
 - heroStatement: Big belief shift or product reveal. One line, no widget.
-- phoneDemo: Mobile interaction, AI call/chat, lead capture, booking.
-- browserDashboard: SaaS dashboard, command center, analytics, workflow UI.
+- phoneDemo: Mobile interaction, AI call/chat, lead capture, booking. Shows a REAL app screenshot in a phone if one is attached.
+- browserDashboard: SaaS dashboard, command center, analytics, workflow UI. Shows a REAL screenshot in a browser if one is attached.
 - statsGrid: 2-3 crisp quantified proof points.
 - testimonialQuote: Short proof quote or market signal.
 - beforeAfter: Old workflow vs new workflow.
@@ -178,7 +178,19 @@ AVAILABLE TEMPLATES
 - socialProofBanner: Customer/user trust signal.
 - calendarBooking: Booking/scheduling outcome.
 - revenueCounter: One outcome metric.
-- brandLockup: Final CTA.
+- brandLockup: Final CTA (renders the uploaded brand logo if present).
+
+IMAGE-DRIVEN TEMPLATES (use these when the scene should show the user's REAL product, screenshot, or logo)
+- productShowcase: Copy on one side, a device-framed product screenshot on the other. The default "show the product" scene.
+- heroImage: One large product screenshot as the centerpiece with a headline beneath it. Great for the reveal beat.
+- screenshotCarousel: Several product screenshots fanned in 3D. Use for "works everywhere / many features" beats (needs 2-4 images).
+- featureSplit: A tight copy + screenshot detail pairing for a single capability.
+- logoReveal: The brand logo, large and centered. Good as an opener or closer.
+
+PICKING IMAGE TEMPLATES
+- The user attaches their own screenshots/logo to scenes in the editor AFTER you write them. So when the script describes seeing the product, the dashboard, the app, the UI, or "take a look", prefer an image-driven template (productShowcase / heroImage / browserDashboard / phoneDemo) so there is a natural place for their screenshot.
+- For each image-friendly scene you may set "device" to one of: browser, phone, tablet, window, bare (how the screenshot is framed). Default browser; use phone for mobile app shots; bare/window for full-bleed marketing shots.
+- Do NOT invent image URLs. Never put http links in any field. Just choose the template + device; the editor supplies the actual image.
 
 SCENE ARC
 Use 5-7 scenes for normal input. Use 3-4 only if input is very short.
@@ -213,6 +225,8 @@ Template-specific fields, when useful:
 - testimonialQuote: quote: "...", attribution: "..."
 - pricingTiers: plans: [{"name":"...", "price":"...", "features":["...","..."]}, ...]
 - brandLockup: cta: "...", url: "..."
+- productShowcase / heroImage / browserDashboard / phoneDemo / featureSplit: device: "browser" | "phone" | "tablet" | "window" | "bare"
+- screenshotCarousel: device: "window" (the editor attaches 2-4 screenshots)
 
 RULES FOR QUALITY
 - Do not paste long narrator sentences into headline. The visual copy must be shorter and punchier.

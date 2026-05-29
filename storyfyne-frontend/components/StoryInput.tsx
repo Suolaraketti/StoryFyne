@@ -88,6 +88,8 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [explainerAccentColor, setExplainerAccentColor] = useState('#10a37f');
   const [explainerImageUrls, setExplainerImageUrls] = useState<string[]>([]);
   const [explainerRenderQuality, setExplainerRenderQuality] = useState<'standard' | 'premium'>('standard');
+  const [pendingImgScene, setPendingImgScene] = useState<number | null>(null);
+  const [uploadingScene, setUploadingScene] = useState<number | null>(null);
 
   const [showCreateAvatar, setShowCreateAvatar] = useState(false);
   const [newAvatarName, setNewAvatarName] = useState('');
@@ -97,6 +99,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [createAvatarStatus, setCreateAvatarStatus] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
+  const sceneImgRef = useRef<HTMLInputElement>(null);
   const sceneFileRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
   const isSales = mode === 'sales';
@@ -199,6 +202,44 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       next[idx] = { ...next[idx], scene_text: newText };
       return next;
     });
+  };
+
+  const updateSceneField = (idx: number, key: string, value: any) => {
+    setExplainerScenes(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [key]: value };
+      return next;
+    });
+  };
+
+  // Image-friendly templates default to a sensible device frame.
+  const defaultDeviceFor = (tpl: string): string => {
+    if (tpl === 'phoneDemo') return 'phone';
+    if (tpl === 'heroImage' || tpl === 'screenshotCarousel') return 'window';
+    if (tpl === 'featureSplit') return 'bare';
+    return 'browser';
+  };
+
+  const handleSceneImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const idx = pendingImgScene;
+    e.target.value = '';
+    if (!file || idx === null) return;
+    setUploadingScene(idx);
+    try {
+      const result = await onUploadAsset(file);
+      setExplainerScenes(prev => {
+        const next = [...prev];
+        const tpl = next[idx]?.template || 'heroStatement';
+        next[idx] = { ...next[idx], imageUrl: result.url, device: next[idx]?.device || defaultDeviceFor(tpl) };
+        return next;
+      });
+    } catch (err: any) {
+      alert(err.message || 'Image upload failed');
+    } finally {
+      setUploadingScene(null);
+      setPendingImgScene(null);
+    }
   };
 
   const moveScene = (idx: number, dir: number) => {
@@ -752,6 +793,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
             )}
             {isExplainer && showExplainerPreview && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <input type="file" ref={sceneImgRef} accept="image/*" style={{ display: 'none' }} onChange={handleSceneImageFile} />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <label style={{ fontSize: '13px', fontWeight: 700, color: '#a5b4fc', letterSpacing: '0.02em' }}>
                     Scene Script & Visual Plan
@@ -833,6 +875,39 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                         }}>
                           <div style={{ fontSize: '10px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Visual Plan</div>
                           <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>{visualPlan}</div>
+                        </div>
+
+                        {/* Per-scene product image / screenshot */}
+                        <div style={{ marginTop: '10px' }}>
+                          <div style={{ fontSize: '10px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Image size={11} /> Product image {scene.imageUrl ? '' : '(optional)'}
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <input type="url" placeholder="Paste image URL or upload a screenshot" value={scene.imageUrl || ''} onChange={e => updateSceneField(idx, 'imageUrl', e.target.value)} disabled={isLoading}
+                              style={{ ...inputStyle, flex: 1, padding: '8px 10px', fontSize: '12px' }} />
+                            <button type="button" onClick={() => { setPendingImgScene(idx); sceneImgRef.current?.click(); }} disabled={isLoading || uploadingScene === idx}
+                              style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                              {uploadingScene === idx ? <Loader2 size={12} className="spin" /> : <Upload size={12} />} Upload
+                            </button>
+                          </div>
+                          {scene.imageUrl && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                              <img src={scene.imageUrl} alt="" style={{ width: 64, height: 40, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--border-subtle)' }} />
+                              <select value={scene.device || defaultDeviceFor(tpl)} onChange={e => updateSceneField(idx, 'device', e.target.value)} disabled={isLoading}
+                                style={{ padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                                <option value="browser">Browser</option>
+                                <option value="phone">Phone</option>
+                                <option value="tablet">Tablet</option>
+                                <option value="window">Window</option>
+                                <option value="bare">Bare</option>
+                              </select>
+                              <select value={scene.imageFit || 'cover'} onChange={e => updateSceneField(idx, 'imageFit', e.target.value)} disabled={isLoading}
+                                style={{ padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                                <option value="cover">Fill frame</option>
+                                <option value="contain">Fit inside</option>
+                              </select>
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     );
