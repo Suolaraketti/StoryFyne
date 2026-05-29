@@ -31,6 +31,9 @@ import logging
 logger = logging.getLogger("storyfyne")
 
 MUSIC_BASE_URL = os.getenv("MUSIC_BASE_URL", "").rstrip("/")
+# Bundled tracks are served by the backend at /music (see main.py static mount).
+_PUBLIC_URL = os.getenv("PUBLIC_URL", "").rstrip("/")
+BUNDLED_BASE_URL = f"{_PUBLIC_URL}/music" if _PUBLIC_URL else ""
 
 # Seed catalog. Replace `file`/`url` with your hosted tracks. Empty url+no
 # MUSIC_BASE_URL → the entry is skipped (so an unconfigured app stays silent).
@@ -49,8 +52,11 @@ _ENERGY_RANK = {"calm": 0, "steady": 1, "build": 2, "high": 3}
 def _resolve_url(track: dict) -> str:
     if track.get("url"):
         return track["url"]
-    if track.get("file") and MUSIC_BASE_URL:
-        return f"{MUSIC_BASE_URL}/{track['file']}"
+    if track.get("file"):
+        if MUSIC_BASE_URL:           # custom R2/CDN prefix wins
+            return f"{MUSIC_BASE_URL}/{track['file']}"
+        if BUNDLED_BASE_URL:         # bundled tracks served by the backend
+            return f"{BUNDLED_BASE_URL}/{track['file']}"
     return ""
 
 

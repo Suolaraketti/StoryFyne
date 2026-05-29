@@ -180,6 +180,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve the bundled royalty-free music beds at /music (used by the renderer).
+_MUSIC_DIR = os.path.join(os.path.dirname(__file__), "assets", "music")
+if os.path.isdir(_MUSIC_DIR):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/music", StaticFiles(directory=_MUSIC_DIR), name="music")
+
 
 async def get_cached_stories() -> Dict:
     """Get stories index with caching."""
