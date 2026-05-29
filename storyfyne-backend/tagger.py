@@ -186,6 +186,7 @@ IMAGE-DRIVEN TEMPLATES (use these when the scene should show the user's REAL pro
 - screenshotCarousel: Several product screenshots fanned in 3D. Use for "works everywhere / many features" beats (needs 2-4 images).
 - featureSplit: A tight copy + screenshot detail pairing for a single capability.
 - logoReveal: The brand logo, large and centered. Good as an opener or closer.
+- logoWall: A "trusted by" grid of customer/integration logos. Use for social proof; the editor attaches the logos (or list names in `steps`).
 
 PICKING IMAGE TEMPLATES
 - The user attaches their own screenshots/logo to scenes in the editor AFTER you write them. So when the script describes seeing the product, the dashboard, the app, the UI, or "take a look", prefer an image-driven template (productShowcase / heroImage / browserDashboard / phoneDemo) so there is a natural place for their screenshot.

@@ -2305,6 +2305,33 @@ const LogoLockup = ({ logoUrl, wordmark, frame, fps, delay = 0, primaryColor = "
     wordmark && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 34 * unit, fontWeight: 800, letterSpacing: "-0.03em", color: textColor }, children: wordmark })
   ] });
 };
+const LogoWall = ({ logos, labels, frame, fps, delay = 0, primaryColor = "#10a37f", textColor = "#ffffff" }) => {
+  const { width: stageW, isVertical, unit } = useStage();
+  const items = (logos && logos.filter(Boolean).length > 0 ? logos.filter(Boolean) : labels || []).slice(0, isVertical ? 6 : 8);
+  const useImages = logos && logos.filter(Boolean).length > 0;
+  const cols = isVertical ? 2 : Math.min(4, items.length);
+  const chipW = clamp(stageW * (isVertical ? 0.86 : 0.72) / cols - 18 * unit, 150, 280 * unit);
+  const chipH = chipW * 0.42;
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "grid", gridTemplateColumns: `repeat(${cols}, ${chipW}px)`, gap: 18 * unit, justifyContent: "center" }, children: items.map((it, i) => {
+    const r = revealMotion(frame, fps, delay + i * 6);
+    return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      width: chipW,
+      height: chipH,
+      borderRadius: 16 * unit,
+      background: "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+      border: "1px solid rgba(255,255,255,0.1)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: chipW * 0.12,
+      boxShadow: `0 ${16 * unit}px ${44 * unit}px rgba(0,0,0,0.32)`,
+      opacity: r.opacity,
+      transform: `translateY(${r.y * 0.5}px) scale(${r.scale})`,
+      filter: `blur(${r.blur * 0.5}px)`,
+      willChange: "transform, opacity, filter"
+    }, children: useImages ? /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Img, { src: it, style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.3))" } }) : /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: theme_FONT, fontSize: chipH * 0.32, fontWeight: 800, color: textColor, letterSpacing: "-0.02em", opacity: 0.92 }, children: it }) }, i);
+  }) });
+};
 const BrandMark = ({ logoUrl, frame, fps, delay = 0, primaryColor = "#10a37f", position = "topLeft" }) => {
   const { unit } = useStage();
   const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
@@ -3159,6 +3186,26 @@ const FeatureSplitTemplate = ({
     /* @__PURE__ */ (0,jsx_runtime.jsx)(ScreenshotFrame, { imageUrl: shot, variant: scene.device || "bare", frame, fps, delay: 8, primaryColor, fit: scene.imageFit || "cover", widthFraction: sizes.isVertical ? 0.9 : 0.46 })
   ] }) }) });
 };
+const LogoWallTemplate = ({
+  scene,
+  primaryColor,
+  textColor,
+  frame,
+  fps,
+  duration,
+  entranceDirection,
+  exitDirection,
+  entranceStyle,
+  audioMarkers
+}) => {
+  const sizes = scene_core_useSceneSizes();
+  const logos = sceneImages(scene);
+  const labels = (scene.steps && scene.steps.length > 0 ? scene.steps : scene.features && scene.features.length > 0 ? scene.features.map((f) => f.title) : scene.text.split(/[,•|]/).map((s) => s.trim()).filter(Boolean)).slice(0, 8);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: sizes.isVertical ? 36 : 48, alignItems: "center", width: "100%" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, align: "center", compact: true, audioMarkers }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(LogoWall, { logos, labels, frame, fps, delay: 14, primaryColor, textColor })
+  ] }) }) });
+};
 const templateComponentMap = {
   heroStatement: HeroStatementTemplate,
   phoneDemo: PremiumPhoneDemoTemplate,
@@ -3178,7 +3225,8 @@ const templateComponentMap = {
   heroImage: HeroImageTemplate,
   screenshotCarousel: ScreenshotCarouselTemplate,
   logoReveal: LogoRevealTemplate,
-  featureSplit: FeatureSplitTemplate
+  featureSplit: FeatureSplitTemplate,
+  logoWall: LogoWallTemplate
 };
 
 ;// ./src/ExplainerVideo.tsx

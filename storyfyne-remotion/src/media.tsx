@@ -254,6 +254,50 @@ export const LogoLockup: React.FC<{
   );
 };
 
+// ─── Logo Wall ──────────────────────────────────────────────────────
+// "Trusted by teams" — a grid of customer/integration logos in soft glass
+// chips, each arriving on a stagger. Falls back to text chips if no images.
+export const LogoWall: React.FC<{
+  logos: string[];
+  labels?: string[];
+  frame: number;
+  fps: number;
+  delay?: number;
+  primaryColor?: string;
+  textColor?: string;
+}> = ({ logos, labels, frame, fps, delay = 0, primaryColor = "#10a37f", textColor = "#ffffff" }) => {
+  const { width: stageW, isVertical, unit } = useStage();
+  const items = (logos && logos.filter(Boolean).length > 0 ? logos.filter(Boolean) : (labels || [])).slice(0, isVertical ? 6 : 8);
+  const useImages = logos && logos.filter(Boolean).length > 0;
+  const cols = isVertical ? 2 : Math.min(4, items.length);
+  const chipW = clamp((stageW * (isVertical ? 0.86 : 0.72)) / cols - 18 * unit, 150, 280 * unit);
+  const chipH = chipW * 0.42;
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, ${chipW}px)`, gap: 18 * unit, justifyContent: "center" }}>
+      {items.map((it, i) => {
+        const r = revealMotion(frame, fps, delay + i * 6);
+        return (
+          <div key={i} style={{
+            width: chipW, height: chipH, borderRadius: 16 * unit,
+            background: "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
+            border: "1px solid rgba(255,255,255,0.1)",
+            display: "flex", alignItems: "center", justifyContent: "center", padding: chipW * 0.12,
+            boxShadow: `0 ${16 * unit}px ${44 * unit}px rgba(0,0,0,0.32)`,
+            opacity: r.opacity, transform: `translateY(${r.y * 0.5}px) scale(${r.scale})`, filter: `blur(${r.blur * 0.5}px)`,
+            willChange: "transform, opacity, filter",
+          }}>
+            {useImages ? (
+              <Img src={it} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.3))" }} />
+            ) : (
+              <span style={{ fontFamily: FONT, fontSize: chipH * 0.32, fontWeight: 800, color: textColor, letterSpacing: "-0.02em", opacity: 0.92 }}>{it}</span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 // ─── Persistent Brand Mark ──────────────────────────────────────────
 // Small corner logo that holds across scenes. Contained + capped so any
 // uploaded asset stays a tasteful watermark, never a giant slab.

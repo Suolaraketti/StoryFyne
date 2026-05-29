@@ -192,6 +192,12 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       calendarBooking: 'Calendar grid with a selected date block. Booking CTA.',
       revenueCounter: 'Big animated revenue/counter number. Dollar sign. Rising value.',
       brandLockup: 'Logo + brand name + URL centered. Final scene. Hold longer.',
+      productShowcase: 'Your screenshot in a device frame beside the copy, with a subtle 3D tilt. Attach an image below.',
+      heroImage: 'One large product screenshot as the centerpiece with the headline beneath. Attach an image below.',
+      screenshotCarousel: 'Several screenshots fanned in 3D depth. Attach 2–3 images below.',
+      featureSplit: 'Copy + a tight screenshot detail, side by side. Attach an image below.',
+      logoReveal: 'Your brand logo, large and centered. Uses the uploaded logo.',
+      logoWall: '“Trusted by” grid of customer logos. Attach logos, or they fall back to names.',
     };
     return plans[template] || 'Clean text scene with minimal motion. One thought per frame.';
   };
@@ -220,6 +226,42 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
     return 'browser';
   };
 
+  // Read an image's natural dimensions (works cross-origin for sizing).
+  const measureImage = (url: string): Promise<{ w: number; h: number }> =>
+    new Promise(resolve => {
+      const img = new window.Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve({ w: 0, h: 0 });
+      img.src = url;
+    });
+
+  // Choose the best device frame + fit from an image's aspect ratio.
+  const frameForAspect = (w: number, h: number): { device: string; fit: string } => {
+    if (!w || !h) return { device: 'browser', fit: 'cover' };
+    const a = w / h;
+    if (a < 0.72) return { device: 'phone', fit: 'cover' };       // tall → phone
+    if (a > 1.45) return { device: 'browser', fit: 'cover' };     // wide → browser
+    return { device: 'bare', fit: 'contain' };                    // square-ish → no crop
+  };
+
+  // Measure an image and auto-assign device/fit for a scene (respecting an
+  // explicit phoneDemo template, which always wants a phone).
+  const autoFrameScene = async (idx: number, url: string) => {
+    if (!url) return;
+    const { w, h } = await measureImage(url);
+    const auto = frameForAspect(w, h);
+    setExplainerScenes(prev => {
+      const next = [...prev];
+      const tpl = next[idx]?.template || '';
+      next[idx] = {
+        ...next[idx],
+        device: tpl === 'phoneDemo' ? 'phone' : auto.device,
+        imageFit: auto.fit,
+      };
+      return next;
+    });
+  };
+
   const handleSceneImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     const idx = pendingImgScene;
@@ -230,10 +272,11 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       const result = await onUploadAsset(file);
       setExplainerScenes(prev => {
         const next = [...prev];
-        const tpl = next[idx]?.template || 'heroStatement';
-        next[idx] = { ...next[idx], imageUrl: result.url, device: next[idx]?.device || defaultDeviceFor(tpl) };
+        next[idx] = { ...next[idx], imageUrl: result.url };
         return next;
       });
+      // Auto-pick the device frame + fit from the image's real aspect ratio.
+      await autoFrameScene(idx, result.url);
     } catch (err: any) {
       alert(err.message || 'Image upload failed');
     } finally {
@@ -883,7 +926,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                             <Image size={11} /> Product image {scene.imageUrl ? '' : '(optional)'}
                           </div>
                           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <input type="url" placeholder="Paste image URL or upload a screenshot" value={scene.imageUrl || ''} onChange={e => updateSceneField(idx, 'imageUrl', e.target.value)} disabled={isLoading}
+                            <input type="url" placeholder="Paste image URL or upload a screenshot" value={scene.imageUrl || ''} onChange={e => updateSceneField(idx, 'imageUrl', e.target.value)} onBlur={e => { if (e.target.value.trim()) autoFrameScene(idx, e.target.value.trim()); }} disabled={isLoading}
                               style={{ ...inputStyle, flex: 1, padding: '8px 10px', fontSize: '12px' }} />
                             <button type="button" onClick={() => { setPendingImgScene(idx); sceneImgRef.current?.click(); }} disabled={isLoading || uploadingScene === idx}
                               style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', whiteSpace: 'nowrap' }}>

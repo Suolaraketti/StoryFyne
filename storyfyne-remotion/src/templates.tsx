@@ -17,7 +17,7 @@ import {
   Stepper,
   SocialProofRow, StatusPill,
 } from "./ui-mockups";
-import { ScreenshotFrame, ScreenshotStack, LogoLockup, DeviceVariant, ImageFit } from "./media";
+import { ScreenshotFrame, ScreenshotStack, LogoLockup, LogoWall, DeviceVariant, ImageFit } from "./media";
 
 // Collect every usable image off a scene: explicit list first, then single.
 const sceneImages = (scene: SceneProps["scene"]): string[] => {
@@ -973,6 +973,28 @@ export const FeatureSplitTemplate: React.FC<SceneProps> = ({
   );
 };
 
+// LOGO WALL — "trusted by teams" grid of customer/integration logos.
+export const LogoWallTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const logos = sceneImages(scene);
+  // Fall back to named marks from steps/features/text if no logos uploaded.
+  const labels = (scene.steps && scene.steps.length > 0 ? scene.steps
+    : scene.features && scene.features.length > 0 ? scene.features.map(f => f.title)
+    : scene.text.split(/[,•|]/).map(s => s.trim()).filter(Boolean)).slice(0, 8);
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: sizes.isVertical ? 36 : 48, alignItems: "center", width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
+          <LogoWall logos={logos} labels={labels} frame={frame} fps={fps} delay={14} primaryColor={primaryColor} textColor={textColor} />
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
 export const templateComponentMap: Record<string, React.FC<SceneProps>> = {
   heroStatement: HeroStatementTemplate,
   phoneDemo: PremiumPhoneDemoTemplate,
@@ -993,4 +1015,5 @@ export const templateComponentMap: Record<string, React.FC<SceneProps>> = {
   screenshotCarousel: ScreenshotCarouselTemplate,
   logoReveal: LogoRevealTemplate,
   featureSplit: FeatureSplitTemplate,
+  logoWall: LogoWallTemplate,
 };
