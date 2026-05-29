@@ -74,6 +74,10 @@ export const ScreenshotFrame: React.FC<{
   const { width: stageW, height: stageH, isVertical, unit } = useStage();
   const reveal = revealMotion(frame, fps, delay);
   const floatY = float ? getFloat(frame, fps, 5 * unit, 0.3) : 0;
+  // Subtle Ken Burns: a slow living zoom inside the frame so screenshots
+  // never feel like a flat static paste.
+  const kb = fit === "contain" ? 1 : 1.016 + Math.sin((frame / fps) * 0.4) * 0.016;
+  const imgStyle: React.CSSProperties = { width: "100%", height: "100%", objectFit: fit, display: "block", transform: `scale(${kb})`, transformOrigin: "center", willChange: "transform" };
   if (!imageUrl) return null;
 
   // ── Phone: height-driven ──────────────────────────────────────────
@@ -95,7 +99,7 @@ export const ScreenshotFrame: React.FC<{
         }}>
           <div style={{ position: "absolute", top: bezel + frameH * 0.012, left: "50%", transform: "translateX(-50%)", width: frameW * 0.32, height: frameH * 0.026, background: "#0a0a0c", borderRadius: 99, zIndex: 3 }} />
           <div style={{ width: "100%", height: "100%", borderRadius: radius - bezel, overflow: "hidden", position: "relative", background: screenBg }}>
-            <Img src={imageUrl} style={{ width: "100%", height: "100%", objectFit: fit, display: "block" }} />
+            <Img src={imageUrl} style={imgStyle} />
           </div>
         </div>
       </div>
@@ -125,7 +129,7 @@ export const ScreenshotFrame: React.FC<{
 
   const screen = (
     <div style={{ width: variant === "browser" ? "100%" : screenW, height: screenH, borderRadius: variant === "browser" ? 0 : radius, overflow: "hidden", position: "relative", background: screenBg }}>
-      <Img src={imageUrl} style={{ width: "100%", height: "100%", objectFit: fit, display: "block" }} />
+      <Img src={imageUrl} style={imgStyle} />
     </div>
   );
 

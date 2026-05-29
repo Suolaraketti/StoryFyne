@@ -2223,6 +2223,8 @@ const ScreenshotFrame = ({
   const { width: stageW, height: stageH, isVertical, unit } = useStage();
   const reveal = revealMotion(frame, fps, delay);
   const floatY = float ? animations_getFloat(frame, fps, 5 * unit, 0.3) : 0;
+  const kb = fit === "contain" ? 1 : 1.016 + Math.sin(frame / fps * 0.4) * 0.016;
+  const imgStyle = { width: "100%", height: "100%", objectFit: fit, display: "block", transform: `scale(${kb})`, transformOrigin: "center", willChange: "transform" };
   if (!imageUrl) return null;
   if (variant === "phone") {
     const hFrac = heightFraction ?? (isVertical ? 0.62 : 0.78);
@@ -2243,7 +2245,7 @@ const ScreenshotFrame = ({
       transformStyle: "preserve-3d"
     }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", top: bezel + frameH2 * 0.012, left: "50%", transform: "translateX(-50%)", width: frameW2 * 0.32, height: frameH2 * 0.026, background: "#0a0a0c", borderRadius: 99, zIndex: 3 } }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: "100%", height: "100%", borderRadius: radius2 - bezel, overflow: "hidden", position: "relative", background: screenBg }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Img, { src: imageUrl, style: { width: "100%", height: "100%", objectFit: fit, display: "block" } }) })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: "100%", height: "100%", borderRadius: radius2 - bezel, overflow: "hidden", position: "relative", background: screenBg }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Img, { src: imageUrl, style: imgStyle }) })
     ] }) });
   }
   const aspect = contentAspect ?? (variant === "tablet" ? 4 / 3 : 16 / 10);
@@ -2265,7 +2267,7 @@ const ScreenshotFrame = ({
   }
   const radius = variant === "bare" ? 16 * unit : variant === "tablet" ? 26 * unit : 16 * unit;
   const shadow = `0 ${44 * unit}px ${120 * unit}px rgba(0,0,0,0.5), 0 0 0 ${1 * unit}px rgba(255,255,255,0.06)`;
-  const screen = /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: variant === "browser" ? "100%" : screenW, height: screenH, borderRadius: variant === "browser" ? 0 : radius, overflow: "hidden", position: "relative", background: screenBg }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Img, { src: imageUrl, style: { width: "100%", height: "100%", objectFit: fit, display: "block" } }) });
+  const screen = /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: variant === "browser" ? "100%" : screenW, height: screenH, borderRadius: variant === "browser" ? 0 : radius, overflow: "hidden", position: "relative", background: screenBg }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Img, { src: imageUrl, style: imgStyle }) });
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { perspective: tilt ? 1800 : void 0, willChange: "transform, opacity, filter", opacity: reveal.opacity, filter: `blur(${reveal.blur}px)`, transform: `translateY(${reveal.y + floatY}px)` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
     width: frameW,
     borderRadius: radius,
