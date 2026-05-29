@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Link2, Type, Briefcase, UserCircle, Sparkles, Wand2,
   ChevronDown, Upload, Image, Palette, MonitorPlay, ArrowRight,
-  Loader2
+  Loader2, Music
 } from 'lucide-react';
 
 interface Avatar {
@@ -22,7 +22,8 @@ interface StoryInputProps {
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
   onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string, taggedText: string, context: string) => void;
-  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string, logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string, imageUrls: string[], renderQuality: string) => void;
+  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string, logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string, imageUrls: string[], renderQuality: string, musicEnabled: boolean, musicTrackId: string, musicVolume: number) => void;
+  musicTracks?: { id: string; bpm: number; energy: string; moods: string[] }[];
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
   onPreviewInfluencer: (text: string, context: string) => Promise<{ tagged_text: string }>;
   onPreviewExplainer: (text: string) => Promise<{ scenes: any[] }>;
@@ -56,7 +57,7 @@ const ASPECT_RATIOS = [
   { id: '4:5', label: '4:5', desc: 'Portrait — Social Feed' },
 ];
 
-export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onSubmitExplainer, onPreviewSales, onPreviewInfluencer, onPreviewExplainer, onCreateAvatar, onUploadAsset, avatars, isLoading }: StoryInputProps) {
+export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onSubmitExplainer, onPreviewSales, onPreviewInfluencer, onPreviewExplainer, onCreateAvatar, onUploadAsset, avatars, isLoading, musicTracks = [] }: StoryInputProps) {
   const [mode, setMode] = useState<'text' | 'url' | 'sales' | 'influencer' | 'explainer'>('text');
   const [url, setUrl] = useState('');
   const [text, setText] = useState('');
@@ -90,6 +91,9 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [explainerRenderQuality, setExplainerRenderQuality] = useState<'standard' | 'premium'>('standard');
   const [pendingImgScene, setPendingImgScene] = useState<number | null>(null);
   const [uploadingScene, setUploadingScene] = useState<number | null>(null);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [musicTrackId, setMusicTrackId] = useState(''); // '' = auto-match vibe
+  const [musicVolume, setMusicVolume] = useState(0.22);
 
   const [showCreateAvatar, setShowCreateAvatar] = useState(false);
   const [newAvatarName, setNewAvatarName] = useState('');
@@ -130,6 +134,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
         explainerBgColor, explainerTextColor, explainerAccentColor,
         explainerImageUrls.filter(u => u.trim()),
         explainerRenderQuality,
+        musicEnabled, musicTrackId, musicVolume,
       );
     }
   };
@@ -749,6 +754,37 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                       </div>
                     ))}
                   </div>
+                  {/* Background music */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '4px', borderTop: '1px solid var(--border-subtle)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Music size={14} /> Background Music
+                      </div>
+                      <button type="button" onClick={() => setMusicEnabled(v => !v)} disabled={isLoading}
+                        style={{ padding: '5px 12px', borderRadius: '100px', border: '1px solid var(--border-medium)', cursor: isLoading ? 'not-allowed' : 'pointer', fontSize: '12px', fontWeight: 600,
+                          background: musicEnabled ? '#6366f1' : 'var(--bg-input)', color: musicEnabled ? '#fff' : 'var(--text-secondary)' }}>
+                        {musicEnabled ? 'On' : 'Off'}
+                      </button>
+                    </div>
+                    {musicEnabled && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+                        <select value={musicTrackId} onChange={e => setMusicTrackId(e.target.value)} disabled={isLoading}
+                          style={{ padding: '7px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', flex: 1, minWidth: 180 }}>
+                          <option value="">Auto — match the vibe</option>
+                          {musicTracks.map(t => <option key={t.id} value={t.id}>{t.id} · {t.bpm}bpm · {t.energy}</option>)}
+                        </select>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 160 }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Vol</span>
+                          <input type="range" min={0} max={0.6} step={0.02} value={musicVolume} onChange={e => setMusicVolume(parseFloat(e.target.value))} disabled={isLoading} style={{ flex: 1 }} />
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', width: 30 }}>{Math.round(musicVolume * 100)}%</span>
+                        </div>
+                      </div>
+                    )}
+                    {musicEnabled && musicTracks.length === 0 && (
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>No tracks in the library yet — add royalty-free tracks to R2 and they’ll appear here. Renders stay silent until then.</div>
+                    )}
+                  </div>
+
                   <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Optional scene images (max 3) — paste a URL or upload</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[0, 1, 2].map(i => (
