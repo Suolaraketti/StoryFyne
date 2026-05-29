@@ -247,9 +247,16 @@ RULES FOR QUALITY
 - No TTS tags, no markdown, no explanations.
 - Avoid empty business cliches: "unlock potential", "revolutionize", "game changer", "seamless experience", "next level".
 
+SOUNDTRACK
+Also choose a background-music vibe for the whole film. Add a top-level "music" object:
+- style: a short phrase (e.g. "uplifting tech", "cinematic build", "warm minimal").
+- bpm: an integer tempo that fits the energy (slow/calm ~80-95, steady ~100-115, upbeat ~118-128).
+- energy: one of calm | steady | build | high.
+
 Return ONLY valid JSON:
 {
   "mood": "clean",
+  "music": {"style": "uplifting tech", "bpm": 120, "energy": "build"},
   "scenes": [
     {
       "scene_text": "...",

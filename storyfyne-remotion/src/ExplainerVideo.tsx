@@ -3,6 +3,7 @@ import { AbsoluteFill, Audio, useCurrentFrame, useVideoConfig, Sequence, interpo
 import { z } from "zod";
 import { zColor } from "@remotion/zod-types";
 import { TRANSITION_FRAMES } from "./animations";
+import { getMusicBeatPulse } from "./audio-sync";
 import { Backgrounds, getBackgroundForSceneType } from "./backgrounds";
 import { CinematicMaster, CinematicMood } from "./effects";
 import { FilmGrain } from "./scene-core";
@@ -61,6 +62,9 @@ export const explainerVideoSchema = z.object({
   textColor: zColor().optional().default("#ffffff"),
   accentColor: zColor().optional().default("#1f86f0"),
   mood: z.enum(["clean", "dramatic", "retro", "cyber", "warm", "cold", "minimal"]).optional().default("clean"),
+  musicUrl: z.string().optional().default(""),
+  musicBpm: z.number().optional().default(0),
+  musicVolume: z.number().optional().default(0.22),
 });
 
 export type ExplainerVideoProps = z.infer<typeof explainerVideoSchema>;
@@ -178,6 +182,9 @@ export const defaultProps: ExplainerVideoProps = {
   textColor: "#ffffff",
   accentColor: "#1f86f0",
   mood: "clean",
+  musicUrl: "",
+  musicBpm: 0,
+  musicVolume: 0.22,
 };
 
 // ─── Main Component ─────────────────────────────────────────────────
@@ -191,9 +198,15 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
   textColor,
   accentColor,
   mood,
+  musicUrl,
+  musicBpm,
+  musicVolume,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+
+  // Global beat pulse from the background track's tempo (0 when no music).
+  const musicBeat = getMusicBeatPulse(frame, fps, musicBpm || 0);
 
   // ─── Build schedules ──────────────────────────────────────────────
   // Audio: sequential, NO overlap. Each scene's audio plays fully.
@@ -230,8 +243,10 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
 
   return (
     <AbsoluteFill style={{ backgroundColor: bgColor }}>
-      {/* Animated background */}
-      <BackgroundComponent bgColor={bgColor} primaryColor={primaryColor} secondaryColor={secondaryColor} />
+      {/* Animated background — gently pulses on the music beat */}
+      <div style={{ position: "absolute", inset: 0, transform: `scale(${1 + musicBeat * 0.012})`, willChange: "transform" }}>
+        <BackgroundComponent bgColor={bgColor} primaryColor={primaryColor} secondaryColor={secondaryColor} />
+      </div>
 
       {/* Visual scenes — overlapping during transitions */}
       {visualSchedule.map(({ scene, from, duration, visualDuration }, i) => {
@@ -292,6 +307,29 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
           </Sequence>
         );
       })}
+
+      {/* Background music — looped, ducked low under narration, with fades. */}
+      {musicUrl && totalAudioFrames > 0 && (
+        <Sequence from={0} durationInFrames={totalAudioFrames}>
+          <Audio
+            src={musicUrl}
+            loop
+            volume={(f) =>
+              Math.max(
+                0,
+                (musicVolume ?? 0.22) *
+                  interpolate(f, [0, 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) *
+                  interpolate(f, [totalAudioFrames - 45, totalAudioFrames], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+              )
+            }
+          />
+        </Sequence>
+      )}
+
+      {/* Beat bloom — a soft brand-color flash on each musical beat. */}
+      {musicBpm > 0 && (
+        <AbsoluteFill style={{ pointerEvents: "none", zIndex: 40, opacity: musicBeat * 0.05, background: `radial-gradient(ellipse at center, ${primaryColor} 0%, transparent 60%)` }} />
+      )}
 
       {/* Persistent brand mark — fades in after the intro, hides when the
           logo is the on-screen subject (lockup / logoReveal scenes). */}

@@ -134,6 +134,117 @@ function getFadeOut(frame, duration, outDuration = TRANSITION_FRAMES, delay = 0)
   return interpolate(frame, [start, start + outDuration], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
 }
 
+;// ./src/audio-sync.ts
+
+
+function audio_sync_getSyncedDelay(markerIndex, markers, fallback) {
+  if (!markers || markers.length === 0) return fallback;
+  return markers[Math.min(markerIndex, markers.length - 1)] ?? fallback;
+}
+function audio_sync_getSyncedStagger(index, totalItems, markers, fallbackBase = 6, fallbackGap = 8) {
+  if (!markers || markers.length === 0 || totalItems <= 0) {
+    return fallbackBase + index * fallbackGap;
+  }
+  if (markers.length >= totalItems) {
+    return markers[index] ?? fallbackBase + index * fallbackGap;
+  }
+  const ratio = index / (totalItems - 1);
+  const markerIdx = Math.round(ratio * (markers.length - 1));
+  return markers[markerIdx] ?? fallbackBase + index * fallbackGap;
+}
+function getMarkerPulse(frame, markers, markerIndex, spread = 10) {
+  if (!markers || markers.length === 0) return 0;
+  const center = markers[markerIndex];
+  if (center === void 0) return 0;
+  const dist = Math.abs(frame - center);
+  if (dist > spread) return 0;
+  const t = dist / spread;
+  return 1 - Easing.out(Easing.cubic)(t);
+}
+function getAudioPulse(frame, markers, decayFrames = 12) {
+  if (!markers || markers.length === 0) return 0;
+  let maxPulse = 0;
+  for (const marker of markers) {
+    const dist = frame - marker;
+    if (dist >= -2 && dist < decayFrames) {
+      const t = Math.max(0, dist / decayFrames);
+      const pulse = 1 - esm.Easing.out(esm.Easing.quad)(t);
+      maxPulse = Math.max(maxPulse, pulse);
+    }
+  }
+  return maxPulse;
+}
+function getPhraseProgress(frame, markers, duration) {
+  if (!markers || markers.length === 0) {
+    return Math.min(1, Math.max(0, frame / Math.max(1, duration * 0.7)));
+  }
+  for (let i = 0; i < markers.length; i++) {
+    const start = markers[i];
+    const end = markers[i + 1] ?? duration;
+    if (frame >= start && frame < end) {
+      const intervalLen = end - start;
+      if (intervalLen <= 0) return 1;
+      return Math.min(1, Math.max(0, (frame - start) / intervalLen));
+    }
+  }
+  if (frame < markers[0]) {
+    return Math.min(1, Math.max(0, frame / Math.max(1, markers[0])));
+  }
+  return 1;
+}
+function getCurrentPhraseIndex(frame, markers) {
+  if (!markers || markers.length === 0) return 0;
+  for (let i = markers.length - 1; i >= 0; i--) {
+    if (frame >= markers[i]) return i;
+  }
+  return 0;
+}
+function getNextMarkerFrame(frame, markers) {
+  if (!markers || markers.length === 0) return null;
+  for (const m of markers) {
+    if (m > frame) return m;
+  }
+  return null;
+}
+function getPrevMarkerFrame(frame, markers) {
+  if (!markers || markers.length === 0) return null;
+  for (let i = markers.length - 1; i >= 0; i--) {
+    if (markers[i] <= frame) return markers[i];
+  }
+  return null;
+}
+function getBeatScale(frame, markers, baseScale = 1, pulseAmount = 0.015, decayFrames = 10) {
+  const pulse = getAudioPulse(frame, markers, decayFrames);
+  return baseScale + pulse * pulseAmount;
+}
+function getBreathingOpacity(frame, markers, baseOpacity = 1, breathAmount = 0.08, breathSpeed = 0.3) {
+  const phraseIdx = getCurrentPhraseIndex(frame, markers);
+  const phraseStart = (markers == null ? void 0 : markers[phraseIdx]) ?? 0;
+  const timeInPhrase = frame - phraseStart;
+  const breath = Math.sin(timeInPhrase * breathSpeed) * 0.5 + 0.5;
+  return baseOpacity - breath * breathAmount;
+}
+function getSyncedExitStart(duration, markers, transitionFrames = 25) {
+  if (!markers || markers.length === 0) {
+    return Math.max(0, duration - transitionFrames);
+  }
+  const lastMarker = markers[markers.length - 1];
+  return Math.min(duration - 5, lastMarker + 8);
+}
+function isAccentFrame(frame, markers, windowFrames = 2) {
+  if (!markers || markers.length === 0) return false;
+  return markers.some((m) => Math.abs(frame - m) <= windowFrames);
+}
+function getMusicBeatPulse(frame, fps, bpm, offsetFrames = 0, decay = 5.5, beatsPerBar = 4) {
+  if (!bpm || bpm <= 0) return 0;
+  const beatLen = fps * 60 / bpm;
+  const rel = frame - offsetFrames;
+  const phase = (rel % beatLen + beatLen) % beatLen / beatLen;
+  const beatIndex = Math.floor(rel / beatLen);
+  const strength = beatIndex % beatsPerBar === 0 ? 1 : 0.6;
+  return Math.exp(-phase * decay) * strength;
+}
+
 ;// ./src/backgrounds.tsx
 
 
@@ -616,108 +727,6 @@ const CinematicMaster = ({ mood, frame, intensity = 0.7 }) => {
   };
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(jsx_runtime.Fragment, { children: configs[mood] || configs.clean });
 };
-
-;// ./src/audio-sync.ts
-
-
-function audio_sync_getSyncedDelay(markerIndex, markers, fallback) {
-  if (!markers || markers.length === 0) return fallback;
-  return markers[Math.min(markerIndex, markers.length - 1)] ?? fallback;
-}
-function audio_sync_getSyncedStagger(index, totalItems, markers, fallbackBase = 6, fallbackGap = 8) {
-  if (!markers || markers.length === 0 || totalItems <= 0) {
-    return fallbackBase + index * fallbackGap;
-  }
-  if (markers.length >= totalItems) {
-    return markers[index] ?? fallbackBase + index * fallbackGap;
-  }
-  const ratio = index / (totalItems - 1);
-  const markerIdx = Math.round(ratio * (markers.length - 1));
-  return markers[markerIdx] ?? fallbackBase + index * fallbackGap;
-}
-function getMarkerPulse(frame, markers, markerIndex, spread = 10) {
-  if (!markers || markers.length === 0) return 0;
-  const center = markers[markerIndex];
-  if (center === void 0) return 0;
-  const dist = Math.abs(frame - center);
-  if (dist > spread) return 0;
-  const t = dist / spread;
-  return 1 - Easing.out(Easing.cubic)(t);
-}
-function getAudioPulse(frame, markers, decayFrames = 12) {
-  if (!markers || markers.length === 0) return 0;
-  let maxPulse = 0;
-  for (const marker of markers) {
-    const dist = frame - marker;
-    if (dist >= -2 && dist < decayFrames) {
-      const t = Math.max(0, dist / decayFrames);
-      const pulse = 1 - esm.Easing.out(esm.Easing.quad)(t);
-      maxPulse = Math.max(maxPulse, pulse);
-    }
-  }
-  return maxPulse;
-}
-function getPhraseProgress(frame, markers, duration) {
-  if (!markers || markers.length === 0) {
-    return Math.min(1, Math.max(0, frame / Math.max(1, duration * 0.7)));
-  }
-  for (let i = 0; i < markers.length; i++) {
-    const start = markers[i];
-    const end = markers[i + 1] ?? duration;
-    if (frame >= start && frame < end) {
-      const intervalLen = end - start;
-      if (intervalLen <= 0) return 1;
-      return Math.min(1, Math.max(0, (frame - start) / intervalLen));
-    }
-  }
-  if (frame < markers[0]) {
-    return Math.min(1, Math.max(0, frame / Math.max(1, markers[0])));
-  }
-  return 1;
-}
-function getCurrentPhraseIndex(frame, markers) {
-  if (!markers || markers.length === 0) return 0;
-  for (let i = markers.length - 1; i >= 0; i--) {
-    if (frame >= markers[i]) return i;
-  }
-  return 0;
-}
-function getNextMarkerFrame(frame, markers) {
-  if (!markers || markers.length === 0) return null;
-  for (const m of markers) {
-    if (m > frame) return m;
-  }
-  return null;
-}
-function getPrevMarkerFrame(frame, markers) {
-  if (!markers || markers.length === 0) return null;
-  for (let i = markers.length - 1; i >= 0; i--) {
-    if (markers[i] <= frame) return markers[i];
-  }
-  return null;
-}
-function getBeatScale(frame, markers, baseScale = 1, pulseAmount = 0.015, decayFrames = 10) {
-  const pulse = getAudioPulse(frame, markers, decayFrames);
-  return baseScale + pulse * pulseAmount;
-}
-function getBreathingOpacity(frame, markers, baseOpacity = 1, breathAmount = 0.08, breathSpeed = 0.3) {
-  const phraseIdx = getCurrentPhraseIndex(frame, markers);
-  const phraseStart = (markers == null ? void 0 : markers[phraseIdx]) ?? 0;
-  const timeInPhrase = frame - phraseStart;
-  const breath = Math.sin(timeInPhrase * breathSpeed) * 0.5 + 0.5;
-  return baseOpacity - breath * breathAmount;
-}
-function getSyncedExitStart(duration, markers, transitionFrames = 25) {
-  if (!markers || markers.length === 0) {
-    return Math.max(0, duration - transitionFrames);
-  }
-  const lastMarker = markers[markers.length - 1];
-  return Math.min(duration - 5, lastMarker + 8);
-}
-function isAccentFrame(frame, markers, windowFrames = 2) {
-  if (!markers || markers.length === 0) return false;
-  return markers.some((m) => Math.abs(frame - m) <= windowFrames);
-}
 
 ;// ./node_modules/@remotion/fonts/dist/esm/index.mjs
 // src/get-font-format.ts
@@ -3508,6 +3517,7 @@ const templateComponentMap = {
 
 
 
+
 const sceneSchema = lib.z.object({
   type: lib.z.enum([
     "statement",
@@ -3567,7 +3577,10 @@ const explainerVideoSchema = lib.z.object({
   bgColor: (0,dist_esm.zColor)().optional().default("#060912"),
   textColor: (0,dist_esm.zColor)().optional().default("#ffffff"),
   accentColor: (0,dist_esm.zColor)().optional().default("#1f86f0"),
-  mood: lib.z.enum(["clean", "dramatic", "retro", "cyber", "warm", "cold", "minimal"]).optional().default("clean")
+  mood: lib.z.enum(["clean", "dramatic", "retro", "cyber", "warm", "cold", "minimal"]).optional().default("clean"),
+  musicUrl: lib.z.string().optional().default(""),
+  musicBpm: lib.z.number().optional().default(0),
+  musicVolume: lib.z.number().optional().default(0.22)
 });
 const defaultProps = {
   scenes: [
@@ -3681,7 +3694,10 @@ const defaultProps = {
   bgColor: "#060912",
   textColor: "#ffffff",
   accentColor: "#1f86f0",
-  mood: "clean"
+  mood: "clean",
+  musicUrl: "",
+  musicBpm: 0,
+  musicVolume: 0.22
 };
 const ExplainerVideo = ({
   scenes,
@@ -3691,11 +3707,15 @@ const ExplainerVideo = ({
   bgColor,
   textColor,
   accentColor,
-  mood
+  mood,
+  musicUrl,
+  musicBpm,
+  musicVolume
 }) => {
   var _a, _b, _c, _d;
   const frame = (0,esm.useCurrentFrame)();
   const { fps } = (0,esm.useVideoConfig)();
+  const musicBeat = getMusicBeatPulse(frame, fps, musicBpm || 0);
   let audioAccumulated = 0;
   const audioSchedule = scenes.map((scene) => {
     const from = audioAccumulated;
@@ -3718,7 +3738,7 @@ const ExplainerVideo = ({
   const dominantBgType = sceneBgOverride && Backgrounds[sceneBgOverride] ? sceneBgOverride : getBackgroundForSceneType(((_b = scenes[effectiveIdx]) == null ? void 0 : _b.type) || "cleanDark");
   const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.cleanDark;
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { backgroundColor: bgColor }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(BackgroundComponent, { bgColor, primaryColor, secondaryColor }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", inset: 0, transform: `scale(${1 + musicBeat * 0.012})`, willChange: "transform" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(BackgroundComponent, { bgColor, primaryColor, secondaryColor }) }),
     visualSchedule.map(({ scene, from, duration, visualDuration }, i) => {
       const SceneComponent = scene.template && templateComponentMap[scene.template] ? templateComponentMap[scene.template] : sceneComponentMap[scene.type] || sceneComponentMap.statement;
       const entranceDirs = ["up", "right", "left", "down"];
@@ -3763,6 +3783,18 @@ const ExplainerVideo = ({
         }
       ) }, `audio-${i}`);
     }),
+    musicUrl && totalAudioFrames > 0 && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Sequence, { from: 0, durationInFrames: totalAudioFrames, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+      esm.Audio,
+      {
+        src: musicUrl,
+        loop: true,
+        volume: (f) => Math.max(
+          0,
+          (musicVolume ?? 0.22) * (0,esm.interpolate)(f, [0, 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) * (0,esm.interpolate)(f, [totalAudioFrames - 45, totalAudioFrames], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+        )
+      }
+    ) }),
+    musicBpm > 0 && /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { pointerEvents: "none", zIndex: 40, opacity: musicBeat * 0.05, background: `radial-gradient(ellipse at center, ${primaryColor} 0%, transparent 60%)` } }),
     logoUrl && !["brandLockup", "logoReveal"].includes(((_c = scenes[effectiveIdx]) == null ? void 0 : _c.template) || "") && frame > ((_d = scenes[0]) == null ? void 0 : _d.durationInFrames) * 0.5 && /* @__PURE__ */ (0,jsx_runtime.jsx)(BrandMark, { logoUrl, frame, fps, delay: 0, primaryColor, position: "topLeft" }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicMaster, { mood: mood || "clean", frame })
   ] });
