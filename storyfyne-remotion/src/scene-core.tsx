@@ -12,7 +12,8 @@ import {
 } from "./animations";
 import { getSyncedStagger, getSyncedExitStart, getAudioPulse } from "./audio-sync";
 
-export const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+export { FONT } from "./theme";
+import { FONT } from "./theme";
 
 // ─── Responsive Size Hook ───────────────────────────────────────────
 

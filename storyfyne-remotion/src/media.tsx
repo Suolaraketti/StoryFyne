@@ -6,8 +6,7 @@
 import React from "react";
 import { Img, interpolate, useVideoConfig } from "remotion";
 import { getSpringProgress, getFloat, getCinematicEntrance, DEFAULT_SPRING, SNAPPY_SPRING, clamp, lerp } from "./animations";
-
-const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+import { FONT } from "./theme";
 
 export type DeviceVariant = "browser" | "phone" | "tablet" | "window" | "bare";
 export type ImageFit = "cover" | "contain";

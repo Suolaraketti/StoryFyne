@@ -11,13 +11,15 @@
     "lambda:render": "remotion lambda render"
   },
   "dependencies": {
-    "remotion": "4.0.284",
+    "@fontsource/inter": "^5.2.8",
     "@remotion/cli": "4.0.284",
+    "@remotion/fonts": "^4.0.284",
     "@remotion/lambda": "4.0.284",
     "@remotion/player": "4.0.284",
     "@remotion/zod-types": "4.0.284",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "remotion": "4.0.284",
     "zod": "3.22.3"
   },
   "devDependencies": {

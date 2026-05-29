@@ -75,8 +75,14 @@ const PremiumCopy: React.FC<{
   const sizes = useSceneSizes();
   const headline = sceneHeadline(scene, compact ? 5 : 7);
   const subheadline = sceneSubheadline(scene, compact ? 10 : 14);
+  // Adaptive headline size: long headlines step down so they don't wrap to an
+  // ugly second line in a constrained column.
+  const baseMul = compact ? (sizes.isVertical ? 0.4 : 0.46) : 0.6;
+  const lenFactor = headline.length > 22 ? 0.74 : headline.length > 15 ? 0.86 : 1;
+  const headlineSize = Math.round(sizes.headline * baseMul * lenFactor);
+  const maxW = compact ? (sizes.isVertical ? 760 : 620) : 720;
   return (
-    <div style={{ maxWidth: compact ? 520 : 680, textAlign: align }}>
+    <div style={{ maxWidth: maxW, textAlign: align, marginLeft: align === "center" ? "auto" : undefined, marginRight: align === "center" ? "auto" : undefined }}>
       {scene.eyebrow && (
         <div style={{
           fontFamily: FONT,
@@ -96,7 +102,7 @@ const PremiumCopy: React.FC<{
         fps={fps}
         duration={duration}
         color={textColor}
-        size={compact ? Math.round(sizes.headline * 0.5) : Math.round(sizes.headline * 0.62)}
+        size={headlineSize}
         align={align}
         audioMarkers={audioMarkers}
       />
@@ -514,7 +520,7 @@ export const PremiumPhoneDemoTemplate: React.FC<SceneProps> = ({
       <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
         <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
           <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 42 : 84, width: "100%" }}>
-            <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+            <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
             <ScreenshotFrame imageUrl={shot} variant="phone" frame={frame} fps={fps} delay={8} primaryColor={primaryColor} fit={scene.imageFit || "cover"} />
           </div>
         </AbsoluteFill>
@@ -526,7 +532,7 @@ export const PremiumPhoneDemoTemplate: React.FC<SceneProps> = ({
     <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 42 : 90, width: "100%" }}>
-          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
           <div style={{ transform: `translateY(${floatY}px)` }}>
             <PhoneFrame frame={frame} fps={fps} primaryColor={primaryColor}>
               <NotificationCard title="AI concierge" body={clampText(scene.subheadline || sceneHeadline(scene, 9), 62)} frame={frame} fps={fps} delay={10} icon="AI" audioMarkers={audioMarkers} />
@@ -850,7 +856,7 @@ export const ProductShowcaseTemplate: React.FC<SceneProps> = ({
     <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 40 : 80, width: "100%" }}>
-          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
           {shot ? (
             <ScreenshotFrame
               imageUrl={shot}
@@ -959,7 +965,7 @@ export const FeatureSplitTemplate: React.FC<SceneProps> = ({
     <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row-reverse", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 36 : 80, width: "100%" }}>
-          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
           <ScreenshotFrame imageUrl={shot} variant={(scene.device as DeviceVariant) || "bare"} frame={frame} fps={fps} delay={8} primaryColor={primaryColor} fit={scene.imageFit || "cover"} widthFraction={sizes.isVertical ? 0.9 : 0.46} />
         </div>
       </AbsoluteFill>

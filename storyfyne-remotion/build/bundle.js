@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 85109:
+/***/ 56831:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -138,73 +138,153 @@ function getFadeOut(frame, duration, outDuration = TRANSITION_FRAMES, delay = 0)
 
 
 
-const CleanDark = ({ bgColor }) => {
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        backgroundColor: bgColor
-      }
-    }
-  );
-};
+const drift = (frame, fps, speed, amp, phase = 0) => Math.sin(frame / fps * speed + phase) * amp;
+const CleanDark = ({ bgColor }) => /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { backgroundColor: bgColor } });
 const SubtleGlow = ({ bgColor, primaryColor }) => {
   const { width, height } = (0,esm.useVideoConfig)();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        backgroundColor: bgColor
-      },
-      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        "div",
-        {
-          style: {
-            position: "absolute",
-            right: -width * 0.2,
-            top: -height * 0.2,
-            width: width * 0.8,
-            height: height * 0.8,
-            borderRadius: "50%",
-            background: `radial-gradient(circle, ${primaryColor}08 0%, transparent 70%)`,
-            pointerEvents: "none"
-          }
-        }
-      )
-    }
-  );
+  const frame = (0,esm.useCurrentFrame)();
+  const { fps } = (0,esm.useVideoConfig)();
+  const x = drift(frame, fps, 0.18, width * 0.04);
+  const y = drift(frame, fps, 0.14, height * 0.04, 1.5);
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { backgroundColor: bgColor }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+    position: "absolute",
+    right: -width * 0.2 + x,
+    top: -height * 0.2 + y,
+    width: width * 0.85,
+    height: height * 0.85,
+    borderRadius: "50%",
+    background: `radial-gradient(circle, ${primaryColor}14 0%, transparent 68%)`,
+    pointerEvents: "none"
+  } }) });
 };
 const CenterSpotlight = ({ bgColor, primaryColor }) => {
   const { width, height } = (0,esm.useVideoConfig)();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(
-    esm.AbsoluteFill,
-    {
-      style: {
-        backgroundColor: bgColor
-      },
-      children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
-        "div",
-        {
-          style: {
-            position: "absolute",
-            left: "50%",
-            top: "40%",
-            transform: "translate(-50%, -50%)",
-            width: width * 0.6,
-            height: height * 0.5,
-            borderRadius: "50%",
-            background: `radial-gradient(circle, ${primaryColor}06 0%, transparent 70%)`,
-            pointerEvents: "none"
-          }
-        }
-      )
-    }
-  );
+  const frame = (0,esm.useCurrentFrame)();
+  const { fps } = (0,esm.useVideoConfig)();
+  const pulse = 1 + drift(frame, fps, 0.3, 0.04);
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { backgroundColor: bgColor }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      position: "absolute",
+      left: "50%",
+      top: "42%",
+      transform: `translate(-50%, -50%) scale(${pulse})`,
+      width: width * 0.7,
+      height: height * 0.6,
+      borderRadius: "50%",
+      background: `radial-gradient(circle, ${primaryColor}12 0%, transparent 66%)`,
+      pointerEvents: "none"
+    } }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(Vignette, { strength: 0.4 })
+  ] });
 };
+const AuroraMesh = ({ bgColor, primaryColor, secondaryColor }) => {
+  const { width, height } = (0,esm.useVideoConfig)();
+  const frame = (0,esm.useCurrentFrame)();
+  const { fps } = (0,esm.useVideoConfig)();
+  const sec = secondaryColor || primaryColor;
+  const blobs = [
+    { c: primaryColor, op: "40", bx: 0.2, by: 0.25, s: 0.72, sp: 0.16, ph: 0 },
+    { c: sec, op: "38", bx: 0.78, by: 0.7, s: 0.64, sp: 0.13, ph: 2 },
+    { c: primaryColor, op: "2c", bx: 0.62, by: 0.2, s: 0.52, sp: 0.2, ph: 4 }
+  ];
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { backgroundColor: bgColor, overflow: "hidden" }, children: [
+    blobs.map((b, i) => {
+      const x = b.bx * width + drift(frame, fps, b.sp, width * 0.05, b.ph);
+      const y = b.by * height + drift(frame, fps, b.sp * 0.8, height * 0.05, b.ph + 1);
+      const d = Math.min(width, height) * b.s;
+      return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+        position: "absolute",
+        left: x - d / 2,
+        top: y - d / 2,
+        width: d,
+        height: d,
+        borderRadius: "50%",
+        background: `radial-gradient(circle, ${b.c}${b.op} 0%, transparent 70%)`,
+        filter: `blur(${d * 0.06}px)`,
+        pointerEvents: "none"
+      } }, i);
+    }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(Vignette, { strength: 0.45 })
+  ] });
+};
+const GridStage = ({ bgColor, primaryColor }) => {
+  const { width, height } = (0,esm.useVideoConfig)();
+  const frame = (0,esm.useCurrentFrame)();
+  const { fps } = (0,esm.useVideoConfig)();
+  const scroll = frame / fps * 18 % 80;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { backgroundColor: bgColor, overflow: "hidden" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      position: "absolute",
+      left: "50%",
+      top: "58%",
+      transform: "translate(-50%, -50%)",
+      width: width * 1.1,
+      height: height * 0.5,
+      borderRadius: "50%",
+      background: `radial-gradient(ellipse, ${primaryColor}18 0%, transparent 60%)`
+    } }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      position: "absolute",
+      left: "-25%",
+      right: "-25%",
+      bottom: 0,
+      height: "55%",
+      transform: "perspective(640px) rotateX(62deg)",
+      transformOrigin: "bottom center",
+      backgroundImage: `linear-gradient(${primaryColor}22 1px, transparent 1px), linear-gradient(90deg, ${primaryColor}22 1px, transparent 1px)`,
+      backgroundSize: "80px 80px",
+      backgroundPositionY: `${scroll}px`,
+      maskImage: "linear-gradient(to top, black 10%, transparent 85%)",
+      WebkitMaskImage: "linear-gradient(to top, black 10%, transparent 85%)"
+    } }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(Vignette, { strength: 0.4 })
+  ] });
+};
+const GradientWash = ({ bgColor, primaryColor, secondaryColor }) => {
+  const frame = (0,esm.useCurrentFrame)();
+  const { fps } = (0,esm.useVideoConfig)();
+  const a = 120 + drift(frame, fps, 0.12, 14);
+  const sec = secondaryColor || primaryColor;
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { background: `linear-gradient(${a}deg, ${bgColor} 0%, ${bgColor} 45%, ${primaryColor}14 78%, ${sec}1c 100%)` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Vignette, { strength: 0.35 }) });
+};
+const DotGrid = ({ bgColor, primaryColor }) => {
+  const { width, height } = (0,esm.useVideoConfig)();
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { backgroundColor: bgColor }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      position: "absolute",
+      inset: 0,
+      backgroundImage: `radial-gradient(${primaryColor}33 1.4px, transparent 1.4px)`,
+      backgroundSize: "46px 46px",
+      maskImage: "radial-gradient(ellipse at center, black 30%, transparent 72%)",
+      WebkitMaskImage: "radial-gradient(ellipse at center, black 30%, transparent 72%)",
+      opacity: 0.6
+    } }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+      position: "absolute",
+      left: "50%",
+      top: "44%",
+      transform: "translate(-50%,-50%)",
+      width: width * 0.6,
+      height: height * 0.5,
+      borderRadius: "50%",
+      background: `radial-gradient(circle, ${primaryColor}10 0%, transparent 65%)`
+    } })
+  ] });
+};
+const Vignette = ({ strength = 0.4 }) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
+  position: "absolute",
+  inset: 0,
+  pointerEvents: "none",
+  background: `radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,${strength}) 100%)`
+} });
 const Backgrounds = {
   cleanDark: CleanDark,
   subtleGlow: SubtleGlow,
-  centerSpotlight: CenterSpotlight
+  centerSpotlight: CenterSpotlight,
+  auroraMesh: AuroraMesh,
+  gridStage: GridStage,
+  gradientWash: GradientWash,
+  dotGrid: DotGrid
 };
 const getBackgroundForSceneType = (type) => {
   switch (type) {
@@ -212,21 +292,22 @@ const getBackgroundForSceneType = (type) => {
     case "title":
     case "problem":
     case "solution":
-      return "subtleGlow";
+      return "auroraMesh";
     case "evidence":
     case "feature":
     case "benefit":
+      return "gradientWash";
     case "flow":
     case "process":
-      return "cleanDark";
+      return "dotGrid";
     case "metric":
     case "stats":
-      return "subtleGlow";
+      return "gridStage";
     case "lockup":
     case "cta":
       return "centerSpotlight";
     default:
-      return "cleanDark";
+      return "gradientWash";
   }
 };
 
@@ -638,13 +719,96 @@ function isAccentFrame(frame, markers, windowFrames = 2) {
   return markers.some((m) => Math.abs(frame - m) <= windowFrames);
 }
 
+;// ./node_modules/@remotion/fonts/dist/esm/index.mjs
+// src/get-font-format.ts
+var getFontFormat = (url) => {
+  const ext = url.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "woff2":
+      return "woff2";
+    case "woff":
+      return "woff";
+    case "otf":
+      return "opentype";
+    case "ttf":
+      return "truetype";
+    default:
+      throw new Error(`Could not automatically derive font format from extension: ${ext}. Pass the "format" parameter explicitly.`);
+  }
+};
+
+// src/load-font.ts
+
+var loadFont = async ({
+  family,
+  url,
+  ascentOverride,
+  descentOverride,
+  display,
+  featureSettings,
+  lineGapOverride,
+  stretch,
+  style,
+  unicodeRange,
+  weight,
+  format,
+  variant
+}) => {
+  const waitForFont = (0,esm.delayRender)();
+  try {
+    const fontFormat = format ?? getFontFormat(url);
+    const font = new FontFace(family, `url('${url}') format('${fontFormat}')`, {
+      ascentOverride,
+      descentOverride,
+      display,
+      featureSettings,
+      lineGapOverride,
+      stretch,
+      style,
+      unicodeRange,
+      weight,
+      variant
+    });
+    await font.load();
+    document.fonts.add(font);
+    (0,esm.continueRender)(waitForFont);
+  } catch (err) {
+    (0,esm.cancelRender)(err);
+  }
+};
+
+
+;// ./src/theme.ts
+
+
+
+const FAMILY = "Inter";
+[
+  ["400", "inter-latin-400-normal.woff2"],
+  ["500", "inter-latin-500-normal.woff2"],
+  ["600", "inter-latin-600-normal.woff2"],
+  ["700", "inter-latin-700-normal.woff2"],
+  ["800", "inter-latin-800-normal.woff2"],
+  ["900", "inter-latin-900-normal.woff2"]
+].forEach(([weight, file]) => {
+  loadFont({
+    family: FAMILY,
+    url: (0,esm.staticFile)(`fonts/${file}`),
+    weight,
+    style: "normal"
+  }).catch(() => {
+  });
+});
+const theme_FONT = `${FAMILY}, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+
 ;// ./src/scene-core.tsx
 
 
 
 
 
-const scene_core_FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+
 function scene_core_useSceneSizes() {
   const { width, height } = (0,esm.useVideoConfig)();
   const isVertical = height > width;
@@ -692,7 +856,7 @@ const scene_core_CinematicHeadline = ({ text, frame, fps, duration, color, size,
             "span",
             {
               style: {
-                fontFamily: scene_core_FONT,
+                fontFamily: theme_FONT,
                 fontSize: size,
                 fontWeight: weight,
                 color,
@@ -741,7 +905,7 @@ const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center
               "span",
               {
                 style: {
-                  fontFamily: scene_core_FONT,
+                  fontFamily: theme_FONT,
                   fontSize: size,
                   fontWeight: weight,
                   color,
@@ -782,7 +946,7 @@ const scene_core_CinematicBody = ({ text, frame, fps, duration, color, size, ali
           "span",
           {
             style: {
-              fontFamily: scene_core_FONT,
+              fontFamily: theme_FONT,
               fontSize: size,
               fontWeight: 500,
               color,
@@ -918,7 +1082,7 @@ const EvidenceScene = ({
     filter: `blur(${(0,esm.interpolate)(cardS, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" })}px)`,
     willChange: "transform, opacity, filter"
   }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }, children: scene.subtext || " " }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }, children: scene.subtext || " " }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_CinematicHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.5), align: "left", audioMarkers })
   ] }) }) });
 };
@@ -952,11 +1116,11 @@ const FlowScene = ({
         willChange: "transform, opacity, filter",
         flex: 1
       }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: scene_core_FONT, fontSize: 14, fontWeight: 700, color: primaryColor, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: theme_FONT, fontSize: 14, fontWeight: 700, color: primaryColor, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 10 }, children: [
           "Step ",
           i + 1
         ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: Math.round(sizes.body * 0.9), fontWeight: 600, color: textColor, lineHeight: 1.3 }, children: step })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: Math.round(sizes.body * 0.9), fontWeight: 600, color: textColor, lineHeight: 1.3 }, children: step })
       ] }),
       !isLast && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 32, height: 2, background: primaryColor, opacity: (0,esm.interpolate)(s, [0, 1], [0, 0.4]), flexShrink: 0 } })
     ] }, i);
@@ -982,8 +1146,8 @@ const MetricScene = ({
   const displayed = Math.round((0,esm.interpolate)(countS, [0, 1], [0, targetNum], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
   const formatted = numberStr.startsWith("$") ? `$${displayed.toLocaleString()}` : displayed.toLocaleString();
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: Math.round(sizes.headline * 1.3), fontWeight: 800, lineHeight: 1, color: primaryColor, letterSpacing: "-0.04em", fontVariantNumeric: "tabular-nums" }, children: formatted }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: sizes.body, fontWeight: 500, lineHeight: 1.4, color: `${textColor}88`, marginTop: 20, letterSpacing: "-0.01em" }, children: label })
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: Math.round(sizes.headline * 1.3), fontWeight: 800, lineHeight: 1, color: primaryColor, letterSpacing: "-0.04em", fontVariantNumeric: "tabular-nums" }, children: formatted }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: sizes.body, fontWeight: 500, lineHeight: 1.4, color: `${textColor}88`, marginTop: 20, letterSpacing: "-0.01em" }, children: label })
   ] }) }) });
 };
 const LockupScene = ({
@@ -1004,9 +1168,9 @@ const LockupScene = ({
   const mainText = isUrl ? scene.subtext || "Get started" : scene.text;
   const urlText = isUrl ? scene.text : scene.subtext || "";
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: Math.round(sizes.headline * 0.65), fontWeight: 800, lineHeight: 1.1, color: textColor, letterSpacing: "-0.03em", marginBottom: 24 }, children: mainText }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: Math.round(sizes.headline * 0.65), fontWeight: 800, lineHeight: 1.1, color: textColor, letterSpacing: "-0.03em", marginBottom: 24 }, children: mainText }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "0 auto 24px" } }),
-    urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: sizes.body, fontWeight: 500, color: primaryColor, letterSpacing: "0.02em" }, children: urlText })
+    urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: sizes.body, fontWeight: 500, color: primaryColor, letterSpacing: "0.02em" }, children: urlText })
   ] }) }) });
 };
 const sceneComponentMap = {
@@ -1034,7 +1198,7 @@ const sceneComponentMap = {
 
 
 
-const ui_mockups_FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
 const MONO = '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", monospace';
 const ui_mockups_PhoneFrame = ({ children, frame, fps, primaryColor = "#0ea5e9" }) => {
   const s = animations_getSpringProgress(frame, fps, 0, animations_DEFAULT_SPRING);
@@ -1083,7 +1247,7 @@ const ui_mockups_BrowserFrame = ({ children, frame, fps, url = "app.example.com"
             /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#ffbd2e" } }),
             /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 12, height: 12, borderRadius: "50%", background: "#27c93f" } })
           ] }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { flex: 1, background: "#ffffff", borderRadius: 6, padding: "5px 14px", fontFamily: ui_mockups_FONT, fontSize: 12, color: "#666", textAlign: "center", border: "1px solid #e5e5e5" }, children: url })
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { flex: 1, background: "#ffffff", borderRadius: 6, padding: "5px 14px", fontFamily: theme_FONT, fontSize: 12, color: "#666", textAlign: "center", border: "1px solid #e5e5e5" }, children: url })
         ] }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { padding: 24, background: "#fafafa", minHeight: 400 }, children })
       ]
@@ -1134,7 +1298,7 @@ const ChatBubble = ({ text, frame, fps, delay = 0, direction = "left", primaryCo
             borderRadius: isRight ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
             background: isRight ? primaryColor : "#e9ecef",
             color: isRight ? "#ffffff" : "#111111",
-            fontFamily: ui_mockups_FONT,
+            fontFamily: theme_FONT,
             fontSize: 15,
             fontWeight: 400,
             lineHeight: 1.4
@@ -1180,9 +1344,9 @@ const EmailPreview = ({ sender, subject, snippet, frame, fps, delay = 0, unread 
       children: [
         /* @__PURE__ */ jsx("div", { style: { width: 10, height: 10, borderRadius: "50%", background: unread ? "#0ea5e9" : "transparent", marginTop: 6, flexShrink: 0 } }),
         /* @__PURE__ */ jsxs("div", { style: { minWidth: 0, flex: 1 }, children: [
-          /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 14, fontWeight: 600, color: "#111", marginBottom: 2 }, children: sender }),
-          /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 13, fontWeight: 500, color: "#333", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: subject }),
-          /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, color: "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: snippet })
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 600, color: "#111", marginBottom: 2 }, children: sender }),
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 13, fontWeight: 500, color: "#333", marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: subject }),
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 12, color: "#888", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: snippet })
         ] })
       ]
     }
@@ -1212,8 +1376,8 @@ const ui_mockups_NotificationCard = ({ title, body, frame, fps, delay = 0, icon 
       children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 40, height: 40, borderRadius: 10, background: "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }, children: icon }),
         /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { minWidth: 0 }, children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 13, fontWeight: 600, color: "#111", marginBottom: 2 }, children: title }),
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, fontWeight: 400, color: "#666", lineHeight: 1.3 }, children: body })
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 13, fontWeight: 600, color: "#111", marginBottom: 2 }, children: title }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 12, fontWeight: 400, color: "#666", lineHeight: 1.3 }, children: body })
         ] })
       ]
     }
@@ -1258,8 +1422,8 @@ const ui_mockups_DashboardCard = ({ label, value, trend, trendLabel, frame, fps,
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }, children: label }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 36, fontWeight: 700, color: "#111", letterSpacing: "-0.02em", marginBottom: 8 }, children: value }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 12, fontWeight: 600, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }, children: label }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 36, fontWeight: 700, color: "#111", letterSpacing: "-0.02em", marginBottom: 8 }, children: value }),
         trend !== void 0 && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 4 }, children: [
           /* @__PURE__ */ (0,jsx_runtime.jsxs)("span", { style: { color: isUp ? "#22c55e" : "#ef4444", fontSize: 13, fontWeight: 600 }, children: [
             isUp ? "\u2191" : "\u2193",
@@ -1267,7 +1431,7 @@ const ui_mockups_DashboardCard = ({ label, value, trend, trendLabel, frame, fps,
             Math.abs(trend),
             "%"
           ] }),
-          trendLabel && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, color: "#aaa" }, children: trendLabel })
+          trendLabel && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: theme_FONT, fontSize: 12, color: "#aaa" }, children: trendLabel })
         ] })
       ]
     }
@@ -1276,12 +1440,12 @@ const ui_mockups_DashboardCard = ({ label, value, trend, trendLabel, frame, fps,
 const ui_mockups_StatCard = ({ value, label, prefix = "", suffix = "", frame, fps, delay = 0, audioMarkers }) => {
   const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), SNAPPY_SPRING);
   return /* @__PURE__ */ jsxs("div", { style: { textAlign: "center", opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${interpolate(s, [0, 1], [20, 0])}px)`, willChange: "transform, opacity" }, children: [
-    /* @__PURE__ */ jsxs("div", { style: { fontFamily: ui_mockups_FONT, fontSize: "72px", fontWeight: 800, color: "#111", letterSpacing: "-0.03em", lineHeight: 1 }, children: [
+    /* @__PURE__ */ jsxs("div", { style: { fontFamily: FONT, fontSize: "72px", fontWeight: 800, color: "#111", letterSpacing: "-0.03em", lineHeight: 1 }, children: [
       prefix,
       value,
       suffix
     ] }),
-    /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: "18px", fontWeight: 500, color: "#888", marginTop: 8 }, children: label })
+    /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: "18px", fontWeight: 500, color: "#888", marginTop: 8 }, children: label })
   ] });
 };
 const ui_mockups_TestimonialCard = ({ quote, name, role, avatar, rating, frame, fps, delay = 0, audioMarkers }) => {
@@ -1300,13 +1464,13 @@ const ui_mockups_TestimonialCard = ({ quote, name, role, avatar, rating, frame, 
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 48, color: "#ddd", lineHeight: 1, marginBottom: 8 }, children: '"' }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 22, fontWeight: 500, color: "#222", lineHeight: 1.5, marginBottom: 24 }, children: quote }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 48, color: "#ddd", lineHeight: 1, marginBottom: 8 }, children: '"' }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 22, fontWeight: 500, color: "#222", lineHeight: 1.5, marginBottom: 24 }, children: quote }),
         /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 12 }, children: [
-          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 44, height: 44, borderRadius: "50%", background: "#e5e5e5", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: ui_mockups_FONT, fontSize: 16, fontWeight: 600, color: "#666" }, children: avatar || name.charAt(0) }),
+          /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 44, height: 44, borderRadius: "50%", background: "#e5e5e5", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: theme_FONT, fontSize: 16, fontWeight: 600, color: "#666" }, children: avatar || name.charAt(0) }),
           /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { children: [
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 15, fontWeight: 600, color: "#111" }, children: name }),
-            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 13, color: "#888" }, children: role })
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 15, fontWeight: 600, color: "#111" }, children: name }),
+            /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 13, color: "#888" }, children: role })
           ] }),
           rating !== void 0 && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginLeft: "auto", display: "flex", gap: 2 }, children: Array.from({ length: 5 }).map((_, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontSize: 16, color: i < rating ? "#f59e0b" : "#e5e5e5" }, children: "\u2605" }, i)) })
         ] })
@@ -1332,12 +1496,12 @@ const ui_mockups_PricingCard = ({ plan, price, period = "/mo", features, highlig
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 13, fontWeight: 700, color: primaryColor, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }, children: plan }),
-        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 40, fontWeight: 800, color: "#111", letterSpacing: "-0.02em" }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 13, fontWeight: 700, color: primaryColor, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }, children: plan }),
+        /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: theme_FONT, fontSize: 40, fontWeight: 800, color: "#111", letterSpacing: "-0.02em" }, children: [
           price,
           /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontSize: 16, fontWeight: 500, color: "#888" }, children: period })
         ] }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }, children: features.map((f, i) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 8, fontFamily: ui_mockups_FONT, fontSize: 14, color: "#444" }, children: [
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }, children: features.map((f, i) => /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 8, fontFamily: theme_FONT, fontSize: 14, color: "#444" }, children: [
           /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { color: "#22c55e", fontSize: 14 }, children: "\u2713" }),
           " ",
           f
@@ -1362,8 +1526,8 @@ const ui_mockups_FeatureCard = ({ icon, title, description, frame, fps, delay = 
       },
       children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 40, height: 40, borderRadius: 10, background: `${primaryColor}12`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, marginBottom: 14 }, children: icon }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 6 }, children: title }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 13, color: "#666", lineHeight: 1.5 }, children: description })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 6 }, children: title }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 13, color: "#666", lineHeight: 1.5 }, children: description })
       ]
     }
   );
@@ -1372,12 +1536,12 @@ const ui_mockups_ComparisonCard = ({ beforeLabel, beforeText, afterLabel, afterT
   const s = animations_getSpringProgress(frame, fps, audio_sync_getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", gap: 16, maxWidth: 700, opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [30, 0])}px)`, willChange: "transform, opacity" }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, background: "#fef2f2", borderRadius: 16, padding: "28px 24px", border: "1px solid #fecaca" }, children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 11, fontWeight: 700, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }, children: beforeLabel }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 18, fontWeight: 600, color: "#7f1d1d" }, children: beforeText })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 11, fontWeight: 700, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }, children: beforeLabel }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 18, fontWeight: 600, color: "#7f1d1d" }, children: beforeText })
     ] }),
     /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, background: "#f0fdf4", borderRadius: 16, padding: "28px 24px", border: "1px solid #bbf7d0" }, children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 11, fontWeight: 700, color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }, children: afterLabel }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 18, fontWeight: 600, color: "#14532d" }, children: afterText })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 11, fontWeight: 700, color: "#22c55e", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }, children: afterLabel }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 18, fontWeight: 600, color: "#14532d" }, children: afterText })
     ] })
   ] });
 };
@@ -1398,8 +1562,8 @@ const ui_mockups_CalendarBlock = ({ time, title, frame, fps, delay = 0, primaryC
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, fontWeight: 600, color: primaryColor, marginBottom: 4, letterSpacing: "0.02em" }, children: time }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 15, fontWeight: 600, color: "#111" }, children: title })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 12, fontWeight: 600, color: primaryColor, marginBottom: 4, letterSpacing: "0.02em" }, children: time }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 15, fontWeight: 600, color: "#111" }, children: title })
       ]
     }
   );
@@ -1420,9 +1584,9 @@ const ui_mockups_CalendarMonth = ({ month, highlightedDays = [], frame, fps, del
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 12 }, children: month }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 16, fontWeight: 700, color: "#111", marginBottom: 12 }, children: month }),
         /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }, children: [
-          ["S", "M", "T", "W", "T", "F", "S"].map((d, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 10, fontWeight: 600, color: "#aaa", textAlign: "center", padding: "4px 0" }, children: d }, `h-${i}`)),
+          ["S", "M", "T", "W", "T", "F", "S"].map((d, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 10, fontWeight: 600, color: "#aaa", textAlign: "center", padding: "4px 0" }, children: d }, `h-${i}`)),
           days.map((d) => {
             const isHighlighted = highlightedDays.includes(d);
             const ds = animations_getSpringProgress(frame, fps, delay + d * 1, animations_SNAPPY_SPRING);
@@ -1430,7 +1594,7 @@ const ui_mockups_CalendarMonth = ({ month, highlightedDays = [], frame, fps, del
               "div",
               {
                 style: {
-                  fontFamily: ui_mockups_FONT,
+                  fontFamily: theme_FONT,
                   fontSize: 12,
                   fontWeight: isHighlighted ? 700 : 400,
                   color: isHighlighted ? "#fff" : "#444",
@@ -1471,10 +1635,10 @@ const InvoiceRow = ({ service, amount, status, frame, fps, delay = 0 }) => {
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 14, fontWeight: 500, color: "#111" }, children: service }),
+        /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 500, color: "#111" }, children: service }),
         /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: 12 }, children: [
-          /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 14, fontWeight: 700, color: "#111" }, children: amount }),
-          /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 11, fontWeight: 700, color: statusColors[status], background: `${statusColors[status]}12`, padding: "3px 10px", borderRadius: 100, textTransform: "uppercase" }, children: statusLabels[status] })
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 700, color: "#111" }, children: amount }),
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 11, fontWeight: 700, color: statusColors[status], background: `${statusColors[status]}12`, padding: "3px 10px", borderRadius: 100, textTransform: "uppercase" }, children: statusLabels[status] })
         ] })
       ]
     }
@@ -1501,7 +1665,7 @@ const ui_mockups_BarChart = ({ data, frame, fps, delay = 0, primaryColor = "#0ea
           }
         }
       ),
-      /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 11, fontWeight: 500, color: "#888" }, children: d.label })
+      /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "#888" }, children: d.label })
     ] }, i);
   }) });
 };
@@ -1569,7 +1733,7 @@ const PieChart = ({ segments, frame, fps, delay = 0 }) => {
     }) }),
     /* @__PURE__ */ jsx("div", { style: { display: "flex", flexDirection: "column", gap: 8 }, children: segments.map((seg, i) => /* @__PURE__ */ jsxs("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
       /* @__PURE__ */ jsx("div", { style: { width: 10, height: 10, borderRadius: 3, background: seg.color } }),
-      /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, color: "#444" }, children: seg.label })
+      /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 12, color: "#444" }, children: seg.label })
     ] }, i)) })
   ] });
 };
@@ -1598,11 +1762,11 @@ const ui_mockups_ProgressRing = ({ percent, label, frame, fps, delay = 0, primar
         }
       )
     ] }),
-    /* @__PURE__ */ jsxs("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 22, fontWeight: 700, color: "#111" }, children: [
+    /* @__PURE__ */ jsxs("div", { style: { fontFamily: FONT, fontSize: 22, fontWeight: 700, color: "#111" }, children: [
       Math.round(currentPercent),
       "%"
     ] }),
-    label && /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, color: "#888" }, children: label })
+    label && /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 12, color: "#888" }, children: label })
   ] });
 };
 const Sparkline = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
@@ -1635,7 +1799,7 @@ const ui_mockups_TypewriterInput = ({ text, placeholder = "Type something...", f
       },
       children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { color: "#aaa", fontSize: 16 }, children: "\u2318" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: ui_mockups_FONT, fontSize: 16, color: visibleText ? "#111" : "#bbb", fontWeight: 400 }, children: visibleText || placeholder }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: theme_FONT, fontSize: 16, color: visibleText ? "#111" : "#bbb", fontWeight: 400 }, children: visibleText || placeholder }),
         cursorOn && visibleText.length < text.length && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { display: "inline-block", width: 2, height: 20, background: "#0ea5e9", marginLeft: 2 } })
       ]
     }
@@ -1661,7 +1825,7 @@ const SearchBar = ({ query, frame, fps, delay = 0 }) => {
       },
       children: [
         /* @__PURE__ */ jsx("span", { style: { color: "#aaa", fontSize: 16 }, children: "\u{1F50D}" }),
-        /* @__PURE__ */ jsx("span", { style: { fontFamily: ui_mockups_FONT, fontSize: 15, color: "#444" }, children: query })
+        /* @__PURE__ */ jsx("span", { style: { fontFamily: FONT, fontSize: 15, color: "#444" }, children: query })
       ]
     }
   );
@@ -1699,7 +1863,7 @@ const ToggleSwitch = ({ on, label, frame, fps, delay = 0, primaryColor = "#0ea5e
         )
       }
     ),
-    label && /* @__PURE__ */ jsx("span", { style: { fontFamily: ui_mockups_FONT, fontSize: 14, color: "#444" }, children: label })
+    label && /* @__PURE__ */ jsx("span", { style: { fontFamily: FONT, fontSize: 14, color: "#444" }, children: label })
   ] });
 };
 const Button = ({ label, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
@@ -1714,7 +1878,7 @@ const Button = ({ label, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
         padding: "14px 32px",
         background: primaryColor,
         borderRadius: 100,
-        fontFamily: ui_mockups_FONT,
+        fontFamily: FONT,
         fontSize: 15,
         fontWeight: 600,
         color: "#ffffff",
@@ -1732,7 +1896,7 @@ const Slider = ({ value, min = 0, max = 100, label, frame, fps, delay = 0, prima
   const current = interpolate(s, [0, 1], [min, value], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const percent = (current - min) / (max - min) * 100;
   return /* @__PURE__ */ jsxs("div", { style: { width: 240 }, children: [
-    label && /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 13, color: "#666", marginBottom: 8 }, children: label }),
+    label && /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 13, color: "#666", marginBottom: 8 }, children: label }),
     /* @__PURE__ */ jsxs("div", { style: { height: 6, background: "#e5e5e5", borderRadius: 3, position: "relative" }, children: [
       /* @__PURE__ */ jsx("div", { style: { height: "100%", width: `${percent}%`, background: primaryColor, borderRadius: 3 } }),
       /* @__PURE__ */ jsx("div", { style: { position: "absolute", top: -5, left: `calc(${percent}% - 8px)`, width: 16, height: 16, borderRadius: "50%", background: "#ffffff", border: `2px solid ${primaryColor}`, boxShadow: "0 1px 3px rgba(0,0,0,0.15)" } })
@@ -1756,7 +1920,7 @@ const ui_mockups_Stepper = ({ steps, activeStep, frame, fps, delay = 0, primaryC
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily: ui_mockups_FONT,
+              fontFamily: theme_FONT,
               fontSize: 13,
               fontWeight: 700,
               color: isActive ? "#fff" : "#888",
@@ -1767,7 +1931,7 @@ const ui_mockups_Stepper = ({ steps, activeStep, frame, fps, delay = 0, primaryC
             children: i + 1
           }
         ),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 11, fontWeight: 600, color: isActive ? "#111" : "#aaa" }, children: step })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 11, fontWeight: 600, color: isActive ? "#111" : "#aaa" }, children: step })
       ] }),
       i < steps.length - 1 && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 40, height: 2, background: i < activeStep ? primaryColor : "#e5e5e5", margin: "0 8px", marginBottom: 22 } })
     ] }, i);
@@ -1782,9 +1946,9 @@ const Timeline = ({ events, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) =
         i < events.length - 1 && /* @__PURE__ */ jsx("div", { style: { width: 2, flex: 1, background: "#e5e5e5" } })
       ] }),
       /* @__PURE__ */ jsxs("div", { style: { paddingBottom: 18 }, children: [
-        /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 11, fontWeight: 600, color: primaryColor, marginBottom: 2 }, children: ev.time }),
-        /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 14, fontWeight: 600, color: "#111" }, children: ev.title }),
-        ev.description && /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, color: "#888", marginTop: 2 }, children: ev.description })
+        /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 11, fontWeight: 600, color: primaryColor, marginBottom: 2 }, children: ev.time }),
+        /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 600, color: "#111" }, children: ev.title }),
+        ev.description && /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 12, color: "#888", marginTop: 2 }, children: ev.description })
       ] })
     ] }, i);
   }) });
@@ -1797,7 +1961,7 @@ const Breadcrumb = ({ items, frame, fps, delay = 0 }) => {
         "span",
         {
           style: {
-            fontFamily: ui_mockups_FONT,
+            fontFamily: FONT,
             fontSize: 13,
             fontWeight: i === items.length - 1 ? 600 : 400,
             color: i === items.length - 1 ? "#111" : "#888",
@@ -1819,7 +1983,7 @@ const TabBar = ({ tabs, activeTab, frame, fps, delay = 0, primaryColor = "#0ea5e
       {
         style: {
           padding: "12px 18px",
-          fontFamily: ui_mockups_FONT,
+          fontFamily: FONT,
           fontSize: 14,
           fontWeight: isActive ? 600 : 400,
           color: isActive ? primaryColor : "#666",
@@ -1847,7 +2011,7 @@ const Avatar = ({ name, image, online = false, size = 40, frame, fps, delay = 0 
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily: ui_mockups_FONT,
+        fontFamily: FONT,
         fontSize: size * 0.35,
         fontWeight: 600,
         color: "#666",
@@ -1899,8 +2063,8 @@ const ui_mockups_SocialProofRow = ({ avatars, count, label, frame, fps, delay = 
       children: [
         /* @__PURE__ */ jsx("div", { style: { display: "flex" }, children: avatars.slice(0, 4).map((a, i) => /* @__PURE__ */ jsx("div", { style: { marginLeft: i > 0 ? -10 : 0, zIndex: 4 - i }, children: /* @__PURE__ */ jsx(Avatar, { name: a, size: 32, frame, fps, delay: getSyncedStagger(i, avatars.slice(0, 4).length, audioMarkers, delay, 4) }) }, i)) }),
         /* @__PURE__ */ jsxs("div", { children: [
-          /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 14, fontWeight: 700, color: "#111" }, children: count }),
-          /* @__PURE__ */ jsx("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, color: "#888" }, children: label })
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 14, fontWeight: 700, color: "#111" }, children: count }),
+          /* @__PURE__ */ jsx("div", { style: { fontFamily: FONT, fontSize: 12, color: "#888" }, children: label })
         ] })
       ]
     }
@@ -1930,7 +2094,7 @@ const ui_mockups_StatusPill = ({ label, frame, fps, delay = 0, variant = "succes
       },
       children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 7, height: 7, borderRadius: "50%", background: c.dot } }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, fontWeight: 600, color: c.text, letterSpacing: "0.01em" }, children: label })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: { fontFamily: theme_FONT, fontSize: 12, fontWeight: 600, color: c.text, letterSpacing: "0.01em" }, children: label })
       ]
     }
   );
@@ -1945,7 +2109,7 @@ const Tag = ({ label, frame, fps, delay = 0 }) => {
         padding: "4px 10px",
         background: "#f3f4f6",
         borderRadius: 6,
-        fontFamily: ui_mockups_FONT,
+        fontFamily: FONT,
         fontSize: 11,
         fontWeight: 500,
         color: "#666",
@@ -1961,7 +2125,7 @@ const Tag = ({ label, frame, fps, delay = 0 }) => {
 
 
 
-const media_FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
 function useStage() {
   const { width, height } = (0,esm.useVideoConfig)();
   const isVertical = height > width;
@@ -2053,7 +2217,7 @@ const ScreenshotFrame = ({
   }, children: [
     variant === "browser" && /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", alignItems: "center", gap: 10 * unit, height: chromeH, padding: `0 ${16 * unit}px`, background: "#1a1d26", borderBottom: "1px solid rgba(255,255,255,0.05)" }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", gap: 6 * unit }, children: ["#ff5f56", "#ffbd2e", "#27c93f"].map((c) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { width: 11 * unit, height: 11 * unit, borderRadius: "50%", background: c } }, c)) }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { flex: 1, maxWidth: frameW * 0.6, margin: "0 auto", background: "#0c0e14", borderRadius: 7 * unit, padding: `${5 * unit}px ${14 * unit}px`, fontFamily: media_FONT, fontSize: 12 * unit, color: "#8a90a0", textAlign: "center", border: "1px solid rgba(255,255,255,0.04)" }, children: url })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { flex: 1, maxWidth: frameW * 0.6, margin: "0 auto", background: "#0c0e14", borderRadius: 7 * unit, padding: `${5 * unit}px ${14 * unit}px`, fontFamily: theme_FONT, fontSize: 12 * unit, color: "#8a90a0", textAlign: "center", border: "1px solid rgba(255,255,255,0.04)" }, children: url })
     ] }),
     screen
   ] }) });
@@ -2118,7 +2282,7 @@ const LogoLockup = ({ logoUrl, wordmark, frame, fps, delay = 0, primaryColor = "
       /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { position: "absolute", inset: -logoH * 0.4, borderRadius: "50%", background: `radial-gradient(circle, ${primaryColor}22 0%, transparent 65%)`, filter: `blur(${30 * unit}px)` } }),
       /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.Img, { src: logoUrl, style: { height: logoH, width: "auto", maxWidth: "70vw", objectFit: "contain", position: "relative", filter: "drop-shadow(0 6px 22px rgba(0,0,0,0.4))" } })
     ] }),
-    wordmark && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: media_FONT, fontSize: 34 * unit, fontWeight: 800, letterSpacing: "-0.03em", color: textColor }, children: wordmark })
+    wordmark && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 34 * unit, fontWeight: 800, letterSpacing: "-0.03em", color: textColor }, children: wordmark })
   ] });
 };
 const BrandMark = ({ logoUrl, frame, fps, delay = 0, primaryColor = "#10a37f", position = "topLeft" }) => {
@@ -2180,9 +2344,13 @@ const PremiumCopy = ({ scene, frame, fps, duration, textColor, primaryColor, ali
   const sizes = scene_core_useSceneSizes();
   const headline = sceneHeadline(scene, compact ? 5 : 7);
   const subheadline = sceneSubheadline(scene, compact ? 10 : 14);
-  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { maxWidth: compact ? 520 : 680, textAlign: align }, children: [
+  const baseMul = compact ? sizes.isVertical ? 0.4 : 0.46 : 0.6;
+  const lenFactor = headline.length > 22 ? 0.74 : headline.length > 15 ? 0.86 : 1;
+  const headlineSize = Math.round(sizes.headline * baseMul * lenFactor);
+  const maxW = compact ? sizes.isVertical ? 760 : 620 : 720;
+  return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { maxWidth: maxW, textAlign: align, marginLeft: align === "center" ? "auto" : void 0, marginRight: align === "center" ? "auto" : void 0 }, children: [
     scene.eyebrow && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: {
-      fontFamily: scene_core_FONT,
+      fontFamily: theme_FONT,
       fontSize: sizes.small,
       fontWeight: 700,
       letterSpacing: "0.12em",
@@ -2198,7 +2366,7 @@ const PremiumCopy = ({ scene, frame, fps, duration, textColor, primaryColor, ali
         fps,
         duration,
         color: textColor,
-        size: compact ? Math.round(sizes.headline * 0.5) : Math.round(sizes.headline * 0.62),
+        size: headlineSize,
         align,
         audioMarkers
       }
@@ -2235,8 +2403,8 @@ const MetricTile = ({ value, label, frame, fps, delay, primaryColor, textColor }
     opacity: (0,esm.interpolate)(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
     transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [28, 0])}px) scale(${(0,esm.interpolate)(s, [0, 1], [0.96, 1])})`
   }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: 64, fontWeight: 850, color: textColor, letterSpacing: "-0.045em", lineHeight: 0.95 }, children: value }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: 16, fontWeight: 600, color: `${textColor}99`, marginTop: 14 }, children: label }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 64, fontWeight: 850, color: textColor, letterSpacing: "-0.045em", lineHeight: 0.95 }, children: value }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 16, fontWeight: 600, color: `${textColor}99`, marginTop: 14 }, children: label }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 2, width: 68, borderRadius: 99, background: primaryColor, marginTop: 20, opacity: 0.8 } })
   ] });
 };
@@ -2255,7 +2423,7 @@ const HeroStatementTemplate = ({
   const headline = sceneHeadline(scene, 7);
   const subheadline = scene.subheadline || "";
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center", maxWidth: sizes.isVertical ? "90%" : "82%" }, children: [
-    scene.eyebrow && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: sizes.small, fontWeight: 750, letterSpacing: "0.14em", textTransform: "uppercase", color: primaryColor, marginBottom: 22 }, children: scene.eyebrow }),
+    scene.eyebrow && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: sizes.small, fontWeight: 750, letterSpacing: "0.14em", textTransform: "uppercase", color: primaryColor, marginBottom: 22 }, children: scene.eyebrow }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(ClipHeadline, { text: headline, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.9), audioMarkers }),
     subheadline && /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_CinematicBody, { text: subheadline, frame, fps, duration, color: `${textColor}b8`, size: Math.round(sizes.body * 0.72), baseDelay: 22, audioMarkers })
   ] }) }) });
@@ -2564,12 +2732,12 @@ const PremiumPhoneDemoTemplate = ({
   const shot = firstImage(scene);
   if (shot) {
     return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 42 : 84, width: "100%" }, children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, compact: sizes.isVertical, audioMarkers }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, align: sizes.isVertical ? "center" : "left", compact: sizes.isVertical, audioMarkers }),
       /* @__PURE__ */ (0,jsx_runtime.jsx)(ScreenshotFrame, { imageUrl: shot, variant: "phone", frame, fps, delay: 8, primaryColor, fit: scene.imageFit || "cover" })
     ] }) }) });
   }
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 42 : 90, width: "100%" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, compact: sizes.isVertical, audioMarkers }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, align: sizes.isVertical ? "center" : "left", compact: sizes.isVertical, audioMarkers }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { transform: `translateY(${floatY}px)` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(ui_mockups_PhoneFrame, { frame, fps, primaryColor, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsx)(ui_mockups_NotificationCard, { title: "AI concierge", body: clampText(scene.subheadline || sceneHeadline(scene, 9), 62), frame, fps, delay: 10, icon: "AI", audioMarkers }),
       /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 64, padding: "0 4px" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -2618,7 +2786,7 @@ const PremiumBrowserDashboardTemplate = ({
     /* @__PURE__ */ (0,jsx_runtime.jsx)(GlassPanel, { primaryColor, style: { padding: 14, width: isVertical ? "94%" : "82%", maxWidth: 1040 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ui_mockups_BrowserFrame, { frame, fps, url: scene.url || "app.command-center.ai", children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "grid", gridTemplateColumns: isVertical ? "1fr" : "0.9fr 1.1fr", gap: 18 }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: "column", gap: 14 }, children: cards.slice(0, isVertical ? 2 : 3).map((card, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(ui_mockups_DashboardCard, { label: card.label, value: card.value, trend: Number(String(card.trend || "").replace(/[^0-9.-]/g, "")) || void 0, trendLabel: "live", frame, fps, delay: 12 + i * 8, audioMarkers }, card.label)) }),
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { background: "#111", borderRadius: 16, padding: 22, border: "1px solid rgba(255,255,255,0.06)" }, children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: 13, fontWeight: 700, color: "#888", marginBottom: 14, letterSpacing: "0.06em", textTransform: "uppercase" }, children: scene.chartLabel || "Conversion trend" }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: 13, fontWeight: 700, color: "#888", marginBottom: 14, letterSpacing: "0.06em", textTransform: "uppercase" }, children: scene.chartLabel || "Conversion trend" }),
         /* @__PURE__ */ (0,jsx_runtime.jsx)(ui_mockups_LineChart, { data: [22, 34, 31, 48, 56, 72, 86], frame, fps, delay: 30, primaryColor, audioMarkers }),
         /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { marginTop: 18, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }, children: [
           /* @__PURE__ */ (0,jsx_runtime.jsx)(ui_mockups_StatusPill, { label: "Synced", frame, fps, delay: 44, variant: "accent", primaryColor, audioMarkers }),
@@ -2823,7 +2991,7 @@ const PremiumBrandLockupTemplate = ({
   const urlText = scene.url || scene.subheadline || "";
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center", maxWidth: 860, display: "flex", flexDirection: "column", alignItems: "center" }, children: [
     logoUrl && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginBottom: 34 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(LogoLockup, { logoUrl, frame, fps, delay: 0, primaryColor, textColor, heightFraction: 0.16 }) }),
-    scene.eyebrow && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: sizes.small, fontWeight: 750, color: primaryColor, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 18 }, children: scene.eyebrow }),
+    scene.eyebrow && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: sizes.small, fontWeight: 750, color: primaryColor, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 18 }, children: scene.eyebrow }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_CinematicHeadline, { text: mainText, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.58), delay: logoUrl ? 10 : 0, audioMarkers }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "30px auto" } }),
     urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_CinematicBody, { text: urlText, frame, fps, duration, color: primaryColor, size: Math.round(sizes.body * 0.72), baseDelay: 14, audioMarkers })
@@ -2844,7 +3012,7 @@ const ProductShowcaseTemplate = ({
   const shot = firstImage(scene);
   const variant = scene.device || "browser";
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 40 : 80, width: "100%" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, compact: sizes.isVertical, audioMarkers }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, align: sizes.isVertical ? "center" : "left", compact: sizes.isVertical, audioMarkers }),
     shot ? /* @__PURE__ */ (0,jsx_runtime.jsx)(
       ScreenshotFrame,
       {
@@ -2859,7 +3027,7 @@ const ProductShowcaseTemplate = ({
         tilt: variant === "phone" ? 0 : 8,
         widthFraction: sizes.isVertical ? 0.92 : 0.5
       }
-    ) : /* @__PURE__ */ (0,jsx_runtime.jsx)(GlassPanel, { primaryColor, style: { padding: "60px 70px", minWidth: 320 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: Math.round(sizes.headline * 0.4), fontWeight: 850, color: textColor, letterSpacing: "-0.04em" }, children: scene.headline || sceneHeadline(scene, 4) }) })
+    ) : /* @__PURE__ */ (0,jsx_runtime.jsx)(GlassPanel, { primaryColor, style: { padding: "60px 70px", minWidth: 320 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: Math.round(sizes.headline * 0.4), fontWeight: 850, color: textColor, letterSpacing: "-0.04em" }, children: scene.headline || sceneHeadline(scene, 4) }) })
   ] }) }) });
 };
 const HeroImageTemplate = ({
@@ -2877,7 +3045,7 @@ const HeroImageTemplate = ({
   const shot = firstImage(scene);
   const variant = scene.device || "window";
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", gap: sizes.isVertical ? 32 : 44, alignItems: "center", width: "100%" }, children: [
-    scene.eyebrow && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: scene_core_FONT, fontSize: sizes.small, fontWeight: 750, letterSpacing: "0.14em", textTransform: "uppercase", color: primaryColor }, children: scene.eyebrow }),
+    scene.eyebrow && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: sizes.small, fontWeight: 750, letterSpacing: "0.14em", textTransform: "uppercase", color: primaryColor }, children: scene.eyebrow }),
     shot ? /* @__PURE__ */ (0,jsx_runtime.jsx)(ScreenshotFrame, { imageUrl: shot, variant, frame, fps, delay: 6, primaryColor, url: scene.url || "app.example.com", fit: scene.imageFit || "cover", tilt: 6, widthFraction: sizes.isVertical ? 0.9 : 0.62, maxHeightFraction: sizes.isVertical ? 0.5 : 0.56 }) : null,
     /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center", maxWidth: sizes.isVertical ? "92%" : "76%" }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_CinematicHeadline, { text: sceneHeadline(scene, 7), frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.52), delay: shot ? 14 : 0, audioMarkers }),
@@ -2936,7 +3104,7 @@ const FeatureSplitTemplate = ({
     return /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumFeatureHighlightTemplate, { scene, primaryColor, secondaryColor: primaryColor, textColor, accentColor: primaryColor, bgColor: "#000", frame, fps, duration, entranceDirection, exitDirection, audioMarkers });
   }
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: sizes.isVertical ? "column" : "row-reverse", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 36 : 80, width: "100%" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, compact: sizes.isVertical, audioMarkers }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(PremiumCopy, { scene, frame, fps, duration, textColor, primaryColor, align: sizes.isVertical ? "center" : "left", compact: sizes.isVertical, audioMarkers }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(ScreenshotFrame, { imageUrl: shot, variant: scene.device || "bare", frame, fps, delay: 8, primaryColor, fit: scene.imageFit || "cover", widthFraction: sizes.isVertical ? 0.9 : 0.46 })
   ] }) }) });
 };
@@ -3175,7 +3343,7 @@ const ExplainerVideo = ({
   const dominantBgType = getBackgroundForSceneType(((_a = scenes[effectiveIdx]) == null ? void 0 : _a.type) || "cleanDark");
   const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.cleanDark;
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { backgroundColor: bgColor }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(BackgroundComponent, { bgColor, primaryColor }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(BackgroundComponent, { bgColor, primaryColor, secondaryColor }),
     visualSchedule.map(({ scene, from, duration, visualDuration }, i) => {
       const SceneComponent = scene.template && templateComponentMap[scene.template] ? templateComponentMap[scene.template] : sceneComponentMap[scene.type] || sceneComponentMap.statement;
       const entranceDirs = ["up", "right", "left", "down"];
@@ -57933,7 +58101,7 @@ var z = /*#__PURE__*/Object.freeze({
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	__webpack_require__(96507);
-/******/ 	__webpack_require__(85109);
+/******/ 	__webpack_require__(56831);
 /******/ 	__webpack_require__(63610);
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __webpack_require__(66456);

@@ -7,7 +7,7 @@ import { interpolate, spring } from "remotion";
 import { getSpringProgress, DEFAULT_SPRING, SNAPPY_SPRING, clamp } from "./animations";
 import { getSyncedDelay, getSyncedStagger } from "./audio-sync";
 
-const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+import { FONT } from "./theme";
 const MONO = '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", monospace';
 
 // ═══════════════════════════════════════════════════════════════════

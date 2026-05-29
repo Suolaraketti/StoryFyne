@@ -220,7 +220,7 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
   return (
     <AbsoluteFill style={{ backgroundColor: bgColor }}>
       {/* Animated background */}
-      <BackgroundComponent bgColor={bgColor} primaryColor={primaryColor} />
+      <BackgroundComponent bgColor={bgColor} primaryColor={primaryColor} secondaryColor={secondaryColor} />
 
       {/* Visual scenes — overlapping during transitions */}
       {visualSchedule.map(({ scene, from, duration, visualDuration }, i) => {
