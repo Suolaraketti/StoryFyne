@@ -964,6 +964,13 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                               {BG_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                           </div>
+                          {tpl === 'heroStatement' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 150 }}>
+                              <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Highlight word</span>
+                              <input type="text" value={scene.highlight || ''} onChange={e => updateSceneField(idx, 'highlight', e.target.value)} disabled={isLoading} placeholder="e.g. never"
+                                style={{ padding: '7px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }} />
+                            </div>
+                          )}
                         </div>
 
                         {/* Voice script — editable */}

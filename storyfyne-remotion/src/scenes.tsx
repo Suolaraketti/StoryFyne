@@ -19,6 +19,7 @@ export interface SceneData {
   imageFit?: "cover" | "contain";
   device?: "browser" | "phone" | "tablet" | "window" | "bare";
   background?: string;
+  highlight?: string;
   headline?: string;
   subheadline?: string;
   eyebrow?: string;

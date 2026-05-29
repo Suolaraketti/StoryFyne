@@ -125,9 +125,13 @@ export const ClipHeadline: React.FC<{
   weight?: number;
   delay?: number;
   audioMarkers?: number[];
-}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
+  highlight?: string;
+  highlightColor?: string;
+}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers, highlight = "", highlightColor }) => {
   const clip = getClipReveal(frame, delay, 40);
   const words = text.split(/\s+/).filter(Boolean);
+  const norm = (w: string) => w.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const hiSet = new Set(highlight.split(/\s+/).map(norm).filter(Boolean));
 
   return (
     <div
@@ -151,14 +155,20 @@ export const ClipHeadline: React.FC<{
           // Audio-driven: words pop at phrase markers
           const wordDelay = delay + 6 + getSyncedStagger(i, words.length, audioMarkers, 0, duration * 0.35 / Math.max(1, words.length - 1));
           const s = spring({ frame: Math.max(0, frame - wordDelay), fps, config: SNAPPY_SPRING });
+          const isHi = hiSet.size > 0 && hiSet.has(norm(word));
+          const hiCol = highlightColor || color;
+          // Marker sweeps in just after the highlighted word settles.
+          const markerS = spring({ frame: Math.max(0, frame - wordDelay - 6), fps, config: SNAPPY_SPRING });
+          const markerW = interpolate(markerS, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
           return (
             <span
               key={i}
               style={{
+                position: "relative",
                 fontFamily: FONT,
                 fontSize: size,
                 fontWeight: weight,
-                color,
+                color: isHi ? hiCol : color,
                 letterSpacing: "-0.035em",
                 opacity: interpolate(s, [0, 0.2, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
                 transform: `translateY(${interpolate(s, [0, 1], [14, 0])}px) scale(${interpolate(s, [0, 1], [0.95, 1])})`,
@@ -168,6 +178,13 @@ export const ClipHeadline: React.FC<{
               }}
             >
               {word}
+              {isHi && (
+                <span style={{
+                  position: "absolute", left: 0, right: 0, bottom: -size * 0.06, height: size * 0.1,
+                  background: hiCol, borderRadius: 99, transformOrigin: "left center",
+                  transform: `scaleX(${markerW})`, opacity: 0.9,
+                }} />
+              )}
             </span>
           );
         })}

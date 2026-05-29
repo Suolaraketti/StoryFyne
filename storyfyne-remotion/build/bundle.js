@@ -876,9 +876,11 @@ const scene_core_CinematicHeadline = ({ text, frame, fps, duration, color, size,
     }
   ) });
 };
-const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
+const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers, highlight = "", highlightColor }) => {
   const clip = getClipReveal(frame, delay, 40);
   const words = text.split(/\s+/).filter(Boolean);
+  const norm = (w) => w.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const hiSet = new Set(highlight.split(/\s+/).map(norm).filter(Boolean));
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
     "div",
     {
@@ -901,14 +903,19 @@ const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center
           children: words.map((word, i) => {
             const wordDelay = delay + 6 + audio_sync_getSyncedStagger(i, words.length, audioMarkers, 0, duration * 0.35 / Math.max(1, words.length - 1));
             const s = (0,esm.spring)({ frame: Math.max(0, frame - wordDelay), fps, config: animations_SNAPPY_SPRING });
-            return /* @__PURE__ */ (0,jsx_runtime.jsx)(
+            const isHi = hiSet.size > 0 && hiSet.has(norm(word));
+            const hiCol = highlightColor || color;
+            const markerS = (0,esm.spring)({ frame: Math.max(0, frame - wordDelay - 6), fps, config: animations_SNAPPY_SPRING });
+            const markerW = (0,esm.interpolate)(markerS, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+            return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
               "span",
               {
                 style: {
+                  position: "relative",
                   fontFamily: theme_FONT,
                   fontSize: size,
                   fontWeight: weight,
-                  color,
+                  color: isHi ? hiCol : color,
                   letterSpacing: "-0.035em",
                   opacity: (0,esm.interpolate)(s, [0, 0.2, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
                   transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [14, 0])}px) scale(${(0,esm.interpolate)(s, [0, 1], [0.95, 1])})`,
@@ -916,7 +923,21 @@ const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center
                   display: "inline-block",
                   willChange: "transform, opacity, filter"
                 },
-                children: word
+                children: [
+                  word,
+                  isHi && /* @__PURE__ */ (0,jsx_runtime.jsx)("span", { style: {
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: -size * 0.06,
+                    height: size * 0.1,
+                    background: hiCol,
+                    borderRadius: 99,
+                    transformOrigin: "left center",
+                    transform: `scaleX(${markerW})`,
+                    opacity: 0.9
+                  } })
+                ]
               },
               i
             );
@@ -2673,7 +2694,7 @@ const HeroStatementTemplate = ({
   const subheadline = scene.subheadline || "";
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_SceneMotion, { frame, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center", maxWidth: sizes.isVertical ? "90%" : "82%" }, children: [
     scene.eyebrow && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: theme_FONT, fontSize: sizes.small, fontWeight: 750, letterSpacing: "0.14em", textTransform: "uppercase", color: primaryColor, marginBottom: 22 }, children: scene.eyebrow }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(ClipHeadline, { text: headline, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.9), audioMarkers }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(ClipHeadline, { text: headline, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.9), audioMarkers, highlight: scene.highlight, highlightColor: primaryColor }),
     subheadline && /* @__PURE__ */ (0,jsx_runtime.jsx)(scene_core_CinematicBody, { text: subheadline, frame, fps, duration, color: `${textColor}b8`, size: Math.round(sizes.body * 0.72), baseDelay: 22, audioMarkers })
   ] }) }) });
 };
@@ -3515,6 +3536,7 @@ const sceneSchema = lib.z.object({
   imageFit: lib.z.enum(["cover", "contain"]).optional().default("cover"),
   device: lib.z.enum(["browser", "phone", "tablet", "window", "bare"]).optional().default("browser"),
   background: lib.z.string().optional().default(""),
+  highlight: lib.z.string().optional().default(""),
   headline: lib.z.string().optional().default(""),
   subheadline: lib.z.string().optional().default(""),
   eyebrow: lib.z.string().optional().default(""),
@@ -3561,6 +3583,7 @@ const defaultProps = {
       imageFit: "cover",
       device: "browser",
       background: "",
+      highlight: "",
       headline: "Missed call. Missed job.",
       subheadline: "",
       eyebrow: "The problem",
@@ -3594,6 +3617,7 @@ const defaultProps = {
       imageFit: "cover",
       device: "browser",
       background: "",
+      highlight: "",
       headline: "AI answers every call.",
       subheadline: "A live product moment, not another missed opportunity.",
       eyebrow: "Product reveal",
@@ -3627,6 +3651,7 @@ const defaultProps = {
       imageFit: "cover",
       device: "browser",
       background: "",
+      highlight: "",
       headline: "From intent to booked.",
       subheadline: "The workflow runs while your team stays focused.",
       eyebrow: "Workflow",

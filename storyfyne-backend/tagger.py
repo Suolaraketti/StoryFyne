@@ -223,6 +223,7 @@ Required fields per scene:
 - subheadline: optional, 4-14 words max.
 - eyebrow: optional, 1-4 words max.
 - visual_direction: one compact sentence describing the intended product/UI moment.
+- highlight (optional, heroStatement only): one or two words from the headline to emphasize in the brand color with an animated underline. Pick the most important word.
 
 Template-specific fields, when useful:
 - statsGrid / revenueCounter: metrics: [{"value":"$42K","label":"recovered revenue"}, ...]

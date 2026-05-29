@@ -1467,6 +1467,7 @@ async def _process_explainer(
             "imageFit": scene.get("imageFit", scene.get("image_fit", "cover")),
             "device": scene.get("device", "browser"),
             "background": scene.get("background", ""),
+            "highlight": scene.get("highlight", ""),
             "audioUrl": audio_url,
             "durationInFrames": max(int(duration_seconds * REMOTION_FPS), 1),
             "audioMarkers": audio_markers,

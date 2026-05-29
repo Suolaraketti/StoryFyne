@@ -183,7 +183,7 @@ export const HeroStatementTemplate: React.FC<SceneProps> = ({
               {scene.eyebrow}
             </div>
           )}
-          <ClipHeadline text={headline} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.9)} audioMarkers={audioMarkers} />
+          <ClipHeadline text={headline} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.9)} audioMarkers={audioMarkers} highlight={scene.highlight} highlightColor={primaryColor} />
           {subheadline && (
             <CinematicBody text={subheadline} frame={frame} fps={fps} duration={duration} color={`${textColor}b8`} size={Math.round(sizes.body * 0.72)} baseDelay={22} audioMarkers={audioMarkers} />
           )}
