@@ -1,9 +1,11 @@
 import re
 import io
 import base64
+import math
 import httpx
 from typing import List, Tuple, Dict
 from pydub import AudioSegment
+from pydub.silence import detect_nonsilent
 from config import (
     GEMINI_API_KEY,
     GEMINI_TTS_URL,
@@ -318,3 +320,81 @@ async def assemble_story_audio(
     buf = io.BytesIO()
     final_audio.export(buf, format="mp3")
     return buf.getvalue(), len(final_audio)
+
+
+# ─── Audio Analysis for Visual Sync ─────────────────────────────────
+# Detect phrase boundaries and accent peaks so visuals hit on audio cues.
+
+
+def analyze_audio_markers(audio_bytes: bytes, fps: int = 30) -> List[int]:
+    """Analyze audio to find frame offsets where visual events should sync.
+
+    Returns a sorted list of frame numbers (within the scene) representing:
+    - Phrase boundaries (detected via silence gaps)
+    - Amplitude peaks (accent beats / emphasis moments)
+
+    These markers replace hardcoded frame delays in the frontend.
+    """
+    try:
+        audio = AudioSegment.from_mp3(io.BytesIO(audio_bytes))
+    except Exception:
+        return []
+
+    if len(audio) < 200:
+        return []
+
+    markers_ms: List[int] = []
+
+    # ── 1. Phrase boundaries ──
+    # detect_nonsilent returns speech segments; gaps between them are phrases.
+    # Use a relatively sensitive threshold to catch natural pauses.
+    speech_ranges = detect_nonsilent(audio, min_silence_len=200, silence_thresh=-42)
+    for start_ms, _ in speech_ranges:
+        # Slight lead-in so visuals are ready when speech starts
+        lead_ms = max(0, start_ms - 60)
+        markers_ms.append(lead_ms)
+
+    # ── 2. Accent peaks within each phrase ──
+    # Sample RMS in 40ms windows, find local maxima above threshold.
+    window_ms = 40
+    rms_samples: List[Tuple[int, float]] = []
+    for t in range(0, len(audio), window_ms):
+        chunk = audio[t:t + window_ms]
+        rms = chunk.rms
+        if rms > 0:
+            rms_samples.append((t, rms))
+
+    if not rms_samples:
+        return _ms_to_frames_sorted(markers_ms, fps)
+
+    # Dynamic threshold: median + 1.2× MAD (robust peak detection)
+    rms_values = [v for _, v in rms_samples]
+    rms_values.sort()
+    median = rms_values[len(rms_values) // 2]
+    mad = sum(abs(v - median) for v in rms_values) / len(rms_values)
+    threshold = median + max(mad * 1.4, 150)
+
+    # Find local maxima
+    for i in range(2, len(rms_samples) - 2):
+        t, val = rms_samples[i]
+        if val < threshold:
+            continue
+        if val > rms_samples[i - 1][1] and val > rms_samples[i - 2][1] \
+                and val >= rms_samples[i + 1][1] and val >= rms_samples[i + 2][1]:
+            markers_ms.append(t)
+
+    return _ms_to_frames_sorted(markers_ms, fps)
+
+
+def _ms_to_frames_sorted(markers_ms: List[int], fps: int) -> List[int]:
+    """Convert millisecond markers to frame numbers, dedupe and sort."""
+    frames = []
+    seen = set()
+    for ms in markers_ms:
+        f = int(round((ms / 1000.0) * fps))
+        # Deduplicate within 3 frames
+        if not any(abs(f - s) <= 3 for s in seen):
+            frames.append(f)
+            seen.add(f)
+    frames.sort()
+    return frames

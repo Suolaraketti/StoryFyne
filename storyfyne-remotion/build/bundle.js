@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 51562:
+/***/ 84525:
 /***/ ((__unused_webpack_module, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -536,7 +536,110 @@ const CinematicMaster = ({ mood, frame, intensity = 0.7 }) => {
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(jsx_runtime.Fragment, { children: configs[mood] || configs.clean });
 };
 
+;// ./src/audio-sync.ts
+
+
+function getSyncedDelay(markerIndex, markers, fallback) {
+  if (!markers || markers.length === 0) return fallback;
+  return markers[Math.min(markerIndex, markers.length - 1)] ?? fallback;
+}
+function getSyncedStagger(index, totalItems, markers, fallbackBase = 6, fallbackGap = 8) {
+  if (!markers || markers.length === 0 || totalItems <= 0) {
+    return fallbackBase + index * fallbackGap;
+  }
+  if (markers.length >= totalItems) {
+    return markers[index] ?? fallbackBase + index * fallbackGap;
+  }
+  const ratio = index / (totalItems - 1);
+  const markerIdx = Math.round(ratio * (markers.length - 1));
+  return markers[markerIdx] ?? fallbackBase + index * fallbackGap;
+}
+function getMarkerPulse(frame, markers, markerIndex, spread = 10) {
+  if (!markers || markers.length === 0) return 0;
+  const center = markers[markerIndex];
+  if (center === void 0) return 0;
+  const dist = Math.abs(frame - center);
+  if (dist > spread) return 0;
+  const t = dist / spread;
+  return 1 - Easing.out(Easing.cubic)(t);
+}
+function getAudioPulse(frame, markers, decayFrames = 12) {
+  if (!markers || markers.length === 0) return 0;
+  let maxPulse = 0;
+  for (const marker of markers) {
+    const dist = frame - marker;
+    if (dist >= -2 && dist < decayFrames) {
+      const t = Math.max(0, dist / decayFrames);
+      const pulse = 1 - esm.Easing.out(esm.Easing.quad)(t);
+      maxPulse = Math.max(maxPulse, pulse);
+    }
+  }
+  return maxPulse;
+}
+function getPhraseProgress(frame, markers, duration) {
+  if (!markers || markers.length === 0) {
+    return Math.min(1, Math.max(0, frame / Math.max(1, duration * 0.7)));
+  }
+  for (let i = 0; i < markers.length; i++) {
+    const start = markers[i];
+    const end = markers[i + 1] ?? duration;
+    if (frame >= start && frame < end) {
+      const intervalLen = end - start;
+      if (intervalLen <= 0) return 1;
+      return Math.min(1, Math.max(0, (frame - start) / intervalLen));
+    }
+  }
+  if (frame < markers[0]) {
+    return Math.min(1, Math.max(0, frame / Math.max(1, markers[0])));
+  }
+  return 1;
+}
+function getCurrentPhraseIndex(frame, markers) {
+  if (!markers || markers.length === 0) return 0;
+  for (let i = markers.length - 1; i >= 0; i--) {
+    if (frame >= markers[i]) return i;
+  }
+  return 0;
+}
+function getNextMarkerFrame(frame, markers) {
+  if (!markers || markers.length === 0) return null;
+  for (const m of markers) {
+    if (m > frame) return m;
+  }
+  return null;
+}
+function getPrevMarkerFrame(frame, markers) {
+  if (!markers || markers.length === 0) return null;
+  for (let i = markers.length - 1; i >= 0; i--) {
+    if (markers[i] <= frame) return markers[i];
+  }
+  return null;
+}
+function getBeatScale(frame, markers, baseScale = 1, pulseAmount = 0.015, decayFrames = 10) {
+  const pulse = getAudioPulse(frame, markers, decayFrames);
+  return baseScale + pulse * pulseAmount;
+}
+function getBreathingOpacity(frame, markers, baseOpacity = 1, breathAmount = 0.08, breathSpeed = 0.3) {
+  const phraseIdx = getCurrentPhraseIndex(frame, markers);
+  const phraseStart = (markers == null ? void 0 : markers[phraseIdx]) ?? 0;
+  const timeInPhrase = frame - phraseStart;
+  const breath = Math.sin(timeInPhrase * breathSpeed) * 0.5 + 0.5;
+  return baseOpacity - breath * breathAmount;
+}
+function getSyncedExitStart(duration, markers, transitionFrames = 25) {
+  if (!markers || markers.length === 0) {
+    return Math.max(0, duration - transitionFrames);
+  }
+  const lastMarker = markers[markers.length - 1];
+  return Math.min(duration - 5, lastMarker + 8);
+}
+function isAccentFrame(frame, markers, windowFrames = 2) {
+  if (!markers || markers.length === 0) return false;
+  return markers.some((m) => Math.abs(frame - m) <= windowFrames);
+}
+
 ;// ./src/scene-core.tsx
+
 
 
 
@@ -557,7 +660,7 @@ function useSceneSizes() {
     padY: isVertical ? "10%" : "8%"
   };
 }
-const CinematicHeadline = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0 }) => {
+const CinematicHeadline = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
   const chars = text.split("");
   const revealWindow = duration * 0.45;
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { textAlign: align, maxWidth: "92%" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -571,7 +674,7 @@ const CinematicHeadline = ({ text, frame, fps, duration, color, size, align = "c
       },
       children: chars.map((char, i) => {
         const isSpace = char === " ";
-        const charDelay = delay + (chars.length <= 1 ? 0 : i / (chars.length - 1) * revealWindow);
+        const charDelay = delay + getSyncedStagger(i, chars.length, audioMarkers, 0, revealWindow / Math.max(1, chars.length - 1));
         const s = (0,esm.spring)({ frame: Math.max(0, frame - charDelay), fps, config: animations_SNAPPY_SPRING });
         const reveal = {
           opacity: (0,esm.interpolate)(s, [0, 0.15, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
@@ -603,7 +706,7 @@ const CinematicHeadline = ({ text, frame, fps, duration, color, size, align = "c
     }
   ) });
 };
-const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0 }) => {
+const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
   const clip = getClipReveal(frame, delay, 40);
   const words = text.split(/\s+/).filter(Boolean);
   return /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -626,7 +729,7 @@ const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center
             lineHeight: 1.08
           },
           children: words.map((word, i) => {
-            const wordDelay = delay + 6 + (words.length <= 1 ? 0 : i / (words.length - 1) * duration * 0.35);
+            const wordDelay = delay + 6 + getSyncedStagger(i, words.length, audioMarkers, 0, duration * 0.35 / Math.max(1, words.length - 1));
             const s = (0,esm.spring)({ frame: Math.max(0, frame - wordDelay), fps, config: animations_SNAPPY_SPRING });
             return /* @__PURE__ */ (0,jsx_runtime.jsx)(
               "span",
@@ -653,7 +756,7 @@ const ClipHeadline = ({ text, frame, fps, duration, color, size, align = "center
     }
   );
 };
-const CinematicBody = ({ text, frame, fps, duration, color, size, align = "center", baseDelay = 10 }) => {
+const CinematicBody = ({ text, frame, fps, duration, color, size, align = "center", baseDelay = 10, audioMarkers }) => {
   const words = text.split(/\s+/).filter(Boolean);
   const revealWindow = duration * 0.5;
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { textAlign: align, maxWidth: "88%", marginTop: size * 0.7 }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -667,7 +770,7 @@ const CinematicBody = ({ text, frame, fps, duration, color, size, align = "cente
         lineHeight: 1.45
       },
       children: words.map((word, i) => {
-        const delay = baseDelay + (words.length <= 1 ? 0 : i / (words.length - 1) * revealWindow);
+        const delay = baseDelay + getSyncedStagger(i, words.length, audioMarkers, 0, revealWindow / Math.max(1, words.length - 1));
         const reveal = getWordReveal(frame, fps, i, words.length, duration);
         return /* @__PURE__ */ (0,jsx_runtime.jsx)(
           "span",
@@ -692,11 +795,14 @@ const CinematicBody = ({ text, frame, fps, duration, color, size, align = "cente
     }
   ) });
 };
-const SceneMotion = ({ frame, duration, entranceDirection = "up", exitDirection = "down", children, bgChildren }) => {
+const SceneMotion = ({ frame, duration, entranceDirection = "up", exitDirection = "down", children, bgChildren, audioMarkers }) => {
   const entrance = getCinematicEntrance(frame, 0, 30);
-  const exit = getCinematicExit(frame, duration, exitDirection, TRANSITION_FRAMES);
+  const exitStart = getSyncedExitStart(duration, audioMarkers, TRANSITION_FRAMES);
+  const exitDuration = Math.max(10, duration - exitStart);
+  const exit = getCinematicExit(frame, duration, exitDirection, exitDuration);
   const cam = getCamera(frame, duration);
   const bg = getBgDrift(frame, duration);
+  const beatPulse = getAudioPulse(frame, audioMarkers, 14);
   const entranceOffset = 50;
   const entranceMap = {
     left: { x: -entranceOffset, y: 0 },
@@ -733,7 +839,7 @@ const SceneMotion = ({ frame, duration, entranceDirection = "up", exitDirection 
           transform: `
             translateX(${exit.x + eDir.x * (1 - entrance.opacity)}px)
             translateY(${entrance.y + exit.y + eDir.y * (1 - entrance.opacity)}px)
-            scale(${entrance.scale * exit.scale * cam.scale})
+            scale(${entrance.scale * exit.scale * cam.scale * (1 + beatPulse * 8e-3)})
           `,
           filter: `blur(${entrance.blur + exit.blur}px)`,
           willChange: "transform, opacity, filter"
@@ -775,10 +881,11 @@ const StatementScene = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: sizes.headline }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: sizes.headline, audioMarkers }) }) });
 };
 const EvidenceScene = ({
   scene,
@@ -788,11 +895,12 @@ const EvidenceScene = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const cardS = (0,esm.spring)({ frame: Math.max(0, frame - 8), fps, config: animations_DEFAULT_SPRING });
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: {
     background: "#0f0f0f",
     borderRadius: 24,
     border: "1px solid rgba(255,255,255,0.06)",
@@ -805,7 +913,7 @@ const EvidenceScene = ({
     willChange: "transform, opacity, filter"
   }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 13, fontWeight: 700, color: primaryColor, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }, children: scene.subtext || " " }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.5), align: "left" })
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.5), align: "left", audioMarkers })
   ] }) }) });
 };
 const FlowScene = ({
@@ -816,11 +924,12 @@ const FlowScene = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const steps = scene.text.split(/[→\-\>]/).map((s) => s.trim()).filter(Boolean);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, width: "100%", maxWidth: "1100px" }, children: steps.map((step, i) => {
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, width: "100%", maxWidth: "1100px" }, children: steps.map((step, i) => {
     const s = (0,esm.spring)({ frame: Math.max(0, frame - i * 10), fps, config: animations_DEFAULT_SPRING });
     const isLast = i === steps.length - 1;
     return /* @__PURE__ */ (0,jsx_runtime.jsxs)(react.Fragment, { children: [
@@ -855,7 +964,8 @@ const MetricScene = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const numMatch = scene.text.match(/([$€£]?[\d,.]+[KMBkmb]?)/);
@@ -865,7 +975,7 @@ const MetricScene = ({
   const countS = animations_getSpringProgress(frame, fps, 0, animations_SNAPPY_SPRING);
   const displayed = Math.round((0,esm.interpolate)(countS, [0, 1], [0, targetNum], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }));
   const formatted = numberStr.startsWith("$") ? `$${displayed.toLocaleString()}` : displayed.toLocaleString();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: Math.round(sizes.headline * 1.3), fontWeight: 800, lineHeight: 1, color: primaryColor, letterSpacing: "-0.04em", fontVariantNumeric: "tabular-nums" }, children: formatted }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: sizes.body, fontWeight: 500, lineHeight: 1.4, color: `${textColor}88`, marginTop: 20, letterSpacing: "-0.01em" }, children: label })
   ] }) }) });
@@ -878,7 +988,8 @@ const LockupScene = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const lineS = (0,esm.spring)({ frame: Math.max(0, frame - 20), fps, config: animations_SNAPPY_SPRING });
@@ -886,7 +997,7 @@ const LockupScene = ({
   const isUrl = scene.text.includes(".") && !scene.text.includes(" ");
   const mainText = isUrl ? scene.subtext || "Get started" : scene.text;
   const urlText = isUrl ? scene.text : scene.subtext || "";
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: Math.round(sizes.headline * 0.65), fontWeight: 800, lineHeight: 1.1, color: textColor, letterSpacing: "-0.03em", marginBottom: 24 }, children: mainText }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "0 auto 24px" } }),
     urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: sizes.body, fontWeight: 500, color: primaryColor, letterSpacing: "0.02em" }, children: urlText })
@@ -911,6 +1022,7 @@ const sceneComponentMap = {
 };
 
 ;// ./src/ui-mockups.tsx
+
 
 
 
@@ -1027,14 +1139,14 @@ const ChatBubble = ({ text, frame, fps, delay = 0, direction = "left", primaryCo
     }
   );
 };
-const ChatThread = ({ messages, frame, fps, baseDelay = 0, primaryColor = "#0ea5e9" }) => {
+const ChatThread = ({ messages, frame, fps, baseDelay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { padding: "16px 0" }, children: messages.map((m, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(
     ChatBubble,
     {
       text: m.text,
       frame,
       fps,
-      delay: baseDelay + i * 12,
+      delay: baseDelay + getSyncedStagger(i, messages.length, audioMarkers, 0, 12),
       direction: m.direction,
       primaryColor
     },
@@ -1070,8 +1182,8 @@ const EmailPreview = ({ sender, subject, snippet, frame, fps, delay = 0, unread 
     }
   );
 };
-const NotificationCard = ({ title, body, frame, fps, delay = 0, icon = "\u{1F4DE}" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const NotificationCard = ({ title, body, frame, fps, delay = 0, icon = "\u{1F4DE}", audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
     "div",
     {
@@ -1123,8 +1235,8 @@ const VoiceWaveform = ({ frame, fps, active = true, color = "#0ea5e9", delay = 0
     );
   }) });
 };
-const DashboardCard = ({ label, value, trend, trendLabel, frame, fps, delay = 0 }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const DashboardCard = ({ label, value, trend, trendLabel, frame, fps, delay = 0, audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   const isUp = (trend || 0) >= 0;
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
     "div",
@@ -1155,8 +1267,8 @@ const DashboardCard = ({ label, value, trend, trendLabel, frame, fps, delay = 0 
     }
   );
 };
-const StatCard = ({ value, label, prefix = "", suffix = "", frame, fps, delay = 0 }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+const StatCard = ({ value, label, prefix = "", suffix = "", frame, fps, delay = 0, audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_SNAPPY_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center", opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [20, 0])}px)`, willChange: "transform, opacity" }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: "72px", fontWeight: 800, color: "#111", letterSpacing: "-0.03em", lineHeight: 1 }, children: [
       prefix,
@@ -1166,8 +1278,8 @@ const StatCard = ({ value, label, prefix = "", suffix = "", frame, fps, delay = 
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: "18px", fontWeight: 500, color: "#888", marginTop: 8 }, children: label })
   ] });
 };
-const TestimonialCard = ({ quote, name, role, avatar, rating, frame, fps, delay = 0 }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const TestimonialCard = ({ quote, name, role, avatar, rating, frame, fps, delay = 0, audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
     "div",
     {
@@ -1196,8 +1308,8 @@ const TestimonialCard = ({ quote, name, role, avatar, rating, frame, fps, delay 
     }
   );
 };
-const PricingCard = ({ plan, price, period = "/mo", features, highlighted = false, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const PricingCard = ({ plan, price, period = "/mo", features, highlighted = false, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
     "div",
     {
@@ -1228,8 +1340,8 @@ const PricingCard = ({ plan, price, period = "/mo", features, highlighted = fals
     }
   );
 };
-const FeatureCard = ({ icon, title, description, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const FeatureCard = ({ icon, title, description, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
     "div",
     {
@@ -1250,8 +1362,8 @@ const FeatureCard = ({ icon, title, description, frame, fps, delay = 0, primaryC
     }
   );
 };
-const ComparisonCard = ({ beforeLabel, beforeText, afterLabel, afterText, frame, fps, delay = 0 }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const ComparisonCard = ({ beforeLabel, beforeText, afterLabel, afterText, frame, fps, delay = 0, audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", gap: 16, maxWidth: 700, opacity: (0,esm.interpolate)(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${(0,esm.interpolate)(s, [0, 1], [30, 0])}px)`, willChange: "transform, opacity" }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, background: "#fef2f2", borderRadius: 16, padding: "28px 24px", border: "1px solid #fecaca" }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 11, fontWeight: 700, color: "#ef4444", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }, children: beforeLabel }),
@@ -1263,8 +1375,8 @@ const ComparisonCard = ({ beforeLabel, beforeText, afterLabel, afterText, frame,
     ] })
   ] });
 };
-const CalendarBlock = ({ time, title, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const CalendarBlock = ({ time, title, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
     "div",
     {
@@ -1286,8 +1398,8 @@ const CalendarBlock = ({ time, title, frame, fps, delay = 0, primaryColor = "#0e
     }
   );
 };
-const CalendarMonth = ({ month, highlightedDays = [], frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const CalendarMonth = ({ month, highlightedDays = [], frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
     "div",
@@ -1362,10 +1474,10 @@ const InvoiceRow = ({ service, amount, status, frame, fps, delay = 0 }) => {
     }
   );
 };
-const BarChart = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+const BarChart = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
   const max = Math.max(...data.map((d) => d.value));
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", alignItems: "flex-end", gap: 16, height: 160, padding: "0 8px" }, children: data.map((d, i) => {
-    const s = animations_getSpringProgress(frame, fps, delay + i * 4, animations_DEFAULT_SPRING);
+    const s = animations_getSpringProgress(frame, fps, getSyncedStagger(i, data.length, audioMarkers, delay, 4), animations_DEFAULT_SPRING);
     const h = d.value / max * 120;
     return /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -1387,8 +1499,8 @@ const BarChart = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => 
     ] }, i);
   }) });
 };
-const LineChart = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const LineChart = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   const width = 300;
   const height = 100;
   const max = Math.max(...data);
@@ -1455,8 +1567,8 @@ const PieChart = ({ segments, frame, fps, delay = 0 }) => {
     ] }, i)) })
   ] });
 };
-const ProgressRing = ({ percent, label, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+const ProgressRing = ({ percent, label, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_SNAPPY_SPRING);
   const currentPercent = (0,esm.interpolate)(s, [0, 1], [0, percent], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
@@ -1497,8 +1609,8 @@ const Sparkline = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) =>
   const points = data.map((v, i) => `${i / (data.length - 1) * width},${height - (v - min) / range * height}`).join(" ");
   return /* @__PURE__ */ jsx("svg", { width, height, style: { opacity: interpolate(s, [0, 0.5, 1], [0, 1, 1], { extrapolateLeft: "clamp" }) }, children: /* @__PURE__ */ jsx("path", { d: `M${points}`, fill: "none", stroke: primaryColor, strokeWidth: 2, strokeLinecap: "round" }) });
 };
-const TypewriterInput = ({ text, placeholder = "Type something...", frame, fps, delay = 0, speed = 0.3 }) => {
-  const adjustedFrame = Math.max(0, frame - delay);
+const TypewriterInput = ({ text, placeholder = "Type something...", frame, fps, delay = 0, speed = 0.3, audioMarkers }) => {
+  const adjustedFrame = Math.max(0, frame - getSyncedDelay(0, audioMarkers, delay));
   const charsToShow = Math.floor(adjustedFrame * speed);
   const visibleText = text.slice(0, charsToShow);
   const cursorOn = Math.floor(frame / 15) % 2 === 0;
@@ -1621,10 +1733,10 @@ const Slider = ({ value, min = 0, max = 100, label, frame, fps, delay = 0, prima
     ] })
   ] });
 };
-const Stepper = ({ steps, activeStep, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+const Stepper = ({ steps, activeStep, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
   return /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", alignItems: "center", gap: 0 }, children: steps.map((step, i) => {
     const isActive = i <= activeStep;
-    const s = animations_getSpringProgress(frame, fps, delay + i * 8, animations_DEFAULT_SPRING);
+    const s = animations_getSpringProgress(frame, fps, getSyncedStagger(i, steps.length, audioMarkers, delay, 8), animations_DEFAULT_SPRING);
     return /* @__PURE__ */ (0,jsx_runtime.jsxs)(react.Fragment, { children: [
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)(
@@ -1765,8 +1877,8 @@ const RatingStars = ({ rating, frame, fps, delay = 0 }) => {
     );
   }) });
 };
-const SocialProofRow = ({ avatars, count, label, frame, fps, delay = 0 }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_DEFAULT_SPRING);
+const SocialProofRow = ({ avatars, count, label, frame, fps, delay = 0, audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_DEFAULT_SPRING);
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(
     "div",
     {
@@ -1779,7 +1891,7 @@ const SocialProofRow = ({ avatars, count, label, frame, fps, delay = 0 }) => {
         willChange: "transform, opacity"
       },
       children: [
-        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex" }, children: avatars.slice(0, 4).map((a, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginLeft: i > 0 ? -10 : 0, zIndex: 4 - i }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Avatar, { name: a, size: 32, frame, fps, delay: delay + i * 4 }) }, i)) }),
+        /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex" }, children: avatars.slice(0, 4).map((a, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginLeft: i > 0 ? -10 : 0, zIndex: 4 - i }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Avatar, { name: a, size: 32, frame, fps, delay: getSyncedStagger(i, avatars.slice(0, 4).length, audioMarkers, delay, 4) }) }, i)) }),
         /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { children: [
           /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 14, fontWeight: 700, color: "#111" }, children: count }),
           /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: ui_mockups_FONT, fontSize: 12, color: "#888" }, children: label })
@@ -1788,8 +1900,8 @@ const SocialProofRow = ({ avatars, count, label, frame, fps, delay = 0 }) => {
     }
   );
 };
-const StatusPill = ({ label, frame, fps, delay = 0, variant = "success", primaryColor = "#0ea5e9" }) => {
-  const s = animations_getSpringProgress(frame, fps, delay, animations_SNAPPY_SPRING);
+const StatusPill = ({ label, frame, fps, delay = 0, variant = "success", primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = animations_getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), animations_SNAPPY_SPRING);
   const colors = {
     success: { bg: "#dcfce7", text: "#166534", dot: "#22c55e" },
     neutral: { bg: "#f3f4f6", text: "#374151", dot: "#9ca3af" },
@@ -1852,10 +1964,11 @@ const HeroStatementTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ClipHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: sizes.headline }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ClipHeadline, { text: scene.text, frame, fps, duration, color: textColor, size: sizes.headline, audioMarkers }) }) });
 };
 const PhoneDemoTemplate = ({
   scene,
@@ -1865,13 +1978,14 @@ const PhoneDemoTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const textLower = scene.text.toLowerCase();
   const floatY = getFloat(frame, fps, 5, 0.35);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { transform: `translateY(${floatY}px)` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(PhoneFrame, { frame, fps, primaryColor, children: [
-    (textLower.includes("call") || textLower.includes("alert") || textLower.includes("notify")) && /* @__PURE__ */ (0,jsx_runtime.jsx)(NotificationCard, { title: "Incoming Call", body: scene.subtext || scene.text, frame, fps, delay: 10, icon: "\u{1F4DE}" }),
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { transform: `translateY(${floatY}px)` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(PhoneFrame, { frame, fps, primaryColor, children: [
+    (textLower.includes("call") || textLower.includes("alert") || textLower.includes("notify")) && /* @__PURE__ */ (0,jsx_runtime.jsx)(NotificationCard, { title: "Incoming Call", body: scene.subtext || scene.text, frame, fps, delay: 10, icon: "\u{1F4DE}", audioMarkers }),
     (textLower.includes("chat") || textLower.includes("ai") || textLower.includes("talk")) && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 60, padding: "0 4px" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
       ChatThread,
       {
@@ -1879,14 +1993,15 @@ const PhoneDemoTemplate = ({
         frame,
         fps,
         baseDelay: 15,
-        primaryColor
+        primaryColor,
+        audioMarkers
       }
     ) }),
-    (textLower.includes("book") || textLower.includes("calendar") || textLower.includes("schedule")) && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 40, padding: "0 4px" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarBlock, { time: "Today, 2:00 PM", title: scene.text, frame, fps, delay: 15, primaryColor }) }),
+    (textLower.includes("book") || textLower.includes("calendar") || textLower.includes("schedule")) && /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { marginTop: 40, padding: "0 4px" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarBlock, { time: "Today, 2:00 PM", title: scene.text, frame, fps, delay: 15, primaryColor, audioMarkers }) }),
     /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { position: "absolute", bottom: 20, left: 14, right: 14, display: "flex", gap: 8, flexWrap: "wrap" }, children: [
-      textLower.includes("answer") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Answered", frame, fps, delay: 40, variant: "success" }),
-      textLower.includes("qualif") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Qualified", frame, fps, delay: 50, variant: "accent", primaryColor }),
-      textLower.includes("book") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Booked", frame, fps, delay: 60, variant: "success" })
+      textLower.includes("answer") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Answered", frame, fps, delay: 40, variant: "success", audioMarkers }),
+      textLower.includes("qualif") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Qualified", frame, fps, delay: 50, variant: "accent", primaryColor, audioMarkers }),
+      textLower.includes("book") && /* @__PURE__ */ (0,jsx_runtime.jsx)(StatusPill, { label: "Booked", frame, fps, delay: 60, variant: "success", audioMarkers })
     ] })
   ] }) }) }) });
 };
@@ -1898,24 +2013,25 @@ const BrowserDashboardTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(BrowserFrame, { frame, fps, url: scene.subtext || "dashboard", children: [
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)(BrowserFrame, { frame, fps, url: scene.subtext || "dashboard", children: [
     /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, marginBottom: 20 }, children: [
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Calls Answered", value: "2,847", trend: 24, trendLabel: "vs last month", frame, fps, delay: 10 }),
-      /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Jobs Booked", value: "186", trend: 18, trendLabel: "vs last month", frame, fps, delay: 18 }),
-      !isVertical && /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Revenue", value: "$47K", trend: 32, trendLabel: "vs last month", frame, fps, delay: 26 })
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Calls Answered", value: "2,847", trend: 24, trendLabel: "vs last month", frame, fps, delay: 10, audioMarkers }),
+      /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Jobs Booked", value: "186", trend: 18, trendLabel: "vs last month", frame, fps, delay: 18, audioMarkers }),
+      !isVertical && /* @__PURE__ */ (0,jsx_runtime.jsx)(DashboardCard, { label: "Revenue", value: "$47K", trend: 32, trendLabel: "vs last month", frame, fps, delay: 26, audioMarkers })
     ] }),
     /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16 }, children: [
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, background: "#111", borderRadius: 12, padding: 20, border: "1px solid rgba(255,255,255,0.05)" }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "#666", marginBottom: 12 }, children: "Call Volume" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(BarChart, { data: [{ label: "M", value: 45 }, { label: "T", value: 62 }, { label: "W", value: 38 }, { label: "T", value: 71 }, { label: "F", value: 55 }], frame, fps, delay: 30, primaryColor })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(BarChart, { data: [{ label: "M", value: 45 }, { label: "T", value: 62 }, { label: "W", value: 38 }, { label: "T", value: 71 }, { label: "F", value: 55 }], frame, fps, delay: 30, primaryColor, audioMarkers })
       ] }),
       /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { flex: 1, background: "#111", borderRadius: 12, padding: 20, border: "1px solid rgba(255,255,255,0.05)" }, children: [
         /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "#666", marginBottom: 12 }, children: "Revenue Trend" }),
-        /* @__PURE__ */ (0,jsx_runtime.jsx)(LineChart, { data: [30, 45, 35, 60, 55, 80, 75], frame, fps, delay: 35, primaryColor })
+        /* @__PURE__ */ (0,jsx_runtime.jsx)(LineChart, { data: [30, 45, 35, 60, 55, 80, 75], frame, fps, delay: 35, primaryColor, audioMarkers })
       ] })
     ] })
   ] }) }) });
@@ -1928,7 +2044,8 @@ const StatsGridTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const stats = scene.text.split(",").map((s) => s.trim()).filter(Boolean);
@@ -1936,7 +2053,7 @@ const StatsGridTemplate = ({
     const match = s.match(/([$€£]?[\d,.]+[KMBkmb]?)(?:\s+)?(.+)?/);
     return { value: (match == null ? void 0 : match[1]) || s, label: (match == null ? void 0 : match[2]) || "" };
   });
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: sizes.isVertical ? "column" : "row", gap: sizes.isVertical ? 40 : 60, alignItems: "center" }, children: parsed.map((stat, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(StatCard, { value: stat.value, label: stat.label, frame, fps, delay: i * 12 }, i)) }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "flex", flexDirection: sizes.isVertical ? "column" : "row", gap: sizes.isVertical ? 40 : 60, alignItems: "center" }, children: parsed.map((stat, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(StatCard, { value: stat.value, label: stat.label, frame, fps, delay: i * 12, audioMarkers }, i)) }) }) });
 };
 const TestimonialQuoteTemplate = ({
   scene,
@@ -1945,11 +2062,12 @@ const TestimonialQuoteTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   var _a, _b, _c, _d;
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
     TestimonialCard,
     {
       quote: scene.text,
@@ -1958,7 +2076,8 @@ const TestimonialQuoteTemplate = ({
       rating: 5,
       frame,
       fps,
-      delay: 10
+      delay: 10,
+      audioMarkers
     }
   ) }) });
 };
@@ -1970,11 +2089,12 @@ const BeforeAfterTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const parts = scene.text.split(/vs|versus|→|->/).map((s) => s.trim());
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
     ComparisonCard,
     {
       beforeLabel: "Before",
@@ -1983,7 +2103,8 @@ const BeforeAfterTemplate = ({
       afterText: parts[1] || "After",
       frame,
       fps,
-      delay: 10
+      delay: 10,
+      audioMarkers
     }
   ) }) });
 };
@@ -1995,11 +2116,12 @@ const WorkflowStepsTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const steps = scene.text.split(/[→\-\>]/).map((s) => s.trim()).filter(Boolean);
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Stepper, { steps: steps.slice(0, 4), activeStep: steps.length - 1, frame, fps, delay: 10, primaryColor }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(Stepper, { steps: steps.slice(0, 4), activeStep: steps.length - 1, frame, fps, delay: 10, primaryColor, audioMarkers }) }) });
 };
 const PricingTiersTemplate = ({
   scene,
@@ -2009,14 +2131,15 @@ const PricingTiersTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, alignItems: "center" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Starter", price: "$29", period: "/mo", features: ["100 calls/mo", "Basic AI", "Email summaries"], frame, fps, delay: 10, primaryColor }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Pro", price: "$99", period: "/mo", features: ["Unlimited calls", "Custom AI voice", "Calendar sync", "Priority routing"], highlighted: true, frame, fps, delay: 18, primaryColor }),
-    !isVertical && /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Enterprise", price: "Custom", period: "", features: ["Dedicated agent", "API access", "White-label", "SLA"], frame, fps, delay: 26, primaryColor })
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, alignItems: "center" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Starter", price: "$29", period: "/mo", features: ["100 calls/mo", "Basic AI", "Email summaries"], frame, fps, delay: 10, primaryColor, audioMarkers }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Pro", price: "$99", period: "/mo", features: ["Unlimited calls", "Custom AI voice", "Calendar sync", "Priority routing"], highlighted: true, frame, fps, delay: 18, primaryColor, audioMarkers }),
+    !isVertical && /* @__PURE__ */ (0,jsx_runtime.jsx)(PricingCard, { plan: "Enterprise", price: "Custom", period: "", features: ["Dedicated agent", "API access", "White-label", "SLA"], frame, fps, delay: 26, primaryColor, audioMarkers })
   ] }) }) });
 };
 const FeatureHighlightTemplate = ({
@@ -2027,7 +2150,8 @@ const FeatureHighlightTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const features = [
@@ -2036,7 +2160,7 @@ const FeatureHighlightTemplate = ({
     { icon: "\u{1F4C5}", title: "Auto Booking", description: "Calendar integration" },
     { icon: "\u{1F4B0}", title: "Revenue Track", description: "Real-time metrics" }
   ];
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "grid", gridTemplateColumns: sizes.isVertical ? "1fr" : "1fr 1fr", gap: 16, maxWidth: 500 }, children: features.map((f, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(FeatureCard, { icon: f.icon, title: f.title, description: f.description, frame, fps, delay: 10 + i * 8, primaryColor }, i)) }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { display: "grid", gridTemplateColumns: sizes.isVertical ? "1fr" : "1fr 1fr", gap: 16, maxWidth: 500 }, children: features.map((f, i) => /* @__PURE__ */ (0,jsx_runtime.jsx)(FeatureCard, { icon: f.icon, title: f.title, description: f.description, frame, fps, delay: 10 + i * 8, primaryColor, audioMarkers }, i)) }) }) });
 };
 const TypewriterCommandTemplate = ({
   scene,
@@ -2046,10 +2170,11 @@ const TypewriterCommandTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(TypewriterInput, { text: scene.text, frame, fps, delay: 10, speed: 0.4 }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(TypewriterInput, { text: scene.text, frame, fps, delay: 10, speed: 0.4, audioMarkers }) }) });
 };
 const SocialProofBannerTemplate = ({
   scene,
@@ -2058,10 +2183,11 @@ const SocialProofBannerTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(
     SocialProofRow,
     {
       avatars: ["A", "B", "C", "D"],
@@ -2069,7 +2195,8 @@ const SocialProofBannerTemplate = ({
       label: scene.subtext || "businesses trust us",
       frame,
       fps,
-      delay: 10
+      delay: 10,
+      audioMarkers
     }
   ) }) });
 };
@@ -2081,13 +2208,14 @@ const CalendarBookingTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 20, alignItems: "center" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarMonth, { month: "March 2025", highlightedDays: [15, 16, 17, 18, 22], frame, fps, delay: 10, primaryColor }),
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarBlock, { time: "Mar 15, 2:00 PM", title: scene.text, frame, fps, delay: 25, primaryColor })
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { display: "flex", flexDirection: isVertical ? "column" : "row", gap: 20, alignItems: "center" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarMonth, { month: "March 2025", highlightedDays: [15, 16, 17, 18, 22], frame, fps, delay: 10, primaryColor, audioMarkers }),
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(CalendarBlock, { time: "Mar 15, 2:00 PM", title: scene.text, frame, fps, delay: 25, primaryColor, audioMarkers })
   ] }) }) });
 };
 const RevenueCounterTemplate = ({
@@ -2098,10 +2226,11 @@ const RevenueCounterTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ProgressRing, { percent: 85, label: scene.text, frame, fps, delay: 10, primaryColor }) }) });
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center" }, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(ProgressRing, { percent: 85, label: scene.text, frame, fps, delay: 10, primaryColor, audioMarkers }) }) });
 };
 const BrandLockupTemplate = ({
   scene,
@@ -2111,7 +2240,8 @@ const BrandLockupTemplate = ({
   fps,
   duration,
   entranceDirection,
-  exitDirection
+  exitDirection,
+  audioMarkers
 }) => {
   const sizes = useSceneSizes();
   const lineS = (0,esm.spring)({ frame: Math.max(0, frame - 20), fps, config: animations_SNAPPY_SPRING });
@@ -2119,10 +2249,10 @@ const BrandLockupTemplate = ({
   const isUrl = scene.text.includes(".") && !scene.text.includes(" ");
   const mainText = isUrl ? scene.subtext || "Get started" : scene.text;
   const urlText = isUrl ? scene.text : scene.subtext || "";
-  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
-    /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicHeadline, { text: mainText, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.6), delay: 0 }),
+  return /* @__PURE__ */ (0,jsx_runtime.jsx)(SceneMotion, { frame, duration, entranceDirection, exitDirection, audioMarkers, children: /* @__PURE__ */ (0,jsx_runtime.jsx)(esm.AbsoluteFill, { style: { justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }, children: /* @__PURE__ */ (0,jsx_runtime.jsxs)("div", { style: { textAlign: "center" }, children: [
+    /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicHeadline, { text: mainText, frame, fps, duration, color: textColor, size: Math.round(sizes.headline * 0.6), delay: 0, audioMarkers }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)("div", { style: { height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "28px auto" } }),
-    urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicBody, { text: urlText, frame, fps, duration, color: primaryColor, size: sizes.body, baseDelay: 14 })
+    urlText && /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicBody, { text: urlText, frame, fps, duration, color: primaryColor, size: sizes.body, baseDelay: 14, audioMarkers })
   ] }) }) });
 };
 const templateComponentMap = {
@@ -2177,6 +2307,7 @@ const sceneSchema = lib.z.object({
   template: lib.z.string().optional().default(""),
   audioUrl: lib.z.string(),
   durationInFrames: lib.z.number().min(1),
+  audioMarkers: lib.z.array(lib.z.number()).optional().default([]),
   imageUrl: lib.z.string().optional().default("")
 });
 const explainerVideoSchema = lib.z.object({
@@ -2200,6 +2331,7 @@ const defaultProps = {
       visualDirection: "Bold statement text",
       audioUrl: "",
       durationInFrames: 120,
+      audioMarkers: [],
       imageUrl: ""
     },
     {
@@ -2210,6 +2342,7 @@ const defaultProps = {
       visualDirection: "Clean product card",
       audioUrl: "",
       durationInFrames: 150,
+      audioMarkers: [],
       imageUrl: ""
     },
     {
@@ -2220,6 +2353,7 @@ const defaultProps = {
       visualDirection: "Step flow cards",
       audioUrl: "",
       durationInFrames: 180,
+      audioMarkers: [],
       imageUrl: ""
     }
   ],
@@ -2285,7 +2419,8 @@ const ExplainerVideo = ({
           fps,
           duration,
           entranceDirection: entranceDir,
-          exitDirection: exitDir
+          exitDirection: exitDir,
+          audioMarkers: scene.audioMarkers
         }
       ) }) }, `scene-${i}`);
     }),
@@ -57020,7 +57155,7 @@ var z = /*#__PURE__*/Object.freeze({
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	__webpack_require__(96507);
-/******/ 	__webpack_require__(51562);
+/******/ 	__webpack_require__(84525);
 /******/ 	__webpack_require__(63610);
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __webpack_require__(66456);

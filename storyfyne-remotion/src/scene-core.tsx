@@ -10,6 +10,7 @@ import {
   getClipReveal, getCharReveal, getWordReveal,
   TRANSITION_FRAMES, SNAPPY_SPRING, DEFAULT_SPRING,
 } from "./animations";
+import { getSyncedStagger, getSyncedExitStart, getAudioPulse } from "./audio-sync";
 
 export const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
@@ -45,7 +46,8 @@ export const CinematicHeadline: React.FC<{
   align?: "center" | "left";
   weight?: number;
   delay?: number;
-}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0 }) => {
+  audioMarkers?: number[];
+}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
   const chars = text.split("");
   const revealWindow = duration * 0.45;
 
@@ -61,7 +63,8 @@ export const CinematicHeadline: React.FC<{
       >
         {chars.map((char, i) => {
           const isSpace = char === " ";
-          const charDelay = delay + (chars.length <= 1 ? 0 : (i / (chars.length - 1)) * revealWindow);
+          // Audio-driven: characters reveal at phrase markers instead of uniform distribution
+          const charDelay = delay + getSyncedStagger(i, chars.length, audioMarkers, 0, revealWindow / Math.max(1, chars.length - 1));
           const s = spring({ frame: Math.max(0, frame - charDelay), fps, config: SNAPPY_SPRING });
           const reveal = {
             opacity: interpolate(s, [0, 0.15, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
@@ -109,7 +112,8 @@ export const ClipHeadline: React.FC<{
   align?: "center" | "left";
   weight?: number;
   delay?: number;
-}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0 }) => {
+  audioMarkers?: number[];
+}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
   const clip = getClipReveal(frame, delay, 40);
   const words = text.split(/\s+/).filter(Boolean);
 
@@ -132,7 +136,8 @@ export const ClipHeadline: React.FC<{
         }}
       >
         {words.map((word, i) => {
-          const wordDelay = delay + 6 + (words.length <= 1 ? 0 : (i / (words.length - 1)) * duration * 0.35);
+          // Audio-driven: words pop at phrase markers
+          const wordDelay = delay + 6 + getSyncedStagger(i, words.length, audioMarkers, 0, duration * 0.35 / Math.max(1, words.length - 1));
           const s = spring({ frame: Math.max(0, frame - wordDelay), fps, config: SNAPPY_SPRING });
           return (
             <span
@@ -170,7 +175,8 @@ export const CinematicBody: React.FC<{
   size: number;
   align?: "center" | "left";
   baseDelay?: number;
-}> = ({ text, frame, fps, duration, color, size, align = "center", baseDelay = 10 }) => {
+  audioMarkers?: number[];
+}> = ({ text, frame, fps, duration, color, size, align = "center", baseDelay = 10, audioMarkers }) => {
   const words = text.split(/\s+/).filter(Boolean);
   const revealWindow = duration * 0.5;
 
@@ -186,7 +192,8 @@ export const CinematicBody: React.FC<{
         }}
       >
         {words.map((word, i) => {
-          const delay = baseDelay + (words.length <= 1 ? 0 : (i / (words.length - 1)) * revealWindow);
+          // Audio-driven: body text reveals at phrase markers
+          const delay = baseDelay + getSyncedStagger(i, words.length, audioMarkers, 0, revealWindow / Math.max(1, words.length - 1));
           const reveal = getWordReveal(frame, fps, i, words.length, duration);
           return (
             <span
@@ -225,11 +232,17 @@ export const SceneMotion: React.FC<{
   exitDirection?: "left" | "right" | "up" | "down";
   children: React.ReactNode;
   bgChildren?: React.ReactNode;
-}> = ({ frame, duration, entranceDirection = "up", exitDirection = "down", children, bgChildren }) => {
+  audioMarkers?: number[];
+}> = ({ frame, duration, entranceDirection = "up", exitDirection = "down", children, bgChildren, audioMarkers }) => {
   const entrance = getCinematicEntrance(frame, 0, 30);
-  const exit = getCinematicExit(frame, duration, exitDirection, TRANSITION_FRAMES);
+  // Audio-driven: exit starts at last phrase marker instead of fixed offset
+  const exitStart = getSyncedExitStart(duration, audioMarkers, TRANSITION_FRAMES);
+  const exitDuration = Math.max(10, duration - exitStart);
+  const exit = getCinematicExit(frame, duration, exitDirection, exitDuration);
   const cam = getCamera(frame, duration);
   const bg = getBgDrift(frame, duration);
+  // Subtle ambient pulse on beats
+  const beatPulse = getAudioPulse(frame, audioMarkers, 14);
 
   const entranceOffset = 50;
   const entranceMap = {
@@ -272,7 +285,7 @@ export const SceneMotion: React.FC<{
           transform: `
             translateX(${exit.x + eDir.x * (1 - entrance.opacity)}px)
             translateY(${entrance.y + exit.y + eDir.y * (1 - entrance.opacity)}px)
-            scale(${entrance.scale * exit.scale * cam.scale})
+            scale(${entrance.scale * exit.scale * cam.scale * (1 + beatPulse * 0.008)})
           `,
           filter: `blur(${entrance.blur + exit.blur}px)`,
           willChange: "transform, opacity, filter",

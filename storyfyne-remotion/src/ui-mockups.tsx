@@ -5,6 +5,7 @@
 import React from "react";
 import { interpolate, spring } from "remotion";
 import { getSpringProgress, DEFAULT_SPRING, SNAPPY_SPRING, clamp } from "./animations";
+import { getSyncedDelay, getSyncedStagger } from "./audio-sync";
 
 const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const MONO = '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", monospace';
@@ -163,7 +164,8 @@ export const ChatThread: React.FC<{
   fps: number;
   baseDelay?: number;
   primaryColor?: string;
-}> = ({ messages, frame, fps, baseDelay = 0, primaryColor = "#0ea5e9" }) => {
+  audioMarkers?: number[];
+}> = ({ messages, frame, fps, baseDelay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
   return (
     <div style={{ padding: "16px 0" }}>
       {messages.map((m, i) => (
@@ -172,7 +174,7 @@ export const ChatThread: React.FC<{
           text={m.text}
           frame={frame}
           fps={fps}
-          delay={baseDelay + i * 12}
+          delay={baseDelay + getSyncedStagger(i, messages.length, audioMarkers, 0, 12)}
           direction={m.direction}
           primaryColor={primaryColor}
         />
@@ -224,8 +226,9 @@ export const NotificationCard: React.FC<{
   fps: number;
   delay?: number;
   icon?: string;
-}> = ({ title, body, frame, fps, delay = 0, icon = "📞" }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ title, body, frame, fps, delay = 0, icon = "📞", audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   return (
     <div
       style={{
@@ -300,8 +303,9 @@ export const DashboardCard: React.FC<{
   frame: number;
   fps: number;
   delay?: number;
-}> = ({ label, value, trend, trendLabel, frame, fps, delay = 0 }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ label, value, trend, trendLabel, frame, fps, delay = 0, audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   const isUp = (trend || 0) >= 0;
   return (
     <div
@@ -336,8 +340,9 @@ export const StatCard: React.FC<{
   frame: number;
   fps: number;
   delay?: number;
-}> = ({ value, label, prefix = "", suffix = "", frame, fps, delay = 0 }) => {
-  const s = getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  audioMarkers?: number[];
+}> = ({ value, label, prefix = "", suffix = "", frame, fps, delay = 0, audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), SNAPPY_SPRING);
   return (
     <div style={{ textAlign: "center", opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${interpolate(s, [0, 1], [20, 0])}px)`, willChange: "transform, opacity" }}>
       <div style={{ fontFamily: FONT, fontSize: "72px", fontWeight: 800, color: "#111", letterSpacing: "-0.03em", lineHeight: 1 }}>
@@ -357,8 +362,9 @@ export const TestimonialCard: React.FC<{
   frame: number;
   fps: number;
   delay?: number;
-}> = ({ quote, name, role, avatar, rating, frame, fps, delay = 0 }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ quote, name, role, avatar, rating, frame, fps, delay = 0, audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   return (
     <div
       style={{
@@ -404,8 +410,9 @@ export const PricingCard: React.FC<{
   fps: number;
   delay?: number;
   primaryColor?: string;
-}> = ({ plan, price, period = "/mo", features, highlighted = false, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ plan, price, period = "/mo", features, highlighted = false, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   return (
     <div
       style={{
@@ -442,8 +449,9 @@ export const FeatureCard: React.FC<{
   fps: number;
   delay?: number;
   primaryColor?: string;
-}> = ({ icon, title, description, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ icon, title, description, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   return (
     <div
       style={{
@@ -471,8 +479,9 @@ export const ComparisonCard: React.FC<{
   frame: number;
   fps: number;
   delay?: number;
-}> = ({ beforeLabel, beforeText, afterLabel, afterText, frame, fps, delay = 0 }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ beforeLabel, beforeText, afterLabel, afterText, frame, fps, delay = 0, audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   return (
     <div style={{ display: "flex", gap: 16, maxWidth: 700, opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }), transform: `translateY(${interpolate(s, [0, 1], [30, 0])}px)`, willChange: "transform, opacity" }}>
       <div style={{ flex: 1, background: "#fef2f2", borderRadius: 16, padding: "28px 24px", border: "1px solid #fecaca" }}>
@@ -494,8 +503,9 @@ export const CalendarBlock: React.FC<{
   fps: number;
   delay?: number;
   primaryColor?: string;
-}> = ({ time, title, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ time, title, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   return (
     <div
       style={{
@@ -523,8 +533,9 @@ export const CalendarMonth: React.FC<{
   fps: number;
   delay?: number;
   primaryColor?: string;
-}> = ({ month, highlightedDays = [], frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ month, highlightedDays = [], frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   return (
     <div
@@ -618,12 +629,13 @@ export const BarChart: React.FC<{
   fps: number;
   delay?: number;
   primaryColor?: string;
-}> = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  audioMarkers?: number[];
+}> = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
   const max = Math.max(...data.map((d) => d.value));
   return (
     <div style={{ display: "flex", alignItems: "flex-end", gap: 16, height: 160, padding: "0 8px" }}>
       {data.map((d, i) => {
-        const s = getSpringProgress(frame, fps, delay + i * 4, DEFAULT_SPRING);
+        const s = getSpringProgress(frame, fps, getSyncedStagger(i, data.length, audioMarkers, delay, 4), DEFAULT_SPRING);
         const h = (d.value / max) * 120;
         return (
           <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -653,8 +665,9 @@ export const LineChart: React.FC<{
   fps: number;
   delay?: number;
   primaryColor?: string;
-}> = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ data, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   const width = 300;
   const height = 100;
   const max = Math.max(...data);
@@ -737,8 +750,9 @@ export const ProgressRing: React.FC<{
   fps: number;
   delay?: number;
   primaryColor?: string;
-}> = ({ percent, label, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
-  const s = getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  audioMarkers?: number[];
+}> = ({ percent, label, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), SNAPPY_SPRING);
   const currentPercent = interpolate(s, [0, 1], [0, percent], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
@@ -790,8 +804,9 @@ export const TypewriterInput: React.FC<{
   fps: number;
   delay?: number;
   speed?: number;
-}> = ({ text, placeholder = "Type something...", frame, fps, delay = 0, speed = 0.3 }) => {
-  const adjustedFrame = Math.max(0, frame - delay);
+  audioMarkers?: number[];
+}> = ({ text, placeholder = "Type something...", frame, fps, delay = 0, speed = 0.3, audioMarkers }) => {
+  const adjustedFrame = Math.max(0, frame - getSyncedDelay(0, audioMarkers, delay));
   const charsToShow = Math.floor(adjustedFrame * speed);
   const visibleText = text.slice(0, charsToShow);
   const cursorOn = Math.floor(frame / 15) % 2 === 0;
@@ -956,12 +971,13 @@ export const Stepper: React.FC<{
   fps: number;
   delay?: number;
   primaryColor?: string;
-}> = ({ steps, activeStep, frame, fps, delay = 0, primaryColor = "#0ea5e9" }) => {
+  audioMarkers?: number[];
+}> = ({ steps, activeStep, frame, fps, delay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
       {steps.map((step, i) => {
         const isActive = i <= activeStep;
-        const s = getSpringProgress(frame, fps, delay + i * 8, DEFAULT_SPRING);
+        const s = getSpringProgress(frame, fps, getSyncedStagger(i, steps.length, audioMarkers, delay, 8), DEFAULT_SPRING);
         return (
           <React.Fragment key={i}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
@@ -1172,8 +1188,9 @@ export const SocialProofRow: React.FC<{
   frame: number;
   fps: number;
   delay?: number;
-}> = ({ avatars, count, label, frame, fps, delay = 0 }) => {
-  const s = getSpringProgress(frame, fps, delay, DEFAULT_SPRING);
+  audioMarkers?: number[];
+}> = ({ avatars, count, label, frame, fps, delay = 0, audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), DEFAULT_SPRING);
   return (
     <div
       style={{
@@ -1188,7 +1205,7 @@ export const SocialProofRow: React.FC<{
       <div style={{ display: "flex" }}>
         {avatars.slice(0, 4).map((a, i) => (
           <div key={i} style={{ marginLeft: i > 0 ? -10 : 0, zIndex: 4 - i }}>
-            <Avatar name={a} size={32} frame={frame} fps={fps} delay={delay + i * 4} />
+            <Avatar name={a} size={32} frame={frame} fps={fps} delay={getSyncedStagger(i, avatars.slice(0, 4).length, audioMarkers, delay, 4)} />
           </div>
         ))}
       </div>
@@ -1207,8 +1224,9 @@ export const StatusPill: React.FC<{
   delay?: number;
   variant?: "success" | "neutral" | "accent";
   primaryColor?: string;
-}> = ({ label, frame, fps, delay = 0, variant = "success", primaryColor = "#0ea5e9" }) => {
-  const s = getSpringProgress(frame, fps, delay, SNAPPY_SPRING);
+  audioMarkers?: number[];
+}> = ({ label, frame, fps, delay = 0, variant = "success", primaryColor = "#0ea5e9", audioMarkers }) => {
+  const s = getSpringProgress(frame, fps, getSyncedDelay(0, audioMarkers, delay), SNAPPY_SPRING);
   const colors = {
     success: { bg: "#dcfce7", text: "#166534", dot: "#22c55e" },
     neutral: { bg: "#f3f4f6", text: "#374151", dot: "#9ca3af" },

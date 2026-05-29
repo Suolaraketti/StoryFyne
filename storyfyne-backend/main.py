@@ -40,6 +40,7 @@ from generator import (
     build_voice_assignments,
     assemble_story_audio,
     generate_segment_audio,
+    analyze_audio_markers,
 )
 from storage import (
     upload_story_audio,
@@ -1263,7 +1264,13 @@ async def preview_explainer(request: ExplainerRequest):
             raise ValueError("No scenes returned")
     except Exception as e:
         # Fallback: treat entire text as single scene
-        scenes = [{"scene_text": raw_text, "visual_direction": "Full text narration"}]
+        scenes = [{
+            "scene_text": raw_text,
+            "template": "heroStatement",
+            "type": "statement",
+            "headline": raw_text[:72],
+            "visual_direction": "A restrained typography-led launch statement.",
+        }]
 
     return PreviewExplainerResponse(scenes=scenes)
 
@@ -1369,7 +1376,13 @@ async def _process_explainer(
                 logger.info(f"[story {story_id}]   scene {i+1}: type={s.get('type','?')} | text={s.get('scene_text','')[:60]!r}")
         except Exception as e:
             logger.warning(f"[story {story_id}] SCENE BREAKDOWN FAILED | {e}")
-            scenes = [{"scene_text": text, "visual_direction": "Full text narration"}]
+            scenes = [{
+                "scene_text": text,
+                "template": "heroStatement",
+                "type": "statement",
+                "headline": text[:72],
+                "visual_direction": "A restrained typography-led launch statement.",
+            }]
             scene_data = {"mood": "clean", "scenes": scenes}
             update_job_progress(story_id, "tagging", f"Scene breakdown failed, using single scene. {str(e)}")
 
@@ -1413,6 +1426,14 @@ async def _process_explainer(
         duration_seconds = duration_ms / 1000
         total_duration_seconds += duration_seconds
 
+        # Analyze audio for visual sync markers (phrase boundaries + accent peaks)
+        try:
+            audio_markers = analyze_audio_markers(audio_bytes, fps=REMOTION_FPS)
+            logger.info(f"[story {story_id}] AUDIO MARKERS scene {idx+1} | {len(audio_markers)} markers: {audio_markers[:8]}{'...' if len(audio_markers) > 8 else ''}")
+        except Exception as e:
+            logger.warning(f"[story {story_id}] AUDIO MARKER ANALYSIS FAIL scene {idx+1} | {e}")
+            audio_markers = []
+
         scene_type = scene.get("type", "evidence")
         valid_types = ("statement", "evidence", "flow", "metric", "lockup", "title", "problem", "solution", "feature", "benefit", "process", "stats", "socialProof", "comparison", "cta")
         if scene_type not in valid_types:
@@ -1422,9 +1443,28 @@ async def _process_explainer(
             "type": scene_type,
             "template": scene.get("template", ""),
             "text": scene_text,
+            "headline": scene.get("headline", ""),
+            "subheadline": scene.get("subheadline", ""),
+            "eyebrow": scene.get("eyebrow", ""),
             "visualDirection": scene.get("visual_direction", ""),
+            "metrics": scene.get("metrics", []),
+            "before": scene.get("before", ""),
+            "after": scene.get("after", ""),
+            "steps": scene.get("steps", []),
+            "features": scene.get("features", []),
+            "messages": scene.get("messages", []),
+            "statusPills": scene.get("status_pills", scene.get("statusPills", [])),
+            "dashboardCards": scene.get("dashboard_cards", scene.get("dashboardCards", [])),
+            "chartLabel": scene.get("chart_label", scene.get("chartLabel", "")),
+            "command": scene.get("command", ""),
+            "quote": scene.get("quote", ""),
+            "attribution": scene.get("attribution", ""),
+            "plans": scene.get("plans", []),
+            "cta": scene.get("cta", ""),
+            "url": scene.get("url", ""),
             "audioUrl": audio_url,
             "durationInFrames": max(int(duration_seconds * REMOTION_FPS), 1),
+            "audioMarkers": audio_markers,
         })
 
     if not scene_audios:
