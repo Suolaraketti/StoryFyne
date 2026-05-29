@@ -8,6 +8,7 @@ import { CinematicMaster, CinematicMood } from "./effects";
 import { FilmGrain } from "./scene-core";
 import { sceneComponentMap, SceneData } from "./scenes";
 import { templateComponentMap } from "./templates";
+import { BrandMark } from "./media";
 
 // ─── Schema ─────────────────────────────────────────────────────────
 
@@ -25,6 +26,9 @@ const sceneSchema = z.object({
   durationInFrames: z.number().min(1),
   audioMarkers: z.array(z.number()).optional().default([]),
   imageUrl: z.string().optional().default(""),
+  imageUrls: z.array(z.string()).optional().default([]),
+  imageFit: z.enum(["cover", "contain"]).optional().default("cover"),
+  device: z.enum(["browser", "phone", "tablet", "window", "bare"]).optional().default("browser"),
   headline: z.string().optional().default(""),
   subheadline: z.string().optional().default(""),
   eyebrow: z.string().optional().default(""),
@@ -71,6 +75,9 @@ export const defaultProps: ExplainerVideoProps = {
       durationInFrames: 120,
       audioMarkers: [],
       imageUrl: "",
+      imageUrls: [],
+      imageFit: "cover",
+      device: "browser",
       headline: "Missed call. Missed job.",
       subheadline: "",
       eyebrow: "The problem",
@@ -100,6 +107,9 @@ export const defaultProps: ExplainerVideoProps = {
       durationInFrames: 150,
       audioMarkers: [],
       imageUrl: "",
+      imageUrls: [],
+      imageFit: "cover",
+      device: "browser",
       headline: "AI answers every call.",
       subheadline: "A live product moment, not another missed opportunity.",
       eyebrow: "Product reveal",
@@ -129,6 +139,9 @@ export const defaultProps: ExplainerVideoProps = {
       durationInFrames: 180,
       audioMarkers: [],
       imageUrl: "",
+      imageUrls: [],
+      imageFit: "cover",
+      device: "browser",
       headline: "From intent to booked.",
       subheadline: "The workflow runs while your team stays focused.",
       eyebrow: "Workflow",
@@ -163,6 +176,7 @@ export const defaultProps: ExplainerVideoProps = {
 
 export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
   scenes,
+  logoUrl,
   primaryColor,
   secondaryColor,
   bgColor,
@@ -236,6 +250,7 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
                 entranceDirection={entranceDir}
                 exitDirection={exitDir}
                 audioMarkers={scene.audioMarkers}
+                logoUrl={logoUrl}
               />
             </div>
           </Sequence>
@@ -262,6 +277,12 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
           </Sequence>
         );
       })}
+
+      {/* Persistent brand mark — fades in after the intro, hides when the
+          logo is the on-screen subject (lockup / logoReveal scenes). */}
+      {logoUrl && !["brandLockup", "logoReveal"].includes(scenes[effectiveIdx]?.template || "") && frame > scenes[0]?.durationInFrames * 0.5 && (
+        <BrandMark logoUrl={logoUrl} frame={frame} fps={fps} delay={0} primaryColor={primaryColor} position="topLeft" />
+      )}
 
       {/* Cinematic overlay */}
       <CinematicMaster mood={(mood as CinematicMood) || "clean"} frame={frame} />

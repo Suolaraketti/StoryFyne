@@ -15,6 +15,9 @@ export interface SceneData {
   durationInFrames: number;
   audioMarkers?: number[];
   imageUrl?: string;
+  imageUrls?: string[];
+  imageFit?: "cover" | "contain";
+  device?: "browser" | "phone" | "tablet" | "window" | "bare";
   headline?: string;
   subheadline?: string;
   eyebrow?: string;
@@ -48,6 +51,7 @@ export interface SceneProps {
   entranceDirection?: "left" | "right" | "up" | "down";
   exitDirection?: "left" | "right" | "up" | "down";
   audioMarkers?: number[];
+  logoUrl?: string;
 }
 
 // ─── 1. STATEMENT ───────────────────────────────────────────────────

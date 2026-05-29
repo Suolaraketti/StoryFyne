@@ -48,11 +48,15 @@ export const CinematicHeadline: React.FC<{
   delay?: number;
   audioMarkers?: number[];
 }> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
-  const chars = text.split("");
+  // Split into words, but animate per-character. Each word is an unbreakable
+  // unit so the headline wraps between words \u2014 never mid-word.
+  const words = text.split(/(\s+)/).filter((w) => w.length > 0);
+  const totalChars = text.replace(/\s/g, "").length;
   const revealWindow = duration * 0.45;
+  let charCounter = 0;
 
   return (
-    <div style={{ textAlign: align, maxWidth: "92%" }}>
+    <div style={{ textAlign: align, maxWidth: "94%" }}>
       <div
         style={{
           display: "flex",
@@ -61,35 +65,42 @@ export const CinematicHeadline: React.FC<{
           lineHeight: 1.08,
         }}
       >
-        {chars.map((char, i) => {
-          const isSpace = char === " ";
-          // Audio-driven: characters reveal at phrase markers instead of uniform distribution
-          const charDelay = delay + getSyncedStagger(i, chars.length, audioMarkers, 0, revealWindow / Math.max(1, chars.length - 1));
-          const s = spring({ frame: Math.max(0, frame - charDelay), fps, config: SNAPPY_SPRING });
-          const reveal = {
-            opacity: interpolate(s, [0, 0.15, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-            y: interpolate(s, [0, 1], [18, 0]),
-            scale: interpolate(s, [0, 1], [0.9, 1]),
-            blur: interpolate(s, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" }),
-          };
+        {words.map((word, wi) => {
+          if (/^\s+$/.test(word)) {
+            return <span key={`s-${wi}`} style={{ display: "inline-block", width: size * 0.26 }} />;
+          }
           return (
-            <span
-              key={i}
-              style={{
-                fontFamily: FONT,
-                fontSize: size,
-                fontWeight: weight,
-                color,
-                letterSpacing: "-0.035em",
-                opacity: reveal.opacity,
-                transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
-                filter: `blur(${reveal.blur}px)`,
-                display: "inline-block",
-                width: isSpace ? size * 0.25 : "auto",
-                willChange: "transform, opacity, filter",
-              }}
-            >
-              {isSpace ? "\u00A0" : char}
+            <span key={`w-${wi}`} style={{ display: "inline-flex", whiteSpace: "nowrap" }}>
+              {word.split("").map((char, ci) => {
+                const globalIdx = charCounter++;
+                const charDelay = delay + getSyncedStagger(globalIdx, totalChars, audioMarkers, 0, revealWindow / Math.max(1, totalChars - 1));
+                const s = spring({ frame: Math.max(0, frame - charDelay), fps, config: SNAPPY_SPRING });
+                const reveal = {
+                  opacity: interpolate(s, [0, 0.15, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+                  y: interpolate(s, [0, 1], [18, 0]),
+                  scale: interpolate(s, [0, 1], [0.9, 1]),
+                  blur: interpolate(s, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" }),
+                };
+                return (
+                  <span
+                    key={ci}
+                    style={{
+                      fontFamily: FONT,
+                      fontSize: size,
+                      fontWeight: weight,
+                      color,
+                      letterSpacing: "-0.035em",
+                      opacity: reveal.opacity,
+                      transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
+                      filter: `blur(${reveal.blur}px)`,
+                      display: "inline-block",
+                      willChange: "transform, opacity, filter",
+                    }}
+                  >
+                    {char}
+                  </span>
+                );
+              })}
             </span>
           );
         })}

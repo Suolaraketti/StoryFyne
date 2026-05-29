@@ -17,6 +17,15 @@ import {
   Stepper,
   SocialProofRow, StatusPill,
 } from "./ui-mockups";
+import { ScreenshotFrame, ScreenshotStack, LogoLockup, DeviceVariant, ImageFit } from "./media";
+
+// Collect every usable image off a scene: explicit list first, then single.
+const sceneImages = (scene: SceneProps["scene"]): string[] => {
+  const list = (scene.imageUrls || []).filter(Boolean);
+  if (scene.imageUrl) list.unshift(scene.imageUrl);
+  return Array.from(new Set(list));
+};
+const firstImage = (scene: SceneProps["scene"]): string => sceneImages(scene)[0] || "";
 
 const sentenceToHeadline = (text: string, maxWords = 6) => {
   const cleaned = (text || "").replace(/\s+/g, " ").trim();
@@ -497,6 +506,21 @@ export const PremiumPhoneDemoTemplate: React.FC<SceneProps> = ({
   const messages = scene.messages && scene.messages.length > 0 ? scene.messages : ["I need help today.", sceneHeadline(scene, 8)];
   const pills = scene.statusPills && scene.statusPills.length > 0 ? scene.statusPills : ["Answered", "Qualified", "Booked"];
   const shouldShowCalendar = `${scene.text} ${scene.headline || ""} ${scene.subheadline || ""}`.toLowerCase().match(/book|calendar|schedule|appointment/);
+  const shot = firstImage(scene);
+
+  // Real product screenshot supplied → show it in a phone, copy beside it.
+  if (shot) {
+    return (
+      <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+        <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+          <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 42 : 84, width: "100%" }}>
+            <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+            <ScreenshotFrame imageUrl={shot} variant="phone" frame={frame} fps={fps} delay={8} primaryColor={primaryColor} fit={scene.imageFit || "cover"} />
+          </div>
+        </AbsoluteFill>
+      </SceneMotion>
+    );
+  }
 
   return (
     <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
@@ -539,6 +563,7 @@ export const PremiumBrowserDashboardTemplate: React.FC<SceneProps> = ({
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
+  const shot = firstImage(scene);
   const cards = scene.dashboardCards && scene.dashboardCards.length > 0
     ? scene.dashboardCards
     : [
@@ -546,6 +571,20 @@ export const PremiumBrowserDashboardTemplate: React.FC<SceneProps> = ({
         { label: "Qualified", value: "68%", trend: "+18%" },
         { label: "Pipeline", value: "$47K", trend: "+32%" },
       ];
+
+  // Real product screenshot supplied → show it in a browser with copy above.
+  if (shot) {
+    return (
+      <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+        <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: isVertical ? 30 : 40, width: "100%", alignItems: "center" }}>
+            <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
+            <ScreenshotFrame imageUrl={shot} variant={(scene.device as DeviceVariant) || "browser"} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} url={scene.url || "app.command-center.ai"} fit={scene.imageFit || "cover"} maxHeightFraction={sizes.isVertical ? 0.52 : 0.62} />
+          </div>
+        </AbsoluteFill>
+      </SceneMotion>
+    );
+  }
 
   return (
     <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
@@ -766,7 +805,7 @@ export const PremiumTestimonialQuoteTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumBrandLockupTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers, logoUrl,
 }) => {
   const sizes = useSceneSizes();
   const lineS = spring({ frame: Math.max(0, frame - 20), fps, config: SNAPPY_SPRING });
@@ -776,13 +815,152 @@ export const PremiumBrandLockupTemplate: React.FC<SceneProps> = ({
   return (
     <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
-        <div style={{ textAlign: "center", maxWidth: 860 }}>
+        <div style={{ textAlign: "center", maxWidth: 860, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          {logoUrl && (
+            <div style={{ marginBottom: 34 }}>
+              <LogoLockup logoUrl={logoUrl} frame={frame} fps={fps} delay={0} primaryColor={primaryColor} textColor={textColor} heightFraction={0.16} />
+            </div>
+          )}
           {scene.eyebrow && <div style={{ fontFamily: FONT, fontSize: sizes.small, fontWeight: 750, color: primaryColor, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 18 }}>{scene.eyebrow}</div>}
-          <CinematicHeadline text={mainText} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.58)} delay={0} audioMarkers={audioMarkers} />
+          <CinematicHeadline text={mainText} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.58)} delay={logoUrl ? 10 : 0} audioMarkers={audioMarkers} />
           <div style={{ height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "30px auto" }} />
           {urlText && (
             <CinematicBody text={urlText} frame={frame} fps={fps} duration={duration} color={primaryColor} size={Math.round(sizes.body * 0.72)} baseDelay={14} audioMarkers={audioMarkers} />
           )}
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// ─── IMAGE-DRIVEN TEMPLATES ─────────────────────────────────────────
+// These exist to make real product assets the hero of a scene, the way
+// premium SaaS launch films (and the Envato references) actually look.
+
+// PRODUCT SHOWCASE — copy on one side, a device-framed screenshot on the
+// other, with a 3D tilt that settles flat. Falls back to a tasteful copy
+// card if no image is supplied.
+export const ProductShowcaseTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const shot = firstImage(scene);
+  const variant = (scene.device as DeviceVariant) || "browser";
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 40 : 80, width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          {shot ? (
+            <ScreenshotFrame
+              imageUrl={shot}
+              variant={variant}
+              frame={frame}
+              fps={fps}
+              delay={8}
+              primaryColor={primaryColor}
+              url={scene.url || "app.example.com"}
+              fit={scene.imageFit || "cover"}
+              tilt={variant === "phone" ? 0 : 8}
+              widthFraction={sizes.isVertical ? 0.92 : 0.5}
+            />
+          ) : (
+            <GlassPanel primaryColor={primaryColor} style={{ padding: "60px 70px", minWidth: 320 }}>
+              <div style={{ fontFamily: FONT, fontSize: Math.round(sizes.headline * 0.4), fontWeight: 850, color: textColor, letterSpacing: "-0.04em" }}>
+                {scene.headline || sceneHeadline(scene, 4)}
+              </div>
+            </GlassPanel>
+          )}
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// HERO IMAGE — a single product shot as the centerpiece, large and
+// floating over the stage with the headline beneath it.
+export const HeroImageTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const shot = firstImage(scene);
+  const variant = (scene.device as DeviceVariant) || "window";
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: sizes.isVertical ? 32 : 44, alignItems: "center", width: "100%" }}>
+          {scene.eyebrow && (
+            <div style={{ fontFamily: FONT, fontSize: sizes.small, fontWeight: 750, letterSpacing: "0.14em", textTransform: "uppercase", color: primaryColor }}>{scene.eyebrow}</div>
+          )}
+          {shot ? (
+            <ScreenshotFrame imageUrl={shot} variant={variant} frame={frame} fps={fps} delay={6} primaryColor={primaryColor} url={scene.url || "app.example.com"} fit={scene.imageFit || "cover"} tilt={6} widthFraction={sizes.isVertical ? 0.9 : 0.62} maxHeightFraction={sizes.isVertical ? 0.5 : 0.56} />
+          ) : null}
+          <div style={{ textAlign: "center", maxWidth: sizes.isVertical ? "92%" : "76%" }}>
+            <CinematicHeadline text={sceneHeadline(scene, 7)} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.52)} delay={shot ? 14 : 0} audioMarkers={audioMarkers} />
+            {scene.subheadline && (
+              <CinematicBody text={scene.subheadline} frame={frame} fps={fps} duration={duration} color={`${textColor}b8`} size={Math.round(sizes.body * 0.66)} baseDelay={20} audioMarkers={audioMarkers} />
+            )}
+          </div>
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// SCREENSHOT CAROUSEL — multiple product shots fanned in 3D depth.
+export const ScreenshotCarouselTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const images = sceneImages(scene);
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: sizes.isVertical ? 36 : 50, alignItems: "center", width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
+          {images.length > 0 ? (
+            <ScreenshotStack images={images} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} />
+          ) : null}
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// LOGO REVEAL — the brand logo as the on-screen subject, large and centered.
+export const LogoRevealTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers, logoUrl,
+}) => {
+  const sizes = useSceneSizes();
+  const mark = logoUrl || firstImage(scene);
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        {mark ? (
+          <LogoLockup logoUrl={mark} wordmark={scene.headline || ""} frame={frame} fps={fps} delay={0} primaryColor={primaryColor} textColor={textColor} heightFraction={0.26} />
+        ) : (
+          <CinematicHeadline text={scene.headline || sceneHeadline(scene, 4)} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.8)} audioMarkers={audioMarkers} />
+        )}
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// FEATURE SPLIT — copy + a tightly-cropped screenshot detail, alternating side.
+export const FeatureSplitTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const shot = firstImage(scene);
+  if (!shot) {
+    return <PremiumFeatureHighlightTemplate scene={scene} primaryColor={primaryColor} secondaryColor={primaryColor} textColor={textColor} accentColor={primaryColor} bgColor="#000" frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers} />;
+  }
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row-reverse", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 36 : 80, width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          <ScreenshotFrame imageUrl={shot} variant={(scene.device as DeviceVariant) || "bare"} frame={frame} fps={fps} delay={8} primaryColor={primaryColor} fit={scene.imageFit || "cover"} widthFraction={sizes.isVertical ? 0.9 : 0.46} />
         </div>
       </AbsoluteFill>
     </SceneMotion>
@@ -804,4 +982,9 @@ export const templateComponentMap: Record<string, React.FC<SceneProps>> = {
   calendarBooking: PremiumCalendarBookingTemplate,
   revenueCounter: PremiumRevenueCounterTemplate,
   brandLockup: PremiumBrandLockupTemplate,
+  productShowcase: ProductShowcaseTemplate,
+  heroImage: HeroImageTemplate,
+  screenshotCarousel: ScreenshotCarouselTemplate,
+  logoReveal: LogoRevealTemplate,
+  featureSplit: FeatureSplitTemplate,
 };
