@@ -29,6 +29,7 @@ const sceneSchema = z.object({
   imageUrls: z.array(z.string()).optional().default([]),
   imageFit: z.enum(["cover", "contain"]).optional().default("cover"),
   device: z.enum(["browser", "phone", "tablet", "window", "bare"]).optional().default("browser"),
+  background: z.string().optional().default(""),
   headline: z.string().optional().default(""),
   subheadline: z.string().optional().default(""),
   eyebrow: z.string().optional().default(""),
@@ -78,6 +79,7 @@ export const defaultProps: ExplainerVideoProps = {
       imageUrls: [],
       imageFit: "cover",
       device: "browser",
+      background: "",
       headline: "Missed call. Missed job.",
       subheadline: "",
       eyebrow: "The problem",
@@ -110,6 +112,7 @@ export const defaultProps: ExplainerVideoProps = {
       imageUrls: [],
       imageFit: "cover",
       device: "browser",
+      background: "",
       headline: "AI answers every call.",
       subheadline: "A live product moment, not another missed opportunity.",
       eyebrow: "Product reveal",
@@ -142,6 +145,7 @@ export const defaultProps: ExplainerVideoProps = {
       imageUrls: [],
       imageFit: "cover",
       device: "browser",
+      background: "",
       headline: "From intent to booked.",
       subheadline: "The workflow runs while your team stays focused.",
       eyebrow: "Workflow",
@@ -214,7 +218,10 @@ export const ExplainerVideo: React.FC<ExplainerVideoProps> = ({
     ({ from, visualDuration }) => frame >= from && frame < from + visualDuration
   );
   const effectiveIdx = Math.max(0, currentSceneIdx >= 0 ? currentSceneIdx : scenes.length - 1);
-  const dominantBgType = getBackgroundForSceneType(scenes[effectiveIdx]?.type || "cleanDark");
+  const sceneBgOverride = scenes[effectiveIdx]?.background;
+  const dominantBgType = (sceneBgOverride && Backgrounds[sceneBgOverride])
+    ? sceneBgOverride
+    : getBackgroundForSceneType(scenes[effectiveIdx]?.type || "cleanDark");
   const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.cleanDark;
 
   return (

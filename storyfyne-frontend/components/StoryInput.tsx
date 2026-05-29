@@ -176,6 +176,40 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
     }
   };
 
+  const TEMPLATE_OPTIONS: { value: string; label: string }[] = [
+    { value: 'heroStatement', label: 'Hero statement' },
+    { value: 'aiCall', label: 'AI call (voice)' },
+    { value: 'callTranscript', label: 'Call transcript' },
+    { value: 'productShowcase', label: 'Product showcase' },
+    { value: 'heroImage', label: 'Hero image' },
+    { value: 'screenshotCarousel', label: 'Screenshot carousel' },
+    { value: 'featureSplit', label: 'Feature split' },
+    { value: 'browserDashboard', label: 'Browser dashboard' },
+    { value: 'phoneDemo', label: 'Phone demo' },
+    { value: 'statsGrid', label: 'Stats grid' },
+    { value: 'revenueCounter', label: 'Revenue counter' },
+    { value: 'workflowSteps', label: 'Workflow steps' },
+    { value: 'featureHighlight', label: 'Feature highlight' },
+    { value: 'beforeAfter', label: 'Before / after' },
+    { value: 'testimonialQuote', label: 'Testimonial' },
+    { value: 'pricingTiers', label: 'Pricing tiers' },
+    { value: 'typewriterCommand', label: 'Command bar' },
+    { value: 'calendarBooking', label: 'Calendar booking' },
+    { value: 'logoWall', label: 'Logo wall' },
+    { value: 'logoReveal', label: 'Logo reveal' },
+    { value: 'brandLockup', label: 'Brand lockup (CTA)' },
+  ];
+  const BG_OPTIONS: { value: string; label: string }[] = [
+    { value: '', label: 'Auto' },
+    { value: 'auroraMesh', label: 'Aurora mesh' },
+    { value: 'gradientWash', label: 'Gradient wash' },
+    { value: 'gridStage', label: 'Grid stage' },
+    { value: 'dotGrid', label: 'Dot grid' },
+    { value: 'centerSpotlight', label: 'Spotlight' },
+    { value: 'subtleGlow', label: 'Subtle glow' },
+    { value: 'cleanDark', label: 'Clean dark' },
+  ];
+
   const getVisualPlan = (template: string, type: string) => {
     const plans: Record<string, string> = {
       heroStatement: 'Massive bold centered text. No decoration. One sentence dominates the frame. Clean entrance/exit.',
@@ -911,6 +945,24 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                               style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '11px' }}>↓</button>
                             <button type="button" onClick={() => deleteScene(idx)} disabled={isLoading || explainerScenes.length <= 1}
                               style={{ padding: '4px 6px', borderRadius: '6px', border: '1px solid rgba(239,68,68,0.15)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', cursor: 'pointer', fontSize: '11px' }}>×</button>
+                          </div>
+                        </div>
+
+                        {/* Template + background controls */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 150 }}>
+                            <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Template</span>
+                            <select value={tpl} onChange={e => updateSceneField(idx, 'template', e.target.value)} disabled={isLoading}
+                              style={{ padding: '7px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                              {TEMPLATE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 150 }}>
+                            <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Background</span>
+                            <select value={scene.background || ''} onChange={e => updateSceneField(idx, 'background', e.target.value)} disabled={isLoading}
+                              style={{ padding: '7px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                              {BG_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
                           </div>
                         </div>
 

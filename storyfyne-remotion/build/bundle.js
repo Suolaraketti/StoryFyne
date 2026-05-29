@@ -3494,6 +3494,7 @@ const sceneSchema = lib.z.object({
   imageUrls: lib.z.array(lib.z.string()).optional().default([]),
   imageFit: lib.z.enum(["cover", "contain"]).optional().default("cover"),
   device: lib.z.enum(["browser", "phone", "tablet", "window", "bare"]).optional().default("browser"),
+  background: lib.z.string().optional().default(""),
   headline: lib.z.string().optional().default(""),
   subheadline: lib.z.string().optional().default(""),
   eyebrow: lib.z.string().optional().default(""),
@@ -3539,6 +3540,7 @@ const defaultProps = {
       imageUrls: [],
       imageFit: "cover",
       device: "browser",
+      background: "",
       headline: "Missed call. Missed job.",
       subheadline: "",
       eyebrow: "The problem",
@@ -3571,6 +3573,7 @@ const defaultProps = {
       imageUrls: [],
       imageFit: "cover",
       device: "browser",
+      background: "",
       headline: "AI answers every call.",
       subheadline: "A live product moment, not another missed opportunity.",
       eyebrow: "Product reveal",
@@ -3603,6 +3606,7 @@ const defaultProps = {
       imageUrls: [],
       imageFit: "cover",
       device: "browser",
+      background: "",
       headline: "From intent to booked.",
       subheadline: "The workflow runs while your team stays focused.",
       eyebrow: "Workflow",
@@ -3642,7 +3646,7 @@ const ExplainerVideo = ({
   accentColor,
   mood
 }) => {
-  var _a, _b, _c;
+  var _a, _b, _c, _d;
   const frame = (0,esm.useCurrentFrame)();
   const { fps } = (0,esm.useVideoConfig)();
   let audioAccumulated = 0;
@@ -3663,7 +3667,8 @@ const ExplainerVideo = ({
     ({ from, visualDuration }) => frame >= from && frame < from + visualDuration
   );
   const effectiveIdx = Math.max(0, currentSceneIdx >= 0 ? currentSceneIdx : scenes.length - 1);
-  const dominantBgType = getBackgroundForSceneType(((_a = scenes[effectiveIdx]) == null ? void 0 : _a.type) || "cleanDark");
+  const sceneBgOverride = (_a = scenes[effectiveIdx]) == null ? void 0 : _a.background;
+  const dominantBgType = sceneBgOverride && Backgrounds[sceneBgOverride] ? sceneBgOverride : getBackgroundForSceneType(((_b = scenes[effectiveIdx]) == null ? void 0 : _b.type) || "cleanDark");
   const BackgroundComponent = Backgrounds[dominantBgType] || Backgrounds.cleanDark;
   return /* @__PURE__ */ (0,jsx_runtime.jsxs)(esm.AbsoluteFill, { style: { backgroundColor: bgColor }, children: [
     /* @__PURE__ */ (0,jsx_runtime.jsx)(BackgroundComponent, { bgColor, primaryColor, secondaryColor }),
@@ -3711,7 +3716,7 @@ const ExplainerVideo = ({
         }
       ) }, `audio-${i}`);
     }),
-    logoUrl && !["brandLockup", "logoReveal"].includes(((_b = scenes[effectiveIdx]) == null ? void 0 : _b.template) || "") && frame > ((_c = scenes[0]) == null ? void 0 : _c.durationInFrames) * 0.5 && /* @__PURE__ */ (0,jsx_runtime.jsx)(BrandMark, { logoUrl, frame, fps, delay: 0, primaryColor, position: "topLeft" }),
+    logoUrl && !["brandLockup", "logoReveal"].includes(((_c = scenes[effectiveIdx]) == null ? void 0 : _c.template) || "") && frame > ((_d = scenes[0]) == null ? void 0 : _d.durationInFrames) * 0.5 && /* @__PURE__ */ (0,jsx_runtime.jsx)(BrandMark, { logoUrl, frame, fps, delay: 0, primaryColor, position: "topLeft" }),
     /* @__PURE__ */ (0,jsx_runtime.jsx)(CinematicMaster, { mood: mood || "clean", frame })
   ] });
 };
