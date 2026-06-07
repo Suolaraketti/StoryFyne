@@ -1381,9 +1381,7 @@ async def _process_explainer(
     prebuilt_scenes: list[dict] = None,
     music_enabled: bool = True,
     music_track_id: str = "",
-    music_url: str = "",
     music_bpm: int = 0,
-    music_volume: float = 0.22,
 ):
     """Background task: break text into scenes, generate audio, render via Remotion Lambda."""
     start_time = time.time()
