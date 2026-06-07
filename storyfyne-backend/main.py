@@ -32,6 +32,8 @@ from config import (
     REMOTION_COMPOSITION_ID,
     GPU_WORKER_URL,
     GPU_WORKER_TIMEOUT,
+    HYPERFRAMES_ENABLED,
+    HYPERFRAMES_RENDER_QUALITY,
 )
 from scraper import scrape_reddit_post, scrape_website
 from tagger import tag_text_with_claude
@@ -1580,159 +1582,121 @@ async def _process_explainer(
         "musicBpm": final_music_bpm,
         "musicVolume": music_volume,
     }
-    logger.info(f"[story {story_id}] RENDER SUBMIT | composition={composition_id} | serve_url={REMOTION_SERVE_URL[:80]}... | scenes={len(scene_audios)}")
+    logger.info(f"[story {story_id}] RENDER SUBMIT | scenes={len(scene_audios)} | hyperframes=enabled")
     logger.info(f"[story {story_id}] RENDER PROPS | logo={logo_url!r} | colors={primary_color},{secondary_color},{bg_color},{text_color},{accent_color}")
 
-    # Step 4: Render video (GPU worker or Lambda)
+    # Step 4: Render video via HyperFrames
     video_url = ""
     video_bytes = b""
     polling_error = ""
     render_id = ""
     bucket_name = ""
-    use_gpu = render_quality == "premium" and GPU_WORKER_URL
 
-    if use_gpu:
-        # ─── GPU Worker Path ────────────────────────────────────────────
-        update_job_progress(story_id, "rendering", "Rendering video via GPU worker...")
-        logger.info(f"[story {story_id}] RENDER GPU | worker={GPU_WORKER_URL}")
+    update_job_progress(story_id, "rendering", "Building HyperFrames composition...")
+    logger.info(f"[story {story_id}] HYPERFRAMES | Building project...")
+
+    try:
+        from hyperframes_builder import build_explainer_project
+        import tempfile
+        import subprocess
+
+        # Build the hyperframes HTML project
+        project_dir = tempfile.mkdtemp(prefix=f"hf_story_{story_id}_")
+
+        hf_config = {
+            "aspect_ratio": aspect_ratio,
+            "primary_color": primary_color,
+            "secondary_color": secondary_color,
+            "bg_color": bg_color,
+            "text_color": text_color,
+            "accent_color": accent_color,
+            "logo_url": logo_url,
+            "brand_name": brand_name or title,
+            "font_family": font_family,
+            "music_url": final_music_url,
+            "music_volume": music_volume,
+            "fps": 30,
+        }
+
+        build_explainer_project(
+            scenes=scene_audios,
+            output_dir=project_dir,
+            config=hf_config,
+        )
+        logger.info(f"[story {story_id}] HYPERFRAMES | Project built at {project_dir}")
+
+        # Run hyperframes render via subprocess
+        output_path = os.path.join(project_dir, "output.mp4")
+        update_job_progress(story_id, "rendering", "Rendering via HyperFrames...")
+
+        # Check if npx is available, fallback to local hyperframes
+        cmd = [
+            "npx", "--yes", "hyperframes@latest",
+            "render",
+            "--output", output_path,
+            "--quality", HYPERFRAMES_RENDER_QUALITY,
+            "--fps", "30",
+            "--format", "mp4",
+        ]
+
+        logger.info(f"[story {story_id}] HYPERFRAMES | Running: {' '.join(cmd)}")
+
+        # Run with a generous timeout (10 minutes)
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=project_dir,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
         try:
-            gpu_result = await submit_to_gpu_worker(
-                story_id=story_id,
-                input_props=input_props,
-                composition_id=composition_id,
-                output_filename=f"explainer_{story_id}.mp4",
-            )
-            video_url = gpu_result.get("outputUrl", "")
-            logger.info(f"[story {story_id}] GPU RENDER DONE | url={video_url[:120] if video_url else 'EMPTY'}")
-            if video_url:
-                try:
-                    async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
-                        dl = await client.get(video_url)
-                        logger.info(f"[story {story_id}] VIDEO DOWNLOAD | HTTP {dl.status_code} | {len(dl.content)} bytes")
-                        if dl.status_code == 200:
-                            video_bytes = dl.content
-                            update_job_progress(story_id, "rendering", f"Video rendered ({len(video_bytes) // 1024} KB).")
-                        else:
-                            polling_error = f"GPU video ready but download returned {dl.status_code}"
-                            logger.error(f"[story {story_id}] VIDEO DOWNLOAD FAILED | {polling_error}")
-                except Exception as dl_err:
-                    polling_error = f"GPU video ready but download failed: {dl_err}"
-                    logger.error(f"[story {story_id}] VIDEO DOWNLOAD EXCEPTION | {dl_err}")
-            else:
-                polling_error = "GPU render completed but no output URL."
-                logger.error(f"[story {story_id}] GPU RENDER COMPLETE BUT NO URL")
-        except Exception as gpu_err:
-            polling_error = f"GPU render failed: {gpu_err}"
-            logger.error(f"[story {story_id}] GPU RENDER FAILED | {gpu_err}")
-    else:
-        # ─── Lambda Path ────────────────────────────────────────────────
-        try:
-            if not RENDER_GATEWAY_URL:
-                raise RuntimeError("RENDER_GATEWAY_URL not configured")
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=600)
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.wait()
+            raise RuntimeError("HyperFrames render timed out after 10 minutes")
 
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(
-                    f"{RENDER_GATEWAY_URL}/render",
-                    json={
-                        "serveUrl": REMOTION_SERVE_URL,
-                        "compositionId": composition_id,
-                        "inputProps": input_props,
-                        "outName": f"explainer_{story_id}.mp4",
-                    },
-                )
+        if proc.returncode != 0:
+            stderr_text = stderr.decode("utf-8", errors="replace")[-2000:] if stderr else ""
+            stdout_text = stdout.decode("utf-8", errors="replace")[-2000:] if stdout else ""
+            raise RuntimeError(f"HyperFrames render failed (exit {proc.returncode}). stderr: {stderr_text}. stdout: {stdout_text}")
 
-            logger.info(f"[story {story_id}] GATEWAY RESPONSE | status={response.status_code} | body={response.text[:300]}")
+        logger.info(f"[story {story_id}] HYPERFRAMES | Render complete. stdout: {stdout.decode('utf-8', errors='replace')[-500:]}")
 
-            if response.status_code != 200:
-                raise RuntimeError(f"Gateway error: {response.status_code} - {response.text}")
-
-            render_result = response.json()
-            render_id = render_result.get("renderId", "")
-            bucket_name = render_result.get("bucketName", "")
-            if not render_id:
-                raise RuntimeError("No renderId from gateway")
-            logger.info(f"[story {story_id}] RENDER STARTED | render_id={render_id} | bucket={bucket_name}")
-        except Exception as e:
-            logger.error(f"[story {story_id}] RENDER SUBMIT FAILED | {e}")
-            metadata = {
-                "id": story_id, "reddit_url": "", "title": title, "author": author,
-                "subreddit": "explainer", "mode": "explainer", "status": "audio_only",
-                "audio_url": scene_audios[0]["audioUrl"] if scene_audios else "",
-                "video_url": "", "duration_seconds": int(total_duration_seconds),
-                "file_size_bytes": 0, "voice_assignments": {"NARRATOR": voice_id},
-                "tagged_text_preview": text[:200],
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "processing_time_seconds": int(time.time() - start_time),
-                "error": f"Render submission failed: {str(e)}",
-            }
-            await upload_story_metadata(story_id, metadata)
-            await add_story_to_index({"id": story_id, "title": title, "subreddit": "explainer", "mode": "explainer", "status": "audio_only", "audio_url": metadata["audio_url"], "duration_seconds": metadata["duration_seconds"], "created_at": metadata["created_at"]})
-            invalidate_cache()
-            update_job_progress(story_id, "complete", "Audio ready. Video render failed.")
-            return
-
-        # Poll render gateway
-        update_job_progress(story_id, "rendering", f"Rendering video via Remotion Lambda... ({render_id[:8]})")
-        poll_count = 0
-
-        for _ in range(360):
-            await asyncio.sleep(5)
-            poll_count += 1
-            try:
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    status_response = await client.get(
-                        f"{RENDER_GATEWAY_URL}/status",
-                        params={"renderId": render_id, "bucketName": bucket_name},
-                    )
-
-                if status_response.status_code != 200:
-                    logger.warning(f"[story {story_id}] POLL {poll_count} | gateway HTTP {status_response.status_code} | {status_response.text[:200]}")
-                    continue
-
-                status_data = status_response.json()
-                status = status_data.get("status", "")
-                progress_pct = status_data.get("progressPercent", 0)
-                logger.info(f"[story {story_id}] POLL {poll_count} | status={status} | progress={progress_pct}% | frames={status_data.get('framesRendered','?')}")
-
-                if status == "completed":
-                    video_url = status_data.get("outputFile", "")
-                    logger.info(f"[story {story_id}] RENDER COMPLETED | outputFile={video_url[:120] if video_url else 'EMPTY'}")
-                    if video_url:
-                        try:
-                            async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
-                                dl = await client.get(video_url)
-                                logger.info(f"[story {story_id}] VIDEO DOWNLOAD | HTTP {dl.status_code} | {len(dl.content)} bytes")
-                                if dl.status_code == 200:
-                                    video_bytes = dl.content
-                                    update_job_progress(story_id, "rendering", f"Video rendered ({len(video_bytes) // 1024} KB). Downloading...")
-                                else:
-                                    polling_error = f"Video ready but S3 returned {dl.status_code}. URL: {video_url[:120]}"
-                                    update_job_progress(story_id, "rendering", polling_error)
-                                    logger.error(f"[story {story_id}] VIDEO DOWNLOAD FAILED | {polling_error}")
-                        except Exception as dl_err:
-                            polling_error = f"Video ready but download failed: {dl_err}"
-                            update_job_progress(story_id, "rendering", polling_error)
-                            logger.error(f"[story {story_id}] VIDEO DOWNLOAD EXCEPTION | {dl_err}")
-                    else:
-                        polling_error = "Render completed but no outputFile URL returned."
-                        update_job_progress(story_id, "rendering", polling_error)
-                        logger.error(f"[story {story_id}] RENDER COMPLETE BUT NO URL")
-                    break
-                elif status == "failed":
-                    errors = status_data.get("errors", ["Unknown render error"])
-                    polling_error = errors[0] if errors else "Unknown render error"
-                    update_job_progress(story_id, "rendering", f"Render failed: {polling_error}")
-                    logger.error(f"[story {story_id}] RENDER FAILED | {polling_error}")
-                    break
-                else:
-                    update_job_progress(story_id, "rendering", f"Rendering video... {progress_pct}%")
-            except Exception as poll_err:
-                logger.warning(f"[story {story_id}] POLL {poll_count} EXCEPTION | {poll_err}")
-                continue
+        # Read output video
+        if os.path.exists(output_path):
+            video_bytes = open(output_path, "rb").read()
+            logger.info(f"[story {story_id}] HYPERFRAMES | Video read: {len(video_bytes)} bytes")
+            update_job_progress(story_id, "rendering", f"Video rendered ({len(video_bytes) // 1024} KB).")
         else:
-            polling_error = "Video render timed out."
-            update_job_progress(story_id, "rendering", f"{polling_error} Saving audio only.")
-            logger.error(f"[story {story_id}] RENDER TIMEOUT | {poll_count} polls")
+            raise RuntimeError(f"HyperFrames render succeeded but output file not found at {output_path}")
+
+        # Cleanup temp dir
+        try:
+            shutil.rmtree(project_dir, ignore_errors=True)
+        except Exception:
+            pass
+
+    except Exception as e:
+        polling_error = f"HyperFrames render failed: {e}"
+        logger.error(f"[story {story_id}] HYPERFRAMES RENDER FAILED | {e}")
+        # Fall back to audio-only if render fails
+        metadata = {
+            "id": story_id, "reddit_url": "", "title": title, "author": author,
+            "subreddit": "explainer", "mode": "explainer", "status": "audio_only",
+            "audio_url": scene_audios[0]["audioUrl"] if scene_audios else "",
+            "video_url": "", "duration_seconds": int(total_duration_seconds),
+            "file_size_bytes": 0, "voice_assignments": {"NARRATOR": voice_id},
+            "tagged_text_preview": text[:200],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "processing_time_seconds": int(time.time() - start_time),
+            "error": f"Render failed: {str(e)}",
+        }
+        await upload_story_metadata(story_id, metadata)
+        await add_story_to_index({"id": story_id, "title": title, "subreddit": "explainer", "mode": "explainer", "status": "audio_only", "audio_url": metadata["audio_url"], "duration_seconds": metadata["duration_seconds"], "created_at": metadata["created_at"]})
+        invalidate_cache()
+        update_job_progress(story_id, "complete", "Audio ready. Video render failed.")
+        return
 
     # Step 5: Upload final video (or keep S3 URL if download failed)
     video_upload_url = ""

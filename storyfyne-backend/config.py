@@ -91,3 +91,8 @@ GPU_WORKER_TIMEOUT = int(os.getenv("GPU_WORKER_TIMEOUT", "300"))
 
 # Cache
 STORIES_CACHE_TTL_SECONDS = 60
+
+# HyperFrames
+HYPERFRAMES_ENABLED = os.getenv("HYPERFRAMES_ENABLED", "true").lower() == "true"
+HYPERFRAMES_RENDER_QUALITY = os.getenv("HYPERFRAMES_RENDER_QUALITY", "standard")
+HYPERFRAMES_FPS = int(os.getenv("HYPERFRAMES_FPS", "30"))
