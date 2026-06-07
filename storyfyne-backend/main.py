@@ -108,11 +108,16 @@ class ExplainerRequest(BaseModel):
     aspect_ratio: str = "16:9"
     language: str = "en-US"
     logo_url: str = ""
+    brand_name: str = ""
+    font_family: str = "Instrument Sans, Inter, Arial, sans-serif"
     primary_color: str = "#10a37f"
     secondary_color: str = "#19c59f"
     bg_color: str = "#050505"
     text_color: str = "#ffffff"
     accent_color: str = "#10a37f"
+    music_url: str = ""
+    music_volume: float = 0.24
+    maintain_background: bool = True
     template: str = "modern"
     image_urls: list[str] = []
     render_quality: str = "standard"  # "standard" = Lambda, "premium" = GPU worker
@@ -1342,11 +1347,16 @@ async def _process_explainer(
     aspect_ratio: str,
     language: str = "en-US",
     logo_url: str = "",
+    brand_name: str = "",
+    font_family: str = "Instrument Sans, Inter, Arial, sans-serif",
     primary_color: str = "#10a37f",
     secondary_color: str = "#19c59f",
     bg_color: str = "#050505",
     text_color: str = "#ffffff",
     accent_color: str = "#10a37f",
+    music_url: str = "",
+    music_volume: float = 0.24,
+    maintain_background: bool = True,
     template: str = "modern",
     image_urls: list[str] = None,
     render_quality: str = "standard",
@@ -1502,11 +1512,16 @@ async def _process_explainer(
         "scenes": scene_audios,
         "aspectRatio": aspect_ratio,
         "logoUrl": logo_url,
+        "brandName": brand_name or title,
+        "fontFamily": font_family,
         "primaryColor": primary_color,
         "secondaryColor": secondary_color,
         "bgColor": bg_color,
         "textColor": text_color,
         "accentColor": accent_color,
+        "musicUrl": music_url,
+        "musicVolume": max(0, min(1, music_volume)),
+        "maintainBackground": maintain_background,
         "mood": mood,
     }
     logger.info(f"[story {story_id}] RENDER SUBMIT | composition={composition_id} | serve_url={REMOTION_SERVE_URL[:80]}... | scenes={len(scene_audios)}")
@@ -1783,6 +1798,11 @@ async def process_explainer(request: ExplainerRequest):
                 template=request.template,
                 image_urls=request.image_urls,
                 render_quality=request.render_quality,
+                brand_name=request.brand_name,
+                font_family=request.font_family,
+                music_url=request.music_url,
+                music_volume=request.music_volume,
+                maintain_background=request.maintain_background,
                 prebuilt_scenes=prebuilt_scenes,
             )
         except Exception as e:

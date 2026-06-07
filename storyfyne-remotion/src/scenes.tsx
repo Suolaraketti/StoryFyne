@@ -15,6 +15,9 @@ export interface SceneData {
   durationInFrames: number;
   audioMarkers?: number[];
   imageUrl?: string;
+  logoUrl?: string;
+  brandName?: string;
+  fontFamily?: string;
   headline?: string;
   subheadline?: string;
   eyebrow?: string;

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Link2, Type, Briefcase, UserCircle, Sparkles, Wand2,
   ChevronDown, Upload, Image, Palette, MonitorPlay, ArrowRight,
-  Loader2
+  Loader2, Music
 } from 'lucide-react';
 
 interface Avatar {
@@ -22,7 +22,7 @@ interface StoryInputProps {
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
   onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string, taggedText: string, context: string) => void;
-  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string, logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string, imageUrls: string[], renderQuality: string) => void;
+  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string, logoUrl: string, brandName: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string, imageUrls: string[], renderQuality: string, musicUrl: string, musicVolume: number, maintainBackground: boolean) => void;
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
   onPreviewInfluencer: (text: string, context: string) => Promise<{ tagged_text: string }>;
   onPreviewExplainer: (text: string) => Promise<{ scenes: any[] }>;
@@ -81,6 +81,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [showExplainerPreview, setShowExplainerPreview] = useState(false);
   const [isPreviewingExplainer, setIsPreviewingExplainer] = useState(false);
   const [explainerLogoUrl, setExplainerLogoUrl] = useState('');
+  const [explainerBrandName, setExplainerBrandName] = useState('');
   const [explainerPrimaryColor, setExplainerPrimaryColor] = useState('#10a37f');
   const [explainerSecondaryColor, setExplainerSecondaryColor] = useState('#19c59f');
   const [explainerBgColor, setExplainerBgColor] = useState('#050505');
@@ -88,6 +89,9 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [explainerAccentColor, setExplainerAccentColor] = useState('#10a37f');
   const [explainerImageUrls, setExplainerImageUrls] = useState<string[]>([]);
   const [explainerRenderQuality, setExplainerRenderQuality] = useState<'standard' | 'premium'>('standard');
+  const [explainerMusicUrl, setExplainerMusicUrl] = useState('');
+  const [explainerMusicVolume, setExplainerMusicVolume] = useState(0.24);
+  const [explainerMaintainBackground, setExplainerMaintainBackground] = useState(true);
 
   const [showCreateAvatar, setShowCreateAvatar] = useState(false);
   const [newAvatarName, setNewAvatarName] = useState('');
@@ -97,6 +101,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [createAvatarStatus, setCreateAvatarStatus] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
+  const musicFileRef = useRef<HTMLInputElement>(null);
   const sceneFileRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
   const isSales = mode === 'sales';
@@ -123,10 +128,13 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       onSubmitExplainer(
         text.trim(), title.trim() || 'Explainer Video', author.trim() || 'Unknown',
         voiceId, aspectRatio, JSON.stringify(explainerScenes),
-        explainerLogoUrl, explainerPrimaryColor, explainerSecondaryColor,
+        explainerLogoUrl, explainerBrandName.trim() || title.trim() || author.trim(), explainerPrimaryColor, explainerSecondaryColor,
         explainerBgColor, explainerTextColor, explainerAccentColor,
         explainerImageUrls.filter(u => u.trim()),
         explainerRenderQuality,
+        explainerMusicUrl.trim(),
+        explainerMusicVolume,
+        explainerMaintainBackground,
       );
     }
   };
@@ -535,13 +543,18 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
             {/* Explainer extras */}
             {isExplainer && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Aspect Ratio</label>
                     <select value={aspectRatio} onChange={e => setAspectRatio(e.target.value)} disabled={isLoading}
                       style={{ ...inputStyle, appearance: 'auto' }}>
                       {ASPECT_RATIOS.map(r => <option key={r.id} value={r.id}>{r.label} — {r.desc}</option>)}
                     </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Brand Name</label>
+                    <input type="text" placeholder="Brand name" value={explainerBrandName} onChange={e => setExplainerBrandName(e.target.value)} disabled={isLoading}
+                      style={inputStyle} onFocus={e => Object.assign(e.target.style, focusGlow('#6366f1'))} onBlur={e => e.target.style.cssText = ''} />
                   </div>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Logo</label>
@@ -626,6 +639,34 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                       </div>
                     ))}
                   </div>
+                  <div style={{ height: 1, background: 'rgba(99,102,241,0.12)', margin: '2px 0' }} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 150px', gap: '10px', alignItems: 'end' }}>
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Music size={12} /> Music bed
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input type="url" placeholder="Music file URL or upload" value={explainerMusicUrl} onChange={e => setExplainerMusicUrl(e.target.value)} disabled={isLoading}
+                          style={{ ...inputStyle, flex: 1, padding: '8px 10px', fontSize: '12px' }} />
+                        <input type="file" ref={musicFileRef} accept="audio/*" style={{ display: 'none' }}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, setExplainerMusicUrl); }} />
+                        <button type="button" onClick={() => musicFileRef.current?.click()} disabled={isLoading}
+                          style={{ padding: '8px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                          <Upload size={12} />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginBottom: '6px' }}>Volume {Math.round(explainerMusicVolume * 100)}%</div>
+                      <input type="range" min={0} max={0.75} step={0.01} value={explainerMusicVolume} onChange={e => setExplainerMusicVolume(Number(e.target.value))} disabled={isLoading}
+                        style={{ width: '100%', accentColor: '#818cf8' }} />
+                    </div>
+                  </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                    <input type="checkbox" checked={explainerMaintainBackground} onChange={e => setExplainerMaintainBackground(e.target.checked)} disabled={isLoading}
+                      style={{ accentColor: '#818cf8' }} />
+                    Maintain background throughout
+                  </label>
                 </div>
               </>
             )}

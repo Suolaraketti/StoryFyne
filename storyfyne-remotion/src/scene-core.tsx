@@ -33,8 +33,7 @@ export function useSceneSizes() {
 }
 
 // ─── Cinematic Headline ─────────────────────────────────────────────
-// Character-by-character reveal with spring + blur clearing.
-// Each letter has weight. Feels expensive.
+// Word-level reveal. Keeps glyphs stable and prevents mid-word wrapping.
 
 export const CinematicHeadline: React.FC<{
   text: string;
@@ -48,7 +47,7 @@ export const CinematicHeadline: React.FC<{
   delay?: number;
   audioMarkers?: number[];
 }> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
-  const chars = text.split("");
+  const words = text.split(/\s+/).filter(Boolean);
   const revealWindow = duration * 0.45;
 
   return (
@@ -57,39 +56,31 @@ export const CinematicHeadline: React.FC<{
         style={{
           display: "flex",
           flexWrap: "wrap",
+          columnGap: size * 0.22,
+          rowGap: size * 0.12,
           justifyContent: align === "center" ? "center" : "flex-start",
           lineHeight: 1.08,
         }}
       >
-        {chars.map((char, i) => {
-          const isSpace = char === " ";
-          // Audio-driven: characters reveal at phrase markers instead of uniform distribution
-          const charDelay = delay + getSyncedStagger(i, chars.length, audioMarkers, 0, revealWindow / Math.max(1, chars.length - 1));
-          const s = spring({ frame: Math.max(0, frame - charDelay), fps, config: SNAPPY_SPRING });
-          const reveal = {
-            opacity: interpolate(s, [0, 0.15, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-            y: interpolate(s, [0, 1], [18, 0]),
-            scale: interpolate(s, [0, 1], [0.9, 1]),
-            blur: interpolate(s, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" }),
-          };
+        {words.map((word, wordIndex) => {
+          const wordDelay = delay + getSyncedStagger(wordIndex, words.length, audioMarkers, 0, revealWindow / Math.max(1, words.length - 1));
+          const opacity = interpolate(frame, [wordDelay, wordDelay + 8], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
           return (
             <span
-              key={i}
+              key={`${word}-${wordIndex}`}
               style={{
                 fontFamily: FONT,
                 fontSize: size,
                 fontWeight: weight,
                 color,
-                letterSpacing: "-0.035em",
-                opacity: reveal.opacity,
-                transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
-                filter: `blur(${reveal.blur}px)`,
+                letterSpacing: 0,
                 display: "inline-block",
-                width: isSpace ? size * 0.25 : "auto",
-                willChange: "transform, opacity, filter",
+                whiteSpace: "nowrap",
+                opacity,
+                willChange: "opacity",
               }}
             >
-              {isSpace ? "\u00A0" : char}
+              {word}
             </span>
           );
         })}
@@ -147,12 +138,12 @@ export const ClipHeadline: React.FC<{
                 fontSize: size,
                 fontWeight: weight,
                 color,
-                letterSpacing: "-0.035em",
+                letterSpacing: 0,
                 opacity: interpolate(s, [0, 0.2, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                transform: `translateY(${interpolate(s, [0, 1], [14, 0])}px) scale(${interpolate(s, [0, 1], [0.95, 1])})`,
-                filter: `blur(${interpolate(s, [0, 0.4], [2, 0], { extrapolateLeft: "clamp" })}px)`,
+                transform: "none",
+                filter: "none",
                 display: "inline-block",
-                willChange: "transform, opacity, filter",
+                willChange: "opacity",
               }}
             >
               {word}
@@ -203,12 +194,12 @@ export const CinematicBody: React.FC<{
                 fontSize: size,
                 fontWeight: 500,
                 color,
-                letterSpacing: "-0.01em",
+                letterSpacing: 0,
                 opacity: reveal.opacity,
-                transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
-                filter: `blur(${reveal.blur}px)`,
+                transform: "none",
+                filter: "none",
                 display: "inline-block",
-                willChange: "transform, opacity, filter",
+                willChange: "opacity",
               }}
             >
               {word}
@@ -273,7 +264,7 @@ export const SceneMotion: React.FC<{
         </div>
       )}
 
-      {/* Content layer — stacks blur + scale + translate */}
+      {/* Content layer */}
       <div
         style={{
           position: "absolute",
@@ -283,12 +274,12 @@ export const SceneMotion: React.FC<{
           alignItems: "center",
           opacity,
           transform: `
-            translateX(${exit.x + eDir.x * (1 - entrance.opacity)}px)
-            translateY(${entrance.y + exit.y + eDir.y * (1 - entrance.opacity)}px)
-            scale(${entrance.scale * exit.scale * cam.scale * (1 + beatPulse * 0.008)})
+            translateX(${Math.round(exit.x + eDir.x * (1 - entrance.opacity))}px)
+            translateY(${Math.round(entrance.y + exit.y + eDir.y * (1 - entrance.opacity))}px)
+            scale(${entrance.scale * exit.scale * cam.scale})
           `,
-          filter: `blur(${entrance.blur + exit.blur}px)`,
-          willChange: "transform, opacity, filter",
+          filter: "none",
+          willChange: "transform, opacity",
         }}
       >
         <div style={{ transform: `translateY(${cam.y}px)`, width: "100%", height: "100%" }}>

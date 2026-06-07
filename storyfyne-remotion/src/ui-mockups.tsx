@@ -32,8 +32,8 @@ export const PhoneFrame: React.FC<{
         padding: "14px 14px 20px",
         position: "relative",
         opacity: interpolate(s, [0, 0.3, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-        transform: `translateY(${interpolate(s, [0, 1], [60, 0])}px) scale(${interpolate(s, [0, 1], [0.92, 1])})`,
-        willChange: "transform, opacity",
+        transform: "none",
+        willChange: "opacity",
       }}
     >
       <div style={{ width: 100, height: 28, background: "#000", borderRadius: 20, margin: "0 auto 12px" }} />
@@ -167,7 +167,7 @@ export const ChatThread: React.FC<{
   audioMarkers?: number[];
 }> = ({ messages, frame, fps, baseDelay = 0, primaryColor = "#0ea5e9", audioMarkers }) => {
   return (
-    <div style={{ padding: "16px 0" }}>
+    <div style={{ padding: "6px 0", display: "flex", flexDirection: "column", gap: 8 }}>
       {messages.map((m, i) => (
         <ChatBubble
           key={i}
@@ -199,7 +199,7 @@ export const EmailPreview: React.FC<{
         display: "flex",
         alignItems: "flex-start",
         gap: 12,
-        padding: "14px 16px",
+        padding: "12px 14px",
         background: "#ffffff",
         borderRadius: 12,
         margin: "0 14px 8px",
@@ -251,7 +251,7 @@ export const NotificationCard: React.FC<{
       <div style={{ width: 40, height: 40, borderRadius: 10, background: "#f0f0f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>{icon}</div>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: "#111", marginBottom: 2 }}>{title}</div>
-        <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 400, color: "#666", lineHeight: 1.3 }}>{body}</div>
+        <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 400, color: "#666", lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{body}</div>
       </div>
     </div>
   );
@@ -510,7 +510,7 @@ export const CalendarBlock: React.FC<{
     <div
       style={{
         margin: "0 14px 10px",
-        padding: "14px 16px",
+        padding: "12px 14px",
         background: "#ffffff",
         borderRadius: 14,
         boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
@@ -521,7 +521,7 @@ export const CalendarBlock: React.FC<{
       }}
     >
       <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 600, color: primaryColor, marginBottom: 4, letterSpacing: "0.02em" }}>{time}</div>
-      <div style={{ fontFamily: FONT, fontSize: 15, fontWeight: 600, color: "#111" }}>{title}</div>
+      <div style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: "#111", lineHeight: 1.25, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{title}</div>
     </div>
   );
 };

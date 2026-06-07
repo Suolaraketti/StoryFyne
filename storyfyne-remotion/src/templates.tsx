@@ -17,6 +17,7 @@ import {
   Stepper,
   SocialProofRow, StatusPill,
 } from "./ui-mockups";
+import { BrandLogo, resolveBrandKit } from "./brand-assets";
 
 const sentenceToHeadline = (text: string, maxWords = 6) => {
   const cleaned = (text || "").replace(/\s+/g, " ").trim();
@@ -493,7 +494,6 @@ export const PremiumPhoneDemoTemplate: React.FC<SceneProps> = ({
   scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
-  const floatY = getFloat(frame, fps, 4, 0.28);
   const messages = scene.messages && scene.messages.length > 0 ? scene.messages : ["I need help today.", sceneHeadline(scene, 8)];
   const pills = scene.statusPills && scene.statusPills.length > 0 ? scene.statusPills : ["Answered", "Qualified", "Booked"];
   const shouldShowCalendar = `${scene.text} ${scene.headline || ""} ${scene.subheadline || ""}`.toLowerCase().match(/book|calendar|schedule|appointment/);
@@ -503,29 +503,54 @@ export const PremiumPhoneDemoTemplate: React.FC<SceneProps> = ({
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 42 : 90, width: "100%" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact={sizes.isVertical} audioMarkers={audioMarkers} />
-          <div style={{ transform: `translateY(${floatY}px)` }}>
+          <div>
             <PhoneFrame frame={frame} fps={fps} primaryColor={primaryColor}>
-              <NotificationCard title="AI concierge" body={clampText(scene.subheadline || sceneHeadline(scene, 9), 62)} frame={frame} fps={fps} delay={10} icon="AI" audioMarkers={audioMarkers} />
-              <div style={{ marginTop: 64, padding: "0 4px" }}>
+              <div style={{ position: "absolute", top: 12, left: 12, right: 12, background: "#ffffff", borderRadius: 18, padding: "12px 14px", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    {[0, 1, 2].map((i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: 13 - i * 2,
+                          height: 3,
+                          borderRadius: 99,
+                          background: primaryColor,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 850, color: "#111827", lineHeight: 1, letterSpacing: 0 }}>
+                    Dialfyne
+                  </div>
+                </div>
+                <div style={{ width: 1, height: 32, background: "#e5e7eb" }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 760, color: "#111", lineHeight: 1.15, whiteSpace: "nowrap" }}>AI answered live</div>
+                  <div style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "#6b7280", lineHeight: 1.25, whiteSpace: "nowrap" }}>Call handled by Dialfyne</div>
+                </div>
+              </div>
+              <div style={{ position: "absolute", top: 110, left: 0, right: 0, bottom: 76, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "0 4px", overflow: "hidden" }}>
                 <ChatThread
-                  messages={messages.slice(0, 2).map((message, i) => ({ text: clampText(message, 54), direction: i === 0 ? "left" as const : "right" as const }))}
+                  messages={messages.slice(0, 2).map((message, i) => ({ text: clampText(message, 44), direction: i === 0 ? "left" as const : "right" as const }))}
                   frame={frame}
                   fps={fps}
                   baseDelay={16}
                   primaryColor={primaryColor}
                   audioMarkers={audioMarkers}
                 />
+                {shouldShowCalendar && (
+                  <CalendarBlock time="Today, 2:00 PM" title={clampText(scene.headline || "Meeting booked", 36)} frame={frame} fps={fps} delay={30} primaryColor={primaryColor} audioMarkers={audioMarkers} />
+                )}
+                {!shouldShowCalendar && (
+                  <div style={{ height: 92 }} />
+                )}
               </div>
-              {shouldShowCalendar && (
-                <div style={{ marginTop: 8, padding: "0 4px" }}>
-                  <CalendarBlock time="Today, 2:00 PM" title={clampText(scene.headline || "Meeting booked", 42)} frame={frame} fps={fps} delay={30} primaryColor={primaryColor} audioMarkers={audioMarkers} />
-                </div>
-              )}
-              <div style={{ position: "absolute", bottom: 20, left: 14, right: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <div style={{ position: "absolute", bottom: 18, left: 14, right: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", justifyContent: "center", minHeight: 42 }}>
                 {pills.slice(0, 3).map((pill, i) => (
                   <StatusPill key={pill} label={pill} frame={frame} fps={fps} delay={40 + i * 8} variant={i === 1 ? "accent" : "success"} primaryColor={primaryColor} audioMarkers={audioMarkers} />
                 ))}
-              </div>
+                </div>
             </PhoneFrame>
           </div>
         </div>
@@ -766,9 +791,19 @@ export const PremiumTestimonialQuoteTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumBrandLockupTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, secondaryColor, textColor, bgColor, accentColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
+  const brand = resolveBrandKit({
+    brandName: scene.brandName,
+    logoUrl: scene.logoUrl,
+    primaryColor,
+    secondaryColor,
+    bgColor,
+    textColor,
+    accentColor,
+    fontFamily: scene.fontFamily,
+  });
   const lineS = spring({ frame: Math.max(0, frame - 20), fps, config: SNAPPY_SPRING });
   const lineWidth = interpolate(lineS, [0, 1], [0, 220], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const mainText = scene.cta || scene.headline || "Launch with confidence";
@@ -776,7 +811,10 @@ export const PremiumBrandLockupTemplate: React.FC<SceneProps> = ({
   return (
     <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
-        <div style={{ textAlign: "center", maxWidth: 860 }}>
+        <div style={{ textAlign: "center", maxWidth: 860, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ marginBottom: 30 }}>
+            <BrandLogo brand={brand} size={sizes.isVertical ? 58 : 72} showName={Boolean(brand.brandName)} opacity={1} />
+          </div>
           {scene.eyebrow && <div style={{ fontFamily: FONT, fontSize: sizes.small, fontWeight: 750, color: primaryColor, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 18 }}>{scene.eyebrow}</div>}
           <CinematicHeadline text={mainText} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.58)} delay={0} audioMarkers={audioMarkers} />
           <div style={{ height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "30px auto" }} />

@@ -1,5 +1,6 @@
 import { Composition, CalculateMetadataFunction } from "remotion";
 import { ExplainerVideo, explainerVideoSchema, defaultProps, ExplainerVideoProps } from "./ExplainerVideo";
+import { BrandAssetsComposition, DEFAULT_BRAND_KIT } from "./brand-assets";
 
 const calculateMetadata: CalculateMetadataFunction<ExplainerVideoProps> = async ({ props }) => {
   const scenes = props.scenes || [];
@@ -33,6 +34,15 @@ export const Root: React.FC = () => {
         schema={explainerVideoSchema}
         defaultProps={defaultProps}
         calculateMetadata={calculateMetadata}
+      />
+      <Composition
+        id="BrandAssets"
+        component={BrandAssetsComposition}
+        durationInFrames={150}
+        fps={30}
+        width={1920}
+        height={1080}
+        defaultProps={DEFAULT_BRAND_KIT}
       />
     </>
   );

@@ -163,6 +163,9 @@ STYLE TARGET
 - Dark cinematic stage, sharp typography, realistic product UI, one idea per beat.
 - Confident, specific, concrete. No hype filler. No corny futurism.
 - Show product behavior wherever possible: dashboards, inboxes, calls, workflows, command bars, scheduling, live metrics.
+- Treat the video like scene-by-scene motion architecture, not slides. Each scene should feel connected to the same product world.
+- Maintain one consistent background direction across the sequence unless the story has a deliberate reveal.
+- Assume brand assets may be available locally: logo, Instrument Sans/Serif style typography, and a stable color palette. Keep every visual field compatible with that shared brand kit.
 
 AVAILABLE TEMPLATES
 - heroStatement: Big belief shift or product reveal. One line, no widget.
@@ -218,6 +221,8 @@ RULES FOR QUALITY
 - Do not paste long narrator sentences into headline. The visual copy must be shorter and punchier.
 - Prefer concrete product UI over abstract claims.
 - Every UI label should sound like real SaaS software, not placeholder copy.
+- Keep continuity: reuse product nouns, status labels, and dashboard metrics across scenes so the video feels built from one system.
+- Design for finishing: leave room for a low-volume music bed under the narration; avoid dense visual moments that fight the voiceover.
 - Use clean/minimal mood by default. Use cyber/retro/dramatic only if the product explicitly demands it.
 - No TTS tags, no markdown, no explanations.
 - Avoid empty business cliches: "unlock potential", "revolutionize", "game changer", "seamless experience", "next level".

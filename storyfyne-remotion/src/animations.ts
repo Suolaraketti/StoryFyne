@@ -46,8 +46,8 @@ export function getCinematicEntrance(frame: number, delay = 0, duration = 30) {
   return {
     opacity: eased,
     y: lerp(40, 0, eased),
-    scale: lerp(0.94, 1, eased),
-    blur: lerp(4, 0, eased), // px
+    scale: 1,
+    blur: 0,
   };
 }
 
@@ -56,14 +56,14 @@ export function getCinematicExit(frame: number, duration: number, direction: "le
   const start = duration - outDuration;
   const t = clamp((frame - start) / outDuration, 0, 1);
   const eased = Easing.out(Easing.cubic)(t);
-  const dirMap = { left: { x: -120, y: 0 }, right: { x: 120, y: 0 }, up: { x: 0, y: -80 }, down: { x: 0, y: 80 } };
+  const dirMap = { left: { x: -18, y: 0 }, right: { x: 18, y: 0 }, up: { x: 0, y: -16 }, down: { x: 0, y: 16 } };
   const dir = dirMap[direction];
   return {
-    opacity: lerp(1, 0, eased),
+    opacity: lerp(1, 0.92, eased),
     x: lerp(0, dir.x, eased),
     y: lerp(0, dir.y, eased),
-    scale: lerp(1, 0.96, eased),
-    blur: lerp(0, 3, eased),
+    scale: 1,
+    blur: 0,
   };
 }
 
@@ -87,8 +87,8 @@ export function getCharReveal(frame: number, fps: number, charIndex: number, tot
   return {
     opacity: interpolate(s, [0, 0.2, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
     y: interpolate(s, [0, 1], [16, 0]),
-    scale: interpolate(s, [0, 1], [0.92, 1]),
-    blur: interpolate(s, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" }),
+    scale: 1,
+    blur: 0,
   };
 }
 
@@ -102,8 +102,8 @@ export function getWordReveal(frame: number, fps: number, wordIndex: number, tot
   return {
     opacity: interpolate(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
     y: interpolate(s, [0, 1], [14, 0]),
-    scale: interpolate(s, [0, 1], [0.96, 1]),
-    blur: interpolate(s, [0, 0.4], [2, 0], { extrapolateLeft: "clamp" }),
+    scale: 1,
+    blur: 0,
   };
 }
 
@@ -111,10 +111,9 @@ export function getWordReveal(frame: number, fps: number, wordIndex: number, tot
 // Slow, deliberate, bezier-based. Never spring-based.
 
 export function getCamera(frame: number, duration: number) {
-  const t = clamp(frame / Math.max(1, duration), 0, 1);
   return {
-    scale: lerp(1, 1.04, Easing.out(Easing.cubic)(t)),
-    y: lerp(0, -12, Easing.out(Easing.cubic)(t)),
+    scale: 1,
+    y: 0,
   };
 }
 

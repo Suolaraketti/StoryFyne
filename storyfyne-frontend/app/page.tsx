@@ -220,7 +220,7 @@ export default function Home() {
   };
 
   const handlePreviewSales = async (text: string, websiteUrl: string) => {
-    const res = await fetch(`${API_URL}/api/preview-sales`, {
+    const res = await fetch(`${API_URL}/api/draft-sales`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, website_url: websiteUrl }),
@@ -247,8 +247,8 @@ export default function Home() {
 
   const handleSubmitExplainer = async (
     text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string,
-    logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string,
-    imageUrls: string[], renderQuality: string,
+    logoUrl: string, brandName: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string,
+    imageUrls: string[], renderQuality: string, musicUrl: string, musicVolume: number, maintainBackground: boolean,
   ) => {
     setIsLoading(true);
     setProgressMode('explainer');
@@ -262,6 +262,7 @@ export default function Home() {
         body: JSON.stringify({
           text, title, author, voice_id: voiceId, aspect_ratio: aspectRatio,
           logo_url: logoUrl,
+          brand_name: brandName,
           primary_color: primaryColor,
           secondary_color: secondaryColor,
           bg_color: bgColor,
@@ -269,6 +270,9 @@ export default function Home() {
           accent_color: accentColor,
           image_urls: imageUrls,
           render_quality: renderQuality,
+          music_url: musicUrl,
+          music_volume: musicVolume,
+          maintain_background: maintainBackground,
           scenes_json: scenesJson,
         }),
       });
