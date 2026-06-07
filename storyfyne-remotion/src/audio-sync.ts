@@ -221,3 +221,25 @@ export function isAccentFrame(frame: number, markers: number[] | undefined, wind
   if (!markers || markers.length === 0) return false;
   return markers.some((m) => Math.abs(frame - m) <= windowFrames);
 }
+
+/**
+ * Music beat pulse from a known tempo (no audio analysis needed).
+ * Returns 0..1 that spikes on each beat and decays — downbeats hit harder.
+ * Drives global beat-reactive accents synced to the background track.
+ */
+export function getMusicBeatPulse(
+  frame: number,
+  fps: number,
+  bpm: number,
+  offsetFrames: number = 0,
+  decay: number = 5.5,
+  beatsPerBar: number = 4,
+): number {
+  if (!bpm || bpm <= 0) return 0;
+  const beatLen = (fps * 60) / bpm;
+  const rel = frame - offsetFrames;
+  const phase = ((rel % beatLen) + beatLen) % beatLen / beatLen;
+  const beatIndex = Math.floor(rel / beatLen);
+  const strength = beatIndex % beatsPerBar === 0 ? 1 : 0.6;
+  return Math.exp(-phase * decay) * strength;
+}

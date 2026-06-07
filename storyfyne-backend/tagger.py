@@ -169,8 +169,8 @@ STYLE TARGET
 
 AVAILABLE TEMPLATES
 - heroStatement: Big belief shift or product reveal. One line, no widget.
-- phoneDemo: Mobile interaction, AI call/chat, lead capture, booking.
-- browserDashboard: SaaS dashboard, command center, analytics, workflow UI.
+- phoneDemo: Mobile interaction, AI call/chat, lead capture, booking. Shows a REAL app screenshot in a phone if one is attached.
+- browserDashboard: SaaS dashboard, command center, analytics, workflow UI. Shows a REAL screenshot in a browser if one is attached.
 - statsGrid: 2-3 crisp quantified proof points.
 - testimonialQuote: Short proof quote or market signal.
 - beforeAfter: Old workflow vs new workflow.
@@ -181,7 +181,29 @@ AVAILABLE TEMPLATES
 - socialProofBanner: Customer/user trust signal.
 - calendarBooking: Booking/scheduling outcome.
 - revenueCounter: One outcome metric.
-- brandLockup: Final CTA.
+- brandLockup: Final CTA (renders the uploaded brand logo if present).
+
+IMAGE-DRIVEN TEMPLATES (use these when the scene should show the user's REAL product, screenshot, or logo)
+- productShowcase: Copy on one side, a device-framed product screenshot on the other. The default "show the product" scene.
+- heroImage: One large product screenshot as the centerpiece with a headline beneath it. Great for the reveal beat.
+- screenshotCarousel: Several product screenshots fanned in 3D. Use for "works everywhere / many features" beats (needs 2-4 images).
+- featureSplit: A tight copy + screenshot detail pairing for a single capability.
+- logoReveal: The brand logo, large and centered. Good as an opener or closer.
+- logoWall: A "trusted by" grid of customer/integration logos. Use for social proof; the editor attaches the logos (or list names in `steps`).
+
+VOICE-AI TEMPLATES (use these when the product is a phone agent, voice assistant, AI receptionist, or call automation — the call itself is the product, so NO screenshot is needed)
+- aiCall: A live AI-call card — pulsing avatar, reactive voice waveform, a 2-line transcript, and outcome chips. THE hero visual for a voice product. Put the caller's first line + the AI's reply in `messages`, and outcomes in `status_pills` (e.g. ["Answered in 0.2s","Qualified","Booked"]).
+- callTranscript: A clean transcript card with speaker turns streaming in. Use for "every call captured / searchable notes" proof. Put 3-4 alternating caller/AI lines in `messages`.
+
+IF THE PRODUCT IS VOICE / CALL / PHONE BASED
+- Use aiCall for the product reveal beat instead of phoneDemo or browserDashboard.
+- Use callTranscript or browserDashboard (dashboard screenshot) for the proof beat.
+- Only reach for screenshot templates (productShowcase/heroImage) when the script explicitly references a dashboard/analytics screen.
+
+PICKING IMAGE TEMPLATES
+- The user attaches their own screenshots/logo to scenes in the editor AFTER you write them. So when the script describes seeing the product, the dashboard, the app, the UI, or "take a look", prefer an image-driven template (productShowcase / heroImage / browserDashboard / phoneDemo) so there is a natural place for their screenshot.
+- For each image-friendly scene you may set "device" to one of: browser, phone, tablet, window, bare (how the screenshot is framed). Default browser; use phone for mobile app shots; bare/window for full-bleed marketing shots.
+- Do NOT invent image URLs. Never put http links in any field. Just choose the template + device; the editor supplies the actual image.
 
 SCENE ARC
 Use 5-7 scenes for normal input. Use 3-4 only if input is very short.
@@ -204,6 +226,7 @@ Required fields per scene:
 - subheadline: optional, 4-14 words max.
 - eyebrow: optional, 1-4 words max.
 - visual_direction: one compact sentence describing the intended product/UI moment.
+- highlight (optional, heroStatement only): one or two words from the headline to emphasize in the brand color with an animated underline. Pick the most important word.
 
 Template-specific fields, when useful:
 - statsGrid / revenueCounter: metrics: [{"value":"$42K","label":"recovered revenue"}, ...]
@@ -216,6 +239,8 @@ Template-specific fields, when useful:
 - testimonialQuote: quote: "...", attribution: "..."
 - pricingTiers: plans: [{"name":"...", "price":"...", "features":["...","..."]}, ...]
 - brandLockup: cta: "...", url: "..."
+- productShowcase / heroImage / browserDashboard / phoneDemo / featureSplit: device: "browser" | "phone" | "tablet" | "window" | "bare"
+- screenshotCarousel: device: "window" (the editor attaches 2-4 screenshots)
 
 RULES FOR QUALITY
 - Do not paste long narrator sentences into headline. The visual copy must be shorter and punchier.
@@ -227,9 +252,16 @@ RULES FOR QUALITY
 - No TTS tags, no markdown, no explanations.
 - Avoid empty business cliches: "unlock potential", "revolutionize", "game changer", "seamless experience", "next level".
 
+SOUNDTRACK
+Also choose a background-music vibe for the whole film. Add a top-level "music" object:
+- style: a short phrase (e.g. "uplifting tech", "cinematic build", "warm minimal").
+- bpm: an integer tempo that fits the energy (slow/calm ~80-95, steady ~100-115, upbeat ~118-128).
+- energy: one of calm | steady | build | high.
+
 Return ONLY valid JSON:
 {
   "mood": "clean",
+  "music": {"style": "uplifting tech", "bpm": 120, "energy": "build"},
   "scenes": [
     {
       "scene_text": "...",

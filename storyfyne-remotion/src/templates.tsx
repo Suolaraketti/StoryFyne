@@ -15,9 +15,18 @@ import {
   BarChart, LineChart, ProgressRing,
   TypewriterInput, Button,
   Stepper,
-  SocialProofRow, StatusPill,
+  SocialProofRow, StatusPill, AnimatedNumber,
 } from "./ui-mockups";
-import { BrandLogo, resolveBrandKit } from "./brand-assets";
+import { ScreenshotFrame, ScreenshotStack, LogoLockup, LogoWall, DeviceVariant, ImageFit } from "./media";
+import { AICallPanel, CallTranscriptPanel } from "./voice";
+
+// Collect every usable image off a scene: explicit list first, then single.
+const sceneImages = (scene: SceneProps["scene"]): string[] => {
+  const list = (scene.imageUrls || []).filter(Boolean);
+  if (scene.imageUrl) list.unshift(scene.imageUrl);
+  return Array.from(new Set(list));
+};
+const firstImage = (scene: SceneProps["scene"]): string => sceneImages(scene)[0] || "";
 
 const sentenceToHeadline = (text: string, maxWords = 6) => {
   const cleaned = (text || "").replace(/\s+/g, " ").trim();
@@ -67,8 +76,14 @@ const PremiumCopy: React.FC<{
   const sizes = useSceneSizes();
   const headline = sceneHeadline(scene, compact ? 5 : 7);
   const subheadline = sceneSubheadline(scene, compact ? 10 : 14);
+  // Adaptive headline size: long headlines step down so they don't wrap to an
+  // ugly second line in a constrained column.
+  const baseMul = compact ? (sizes.isVertical ? 0.4 : 0.46) : 0.6;
+  const lenFactor = headline.length > 22 ? 0.74 : headline.length > 15 ? 0.86 : 1;
+  const headlineSize = Math.round(sizes.headline * baseMul * lenFactor);
+  const maxW = compact ? (sizes.isVertical ? 760 : 620) : 720;
   return (
-    <div style={{ maxWidth: compact ? 520 : 680, textAlign: align }}>
+    <div style={{ maxWidth: maxW, textAlign: align, marginLeft: align === "center" ? "auto" : undefined, marginRight: align === "center" ? "auto" : undefined }}>
       {scene.eyebrow && (
         <div style={{
           fontFamily: FONT,
@@ -88,7 +103,7 @@ const PremiumCopy: React.FC<{
         fps={fps}
         duration={duration}
         color={textColor}
-        size={compact ? Math.round(sizes.headline * 0.5) : Math.round(sizes.headline * 0.62)}
+        size={headlineSize}
         align={align}
         audioMarkers={audioMarkers}
       />
@@ -143,7 +158,7 @@ const MetricTile: React.FC<{
       opacity: interpolate(s, [0, 0.25, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
       transform: `translateY(${interpolate(s, [0, 1], [28, 0])}px) scale(${interpolate(s, [0, 1], [0.96, 1])})`,
     }}>
-      <div style={{ fontFamily: FONT, fontSize: 64, fontWeight: 850, color: textColor, letterSpacing: "-0.045em", lineHeight: 0.95 }}>{value}</div>
+      <div style={{ fontFamily: FONT, fontSize: 64, fontWeight: 850, color: textColor, letterSpacing: "-0.045em", lineHeight: 0.95 }}><AnimatedNumber value={value} frame={frame} fps={fps} delay={delay} /></div>
       <div style={{ fontFamily: FONT, fontSize: 16, fontWeight: 600, color: `${textColor}99`, marginTop: 14 }}>{label}</div>
       <div style={{ height: 2, width: 68, borderRadius: 99, background: primaryColor, marginTop: 20, opacity: 0.8 }} />
     </GlassPanel>
@@ -154,13 +169,13 @@ const MetricTile: React.FC<{
 // The flagship. Clip-path wipe + word pop + camera push.
 
 export const HeroStatementTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const headline = sceneHeadline(scene, 7);
   const subheadline = scene.subheadline || "";
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ textAlign: "center", maxWidth: sizes.isVertical ? "90%" : "82%" }}>
           {scene.eyebrow && (
@@ -168,7 +183,7 @@ export const HeroStatementTemplate: React.FC<SceneProps> = ({
               {scene.eyebrow}
             </div>
           )}
-          <ClipHeadline text={headline} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.9)} audioMarkers={audioMarkers} />
+          <ClipHeadline text={headline} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.9)} audioMarkers={audioMarkers} highlight={scene.highlight} highlightColor={primaryColor} />
           {subheadline && (
             <CinematicBody text={subheadline} frame={frame} fps={fps} duration={duration} color={`${textColor}b8`} size={Math.round(sizes.body * 0.72)} baseDelay={22} audioMarkers={audioMarkers} />
           )}
@@ -181,14 +196,14 @@ export const HeroStatementTemplate: React.FC<SceneProps> = ({
 // ─── 2. PHONE DEMO ──────────────────────────────────────────────────
 
 export const PhoneDemoTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const textLower = scene.text.toLowerCase();
   const floatY = getFloat(frame, fps, 5, 0.35);
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
         <div style={{ transform: `translateY(${floatY}px)` }}>
           <PhoneFrame frame={frame} fps={fps} primaryColor={primaryColor}>
@@ -223,13 +238,13 @@ export const PhoneDemoTemplate: React.FC<SceneProps> = ({
 // ─── 3. BROWSER DASHBOARD ───────────────────────────────────────────
 
 export const BrowserDashboardTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <BrowserFrame frame={frame} fps={fps} url={scene.subtext || "dashboard"}>
           <div style={{ display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, marginBottom: 20 }}>
@@ -256,7 +271,7 @@ export const BrowserDashboardTemplate: React.FC<SceneProps> = ({
 // ─── 4. STATS GRID ──────────────────────────────────────────────────
 
 export const StatsGridTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const stats = scene.text.split(",").map(s => s.trim()).filter(Boolean);
@@ -266,7 +281,7 @@ export const StatsGridTemplate: React.FC<SceneProps> = ({
   });
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", gap: sizes.isVertical ? 40 : 60, alignItems: "center" }}>
           {parsed.map((stat, i) => (
@@ -281,11 +296,11 @@ export const StatsGridTemplate: React.FC<SceneProps> = ({
 // ─── 5. TESTIMONIAL QUOTE ───────────────────────────────────────────
 
 export const TestimonialQuoteTemplate: React.FC<SceneProps> = ({
-  scene, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <TestimonialCard
           quote={scene.text}
@@ -303,13 +318,13 @@ export const TestimonialQuoteTemplate: React.FC<SceneProps> = ({
 // ─── 6. BEFORE AFTER ────────────────────────────────────────────────
 
 export const BeforeAfterTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const parts = scene.text.split(/vs|versus|→|->/).map(s => s.trim());
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <ComparisonCard
           beforeLabel="Before" beforeText={parts[0] || "Before"}
@@ -325,13 +340,13 @@ export const BeforeAfterTemplate: React.FC<SceneProps> = ({
 // ─── 7. WORKFLOW STEPS ──────────────────────────────────────────────
 
 export const WorkflowStepsTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const steps = scene.text.split(/[→\-\>]/).map(s => s.trim()).filter(Boolean);
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <Stepper steps={steps.slice(0, 4)} activeStep={steps.length - 1} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} audioMarkers={audioMarkers} />
       </AbsoluteFill>
@@ -342,13 +357,13 @@ export const WorkflowStepsTemplate: React.FC<SceneProps> = ({
 // ─── 8. PRICING TIERS ───────────────────────────────────────────────
 
 export const PricingTiersTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: isVertical ? "column" : "row", gap: 16, alignItems: "center" }}>
           <PricingCard plan="Starter" price="$29" period="/mo" features={["100 calls/mo", "Basic AI", "Email summaries"]} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} audioMarkers={audioMarkers} />
@@ -363,7 +378,7 @@ export const PricingTiersTemplate: React.FC<SceneProps> = ({
 // ─── 9. FEATURE HIGHLIGHT ───────────────────────────────────────────
 
 export const FeatureHighlightTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const features = [
@@ -374,7 +389,7 @@ export const FeatureHighlightTemplate: React.FC<SceneProps> = ({
   ];
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "grid", gridTemplateColumns: sizes.isVertical ? "1fr" : "1fr 1fr", gap: 16, maxWidth: 500 }}>
           {features.map((f, i) => (
@@ -389,11 +404,11 @@ export const FeatureHighlightTemplate: React.FC<SceneProps> = ({
 // ─── 10. TYPEWRITER COMMAND ─────────────────────────────────────────
 
 export const TypewriterCommandTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <TypewriterInput text={scene.text} frame={frame} fps={fps} delay={10} speed={0.4} audioMarkers={audioMarkers} />
       </AbsoluteFill>
@@ -404,11 +419,11 @@ export const TypewriterCommandTemplate: React.FC<SceneProps> = ({
 // ─── 11. SOCIAL PROOF BANNER ────────────────────────────────────────
 
 export const SocialProofBannerTemplate: React.FC<SceneProps> = ({
-  scene, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <SocialProofRow
           avatars={["A", "B", "C", "D"]}
@@ -425,13 +440,13 @@ export const SocialProofBannerTemplate: React.FC<SceneProps> = ({
 // ─── 12. CALENDAR BOOKING ───────────────────────────────────────────
 
 export const CalendarBookingTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: isVertical ? "column" : "row", gap: 20, alignItems: "center" }}>
           <CalendarMonth month="March 2025" highlightedDays={[15, 16, 17, 18, 22]} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} audioMarkers={audioMarkers} />
@@ -445,11 +460,11 @@ export const CalendarBookingTemplate: React.FC<SceneProps> = ({
 // ─── 13. REVENUE COUNTER ────────────────────────────────────────────
 
 export const RevenueCounterTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
         <ProgressRing percent={85} label={scene.text} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} audioMarkers={audioMarkers} />
       </AbsoluteFill>
@@ -461,7 +476,7 @@ export const RevenueCounterTemplate: React.FC<SceneProps> = ({
 // Clean CTA. Line grows with spring. Text reveals word-by-word.
 
 export const BrandLockupTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const lineS = spring({ frame: Math.max(0, frame - 20), fps, config: SNAPPY_SPRING });
@@ -471,7 +486,7 @@ export const BrandLockupTemplate: React.FC<SceneProps> = ({
   const urlText = isUrl ? scene.text : (scene.subtext || "");
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ textAlign: "center" }}>
           <CinematicHeadline text={mainText} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.6)} delay={0} audioMarkers={audioMarkers} />
@@ -491,66 +506,57 @@ export const BrandLockupTemplate: React.FC<SceneProps> = ({
 // components available, but render from the richer visual brief when present.
 
 export const PremiumPhoneDemoTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
+  const floatY = getFloat(frame, fps, 4, 0.28);
   const messages = scene.messages && scene.messages.length > 0 ? scene.messages : ["I need help today.", sceneHeadline(scene, 8)];
   const pills = scene.statusPills && scene.statusPills.length > 0 ? scene.statusPills : ["Answered", "Qualified", "Booked"];
   const shouldShowCalendar = `${scene.text} ${scene.headline || ""} ${scene.subheadline || ""}`.toLowerCase().match(/book|calendar|schedule|appointment/);
+  const shot = firstImage(scene);
+
+  // Real product screenshot supplied → show it in a phone, copy beside it.
+  if (shot) {
+    return (
+      <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+        <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+          <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 42 : 84, width: "100%" }}>
+            <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+            <ScreenshotFrame imageUrl={shot} variant="phone" frame={frame} fps={fps} delay={8} primaryColor={primaryColor} fit={scene.imageFit || "cover"} />
+          </div>
+        </AbsoluteFill>
+      </SceneMotion>
+    );
+  }
 
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 42 : 90, width: "100%" }}>
-          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact={sizes.isVertical} audioMarkers={audioMarkers} />
-          <div>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          <div style={{ transform: `translateY(${floatY}px)` }}>
             <PhoneFrame frame={frame} fps={fps} primaryColor={primaryColor}>
-              <div style={{ position: "absolute", top: 12, left: 12, right: 12, background: "#ffffff", borderRadius: 18, padding: "12px 14px", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                    {[0, 1, 2].map((i) => (
-                      <div
-                        key={i}
-                        style={{
-                          width: 13 - i * 2,
-                          height: 3,
-                          borderRadius: 99,
-                          background: primaryColor,
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <div style={{ fontFamily: FONT, fontSize: 13, fontWeight: 850, color: "#111827", lineHeight: 1, letterSpacing: 0 }}>
-                    Dialfyne
-                  </div>
-                </div>
-                <div style={{ width: 1, height: 32, background: "#e5e7eb" }} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: FONT, fontSize: 12, fontWeight: 760, color: "#111", lineHeight: 1.15, whiteSpace: "nowrap" }}>AI answered live</div>
-                  <div style={{ fontFamily: FONT, fontSize: 11, fontWeight: 500, color: "#6b7280", lineHeight: 1.25, whiteSpace: "nowrap" }}>Call handled by Dialfyne</div>
-                </div>
-              </div>
-              <div style={{ position: "absolute", top: 110, left: 0, right: 0, bottom: 76, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "0 4px", overflow: "hidden" }}>
+              <NotificationCard title="AI concierge" body={clampText(scene.subheadline || sceneHeadline(scene, 9), 62)} frame={frame} fps={fps} delay={10} icon="AI" audioMarkers={audioMarkers} />
+              <div style={{ marginTop: 64, padding: "0 4px" }}>
                 <ChatThread
-                  messages={messages.slice(0, 2).map((message, i) => ({ text: clampText(message, 44), direction: i === 0 ? "left" as const : "right" as const }))}
+                  messages={messages.slice(0, 2).map((message, i) => ({ text: clampText(message, 54), direction: i === 0 ? "left" as const : "right" as const }))}
                   frame={frame}
                   fps={fps}
                   baseDelay={16}
                   primaryColor={primaryColor}
                   audioMarkers={audioMarkers}
                 />
-                {shouldShowCalendar && (
-                  <CalendarBlock time="Today, 2:00 PM" title={clampText(scene.headline || "Meeting booked", 36)} frame={frame} fps={fps} delay={30} primaryColor={primaryColor} audioMarkers={audioMarkers} />
-                )}
-                {!shouldShowCalendar && (
-                  <div style={{ height: 92 }} />
-                )}
               </div>
-              <div style={{ position: "absolute", bottom: 18, left: 14, right: 14, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", justifyContent: "center", minHeight: 42 }}>
+              {shouldShowCalendar && (
+                <div style={{ marginTop: 8, padding: "0 4px" }}>
+                  <CalendarBlock time="Today, 2:00 PM" title={clampText(scene.headline || "Meeting booked", 42)} frame={frame} fps={fps} delay={30} primaryColor={primaryColor} audioMarkers={audioMarkers} />
+                </div>
+              )}
+              <div style={{ position: "absolute", bottom: 20, left: 14, right: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {pills.slice(0, 3).map((pill, i) => (
                   <StatusPill key={pill} label={pill} frame={frame} fps={fps} delay={40 + i * 8} variant={i === 1 ? "accent" : "success"} primaryColor={primaryColor} audioMarkers={audioMarkers} />
                 ))}
-                </div>
+              </div>
             </PhoneFrame>
           </div>
         </div>
@@ -560,10 +566,11 @@ export const PremiumPhoneDemoTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumBrowserDashboardTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const { isVertical } = sizes;
+  const shot = firstImage(scene);
   const cards = scene.dashboardCards && scene.dashboardCards.length > 0
     ? scene.dashboardCards
     : [
@@ -572,8 +579,22 @@ export const PremiumBrowserDashboardTemplate: React.FC<SceneProps> = ({
         { label: "Pipeline", value: "$47K", trend: "+32%" },
       ];
 
+  // Real product screenshot supplied → show it in a browser with copy above.
+  if (shot) {
+    return (
+      <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+        <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: isVertical ? 30 : 40, width: "100%", alignItems: "center" }}>
+            <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
+            <ScreenshotFrame imageUrl={shot} variant={(scene.device as DeviceVariant) || "browser"} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} url={scene.url || "app.command-center.ai"} fit={scene.imageFit || "cover"} maxHeightFraction={sizes.isVertical ? 0.52 : 0.62} />
+          </div>
+        </AbsoluteFill>
+      </SceneMotion>
+    );
+  }
+
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 28, width: "100%", alignItems: "center" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
@@ -605,12 +626,12 @@ export const PremiumBrowserDashboardTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumStatsGridTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const metrics = scene.metrics && scene.metrics.length > 0 ? scene.metrics : defaultMetrics;
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 46, alignItems: "center", width: "100%" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
@@ -626,14 +647,14 @@ export const PremiumStatsGridTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumBeforeAfterTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const parts = scene.text.split(/vs|versus|->/i).map(s => s.trim());
   const before = scene.before || parts[0] || "Manual follow-up";
   const after = scene.after || parts[1] || sceneHeadline(scene, 7);
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 38, alignItems: "center" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
@@ -645,13 +666,13 @@ export const PremiumBeforeAfterTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumWorkflowStepsTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const steps = scene.steps && scene.steps.length > 0 ? scene.steps : scene.text.split(/->|to|then/i).map(s => s.trim()).filter(Boolean).slice(0, 3);
   const safeSteps = steps.length >= 2 ? steps : ["Capture", "Qualify", "Book"];
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 44, alignItems: "center", width: "100%" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
@@ -665,12 +686,12 @@ export const PremiumWorkflowStepsTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumFeatureHighlightTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const features = scene.features && scene.features.length > 0 ? scene.features : defaultFeatures;
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 34, alignItems: "center", width: "100%" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
@@ -686,12 +707,12 @@ export const PremiumFeatureHighlightTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumTypewriterCommandTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const command = scene.command || `Automate: ${sceneHeadline(scene, 8)}`;
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 36, alignItems: "center", width: "100%" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
@@ -705,12 +726,12 @@ export const PremiumTypewriterCommandTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumRevenueCounterTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const metric = scene.metrics?.[0] || { value: scene.headline || "$47K", label: scene.subheadline || "new pipeline created" };
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 34, alignItems: "center" }}>
           <MetricTile value={metric.value} label={metric.label} frame={frame} fps={fps} delay={8} primaryColor={primaryColor} textColor={textColor} />
@@ -724,12 +745,12 @@ export const PremiumRevenueCounterTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumPricingTiersTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const plans = scene.plans && scene.plans.length > 0 ? scene.plans : defaultPlans;
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 32, alignItems: "center", width: "100%" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
@@ -752,11 +773,11 @@ export const PremiumSocialProofBannerTemplate: React.FC<SceneProps> = (props) =>
 );
 
 export const PremiumCalendarBookingTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", gap: 34, alignItems: "center" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} compact audioMarkers={audioMarkers} />
@@ -773,13 +794,13 @@ export const PremiumCalendarBookingTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumTestimonialQuoteTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
 }) => {
   const sizes = useSceneSizes();
   const attribution = scene.attribution || "Customer";
   const [name, role] = attribution.split("-").map(p => p.trim());
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 28, alignItems: "center" }}>
           <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
@@ -791,36 +812,230 @@ export const PremiumTestimonialQuoteTemplate: React.FC<SceneProps> = ({
 };
 
 export const PremiumBrandLockupTemplate: React.FC<SceneProps> = ({
-  scene, primaryColor, secondaryColor, textColor, bgColor, accentColor, frame, fps, duration, entranceDirection, exitDirection, audioMarkers,
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers, logoUrl,
 }) => {
   const sizes = useSceneSizes();
-  const brand = resolveBrandKit({
-    brandName: scene.brandName,
-    logoUrl: scene.logoUrl,
-    primaryColor,
-    secondaryColor,
-    bgColor,
-    textColor,
-    accentColor,
-    fontFamily: scene.fontFamily,
-  });
   const lineS = spring({ frame: Math.max(0, frame - 20), fps, config: SNAPPY_SPRING });
   const lineWidth = interpolate(lineS, [0, 1], [0, 220], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const mainText = scene.cta || scene.headline || "Launch with confidence";
   const urlText = scene.url || scene.subheadline || "";
   return (
-    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} audioMarkers={audioMarkers}>
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
         <div style={{ textAlign: "center", maxWidth: 860, display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{ marginBottom: 30 }}>
-            <BrandLogo brand={brand} size={sizes.isVertical ? 58 : 72} showName={Boolean(brand.brandName)} opacity={1} />
-          </div>
+          {logoUrl && (
+            <div style={{ marginBottom: 34 }}>
+              <LogoLockup logoUrl={logoUrl} frame={frame} fps={fps} delay={0} primaryColor={primaryColor} textColor={textColor} heightFraction={0.16} />
+            </div>
+          )}
           {scene.eyebrow && <div style={{ fontFamily: FONT, fontSize: sizes.small, fontWeight: 750, color: primaryColor, letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 18 }}>{scene.eyebrow}</div>}
-          <CinematicHeadline text={mainText} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.58)} delay={0} audioMarkers={audioMarkers} />
+          <CinematicHeadline text={mainText} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.58)} delay={logoUrl ? 10 : 0} audioMarkers={audioMarkers} />
           <div style={{ height: 3, width: lineWidth, background: primaryColor, borderRadius: 2, margin: "30px auto" }} />
           {urlText && (
             <CinematicBody text={urlText} frame={frame} fps={fps} duration={duration} color={primaryColor} size={Math.round(sizes.body * 0.72)} baseDelay={14} audioMarkers={audioMarkers} />
           )}
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// ─── IMAGE-DRIVEN TEMPLATES ─────────────────────────────────────────
+// These exist to make real product assets the hero of a scene, the way
+// premium SaaS launch films (and the Envato references) actually look.
+
+// PRODUCT SHOWCASE — copy on one side, a device-framed screenshot on the
+// other, with a 3D tilt that settles flat. Falls back to a tasteful copy
+// card if no image is supplied.
+export const ProductShowcaseTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const shot = firstImage(scene);
+  const variant = (scene.device as DeviceVariant) || "browser";
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 40 : 80, width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          {shot ? (
+            <ScreenshotFrame
+              imageUrl={shot}
+              variant={variant}
+              frame={frame}
+              fps={fps}
+              delay={8}
+              primaryColor={primaryColor}
+              url={scene.url || "app.example.com"}
+              fit={scene.imageFit || "cover"}
+              tilt={variant === "phone" ? 0 : 8}
+              widthFraction={sizes.isVertical ? 0.92 : 0.5}
+            />
+          ) : (
+            <GlassPanel primaryColor={primaryColor} style={{ padding: "60px 70px", minWidth: 320 }}>
+              <div style={{ fontFamily: FONT, fontSize: Math.round(sizes.headline * 0.4), fontWeight: 850, color: textColor, letterSpacing: "-0.04em" }}>
+                {scene.headline || sceneHeadline(scene, 4)}
+              </div>
+            </GlassPanel>
+          )}
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// HERO IMAGE — a single product shot as the centerpiece, large and
+// floating over the stage with the headline beneath it.
+export const HeroImageTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const shot = firstImage(scene);
+  const variant = (scene.device as DeviceVariant) || "window";
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: sizes.isVertical ? 32 : 44, alignItems: "center", width: "100%" }}>
+          {scene.eyebrow && (
+            <div style={{ fontFamily: FONT, fontSize: sizes.small, fontWeight: 750, letterSpacing: "0.14em", textTransform: "uppercase", color: primaryColor }}>{scene.eyebrow}</div>
+          )}
+          {shot ? (
+            <ScreenshotFrame imageUrl={shot} variant={variant} frame={frame} fps={fps} delay={6} primaryColor={primaryColor} url={scene.url || "app.example.com"} fit={scene.imageFit || "cover"} tilt={6} widthFraction={sizes.isVertical ? 0.9 : 0.62} maxHeightFraction={sizes.isVertical ? 0.5 : 0.56} />
+          ) : null}
+          <div style={{ textAlign: "center", maxWidth: sizes.isVertical ? "92%" : "76%" }}>
+            <CinematicHeadline text={sceneHeadline(scene, 7)} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.52)} delay={shot ? 14 : 0} audioMarkers={audioMarkers} />
+            {scene.subheadline && (
+              <CinematicBody text={scene.subheadline} frame={frame} fps={fps} duration={duration} color={`${textColor}b8`} size={Math.round(sizes.body * 0.66)} baseDelay={20} audioMarkers={audioMarkers} />
+            )}
+          </div>
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// SCREENSHOT CAROUSEL — multiple product shots fanned in 3D depth.
+export const ScreenshotCarouselTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const images = sceneImages(scene);
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: sizes.isVertical ? 36 : 50, alignItems: "center", width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
+          {images.length > 0 ? (
+            <ScreenshotStack images={images} frame={frame} fps={fps} delay={10} primaryColor={primaryColor} />
+          ) : null}
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// LOGO REVEAL — the brand logo as the on-screen subject, large and centered.
+export const LogoRevealTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers, logoUrl,
+}) => {
+  const sizes = useSceneSizes();
+  const mark = logoUrl || firstImage(scene);
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        {mark ? (
+          <LogoLockup logoUrl={mark} wordmark={scene.headline || ""} frame={frame} fps={fps} delay={0} primaryColor={primaryColor} textColor={textColor} heightFraction={0.26} />
+        ) : (
+          <CinematicHeadline text={scene.headline || sceneHeadline(scene, 4)} frame={frame} fps={fps} duration={duration} color={textColor} size={Math.round(sizes.headline * 0.8)} audioMarkers={audioMarkers} />
+        )}
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// FEATURE SPLIT — copy + a tightly-cropped screenshot detail, alternating side.
+export const FeatureSplitTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const shot = firstImage(scene);
+  if (!shot) {
+    return <PremiumFeatureHighlightTemplate scene={scene} primaryColor={primaryColor} secondaryColor={primaryColor} textColor={textColor} accentColor={primaryColor} bgColor="#000" frame={frame} fps={fps} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers} />;
+  }
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row-reverse", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 36 : 80, width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          <ScreenshotFrame imageUrl={shot} variant={(scene.device as DeviceVariant) || "bare"} frame={frame} fps={fps} delay={8} primaryColor={primaryColor} fit={scene.imageFit || "cover"} widthFraction={sizes.isVertical ? 0.9 : 0.46} />
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// AI CALL — the hero visual for a voice-AI product. Copy + a live call panel
+// with a reactive waveform, streaming transcript, and outcome chips.
+export const AICallTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const messages = scene.messages && scene.messages.length > 0
+    ? scene.messages
+    : ["Hi, do you have any openings today?", "Absolutely — I can get you booked for 2 PM."];
+  const pills = scene.statusPills && scene.statusPills.length > 0
+    ? scene.statusPills
+    : ["Answered", "Qualified", "Booked"];
+  const caller = scene.attribution || scene.eyebrow || "Incoming call";
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: sizes.isVertical ? "column" : "row", alignItems: "center", justifyContent: "center", gap: sizes.isVertical ? 40 : 80, width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align={sizes.isVertical ? "center" : "left"} compact={sizes.isVertical} audioMarkers={audioMarkers} />
+          <AICallPanel frame={frame} fps={fps} primaryColor={primaryColor} delay={8} caller={caller} callerSub="AI Assistant • Live" messages={messages} pills={pills} audioMarkers={audioMarkers} />
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// CALL TRANSCRIPT — a clean transcript card with speaker turns streaming in.
+export const CallTranscriptTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const src = scene.messages && scene.messages.length > 0
+    ? scene.messages
+    : ["Hi, I need someone to look at a leak today.", "I can help with that. Are mornings or afternoons better?", "Afternoon works.", "Great — you're booked for 2 PM today."];
+  const turns = src.slice(0, 5).map((text, i) => ({ speaker: i % 2 === 1 ? "AI Agent" : "Caller", text }));
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: sizes.isVertical ? 32 : 42, alignItems: "center", width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
+          <CallTranscriptPanel frame={frame} fps={fps} primaryColor={primaryColor} delay={10} title={scene.chartLabel || "Live transcript"} turns={turns} audioMarkers={audioMarkers} />
+        </div>
+      </AbsoluteFill>
+    </SceneMotion>
+  );
+};
+
+// LOGO WALL — "trusted by teams" grid of customer/integration logos.
+export const LogoWallTemplate: React.FC<SceneProps> = ({
+  scene, primaryColor, textColor, frame, fps, duration, entranceDirection, exitDirection, entranceStyle, audioMarkers,
+}) => {
+  const sizes = useSceneSizes();
+  const logos = sceneImages(scene);
+  // Fall back to named marks from steps/features/text if no logos uploaded.
+  const labels = (scene.steps && scene.steps.length > 0 ? scene.steps
+    : scene.features && scene.features.length > 0 ? scene.features.map(f => f.title)
+    : scene.text.split(/[,•|]/).map(s => s.trim()).filter(Boolean)).slice(0, 8);
+  return (
+    <SceneMotion frame={frame} duration={duration} entranceDirection={entranceDirection} exitDirection={exitDirection} entranceStyle={entranceStyle} audioMarkers={audioMarkers}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: `0 ${sizes.padX}` }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: sizes.isVertical ? 36 : 48, alignItems: "center", width: "100%" }}>
+          <PremiumCopy scene={scene} frame={frame} fps={fps} duration={duration} textColor={textColor} primaryColor={primaryColor} align="center" compact audioMarkers={audioMarkers} />
+          <LogoWall logos={logos} labels={labels} frame={frame} fps={fps} delay={14} primaryColor={primaryColor} textColor={textColor} />
         </div>
       </AbsoluteFill>
     </SceneMotion>
@@ -842,4 +1057,12 @@ export const templateComponentMap: Record<string, React.FC<SceneProps>> = {
   calendarBooking: PremiumCalendarBookingTemplate,
   revenueCounter: PremiumRevenueCounterTemplate,
   brandLockup: PremiumBrandLockupTemplate,
+  productShowcase: ProductShowcaseTemplate,
+  heroImage: HeroImageTemplate,
+  screenshotCarousel: ScreenshotCarouselTemplate,
+  logoReveal: LogoRevealTemplate,
+  featureSplit: FeatureSplitTemplate,
+  logoWall: LogoWallTemplate,
+  aiCall: AICallTemplate,
+  callTranscript: CallTranscriptTemplate,
 };

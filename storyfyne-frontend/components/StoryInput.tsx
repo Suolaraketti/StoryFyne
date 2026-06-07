@@ -22,7 +22,8 @@ interface StoryInputProps {
   onSubmitText: (text: string, title: string, author: string, subreddit: string) => void;
   onSubmitSales: (text: string, title: string, author: string, voiceId: string, websiteUrl: string, taggedText: string) => void;
   onSubmitInfluencer: (text: string, title: string, author: string, voiceId: string, avatarId: string, aspectRatio: string, taggedText: string, context: string) => void;
-  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string, logoUrl: string, brandName: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string, imageUrls: string[], renderQuality: string, musicUrl: string, musicVolume: number, maintainBackground: boolean) => void;
+  onSubmitExplainer: (text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string, logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string, imageUrls: string[], renderQuality: string, musicEnabled: boolean, musicTrackId: string, musicVolume: number) => void;
+  musicTracks?: { id: string; bpm: number; energy: string; moods: string[] }[];
   onPreviewSales: (text: string, websiteUrl: string) => Promise<{ tagged_text: string; voice_assignments: Record<string, string> }>;
   onPreviewInfluencer: (text: string, context: string) => Promise<{ tagged_text: string }>;
   onPreviewExplainer: (text: string) => Promise<{ scenes: any[] }>;
@@ -56,7 +57,7 @@ const ASPECT_RATIOS = [
   { id: '4:5', label: '4:5', desc: 'Portrait — Social Feed' },
 ];
 
-export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onSubmitExplainer, onPreviewSales, onPreviewInfluencer, onPreviewExplainer, onCreateAvatar, onUploadAsset, avatars, isLoading }: StoryInputProps) {
+export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, onSubmitInfluencer, onSubmitExplainer, onPreviewSales, onPreviewInfluencer, onPreviewExplainer, onCreateAvatar, onUploadAsset, avatars, isLoading, musicTracks = [] }: StoryInputProps) {
   const [mode, setMode] = useState<'text' | 'url' | 'sales' | 'influencer' | 'explainer'>('text');
   const [url, setUrl] = useState('');
   const [text, setText] = useState('');
@@ -81,17 +82,18 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [showExplainerPreview, setShowExplainerPreview] = useState(false);
   const [isPreviewingExplainer, setIsPreviewingExplainer] = useState(false);
   const [explainerLogoUrl, setExplainerLogoUrl] = useState('');
-  const [explainerBrandName, setExplainerBrandName] = useState('');
-  const [explainerPrimaryColor, setExplainerPrimaryColor] = useState('#10a37f');
-  const [explainerSecondaryColor, setExplainerSecondaryColor] = useState('#19c59f');
-  const [explainerBgColor, setExplainerBgColor] = useState('#050505');
+  const [explainerPrimaryColor, setExplainerPrimaryColor] = useState('#2a93f5');
+  const [explainerSecondaryColor, setExplainerSecondaryColor] = useState('#6cbef9');
+  const [explainerBgColor, setExplainerBgColor] = useState('#060912');
   const [explainerTextColor, setExplainerTextColor] = useState('#ffffff');
-  const [explainerAccentColor, setExplainerAccentColor] = useState('#10a37f');
+  const [explainerAccentColor, setExplainerAccentColor] = useState('#1f86f0');
   const [explainerImageUrls, setExplainerImageUrls] = useState<string[]>([]);
   const [explainerRenderQuality, setExplainerRenderQuality] = useState<'standard' | 'premium'>('standard');
-  const [explainerMusicUrl, setExplainerMusicUrl] = useState('');
-  const [explainerMusicVolume, setExplainerMusicVolume] = useState(0.24);
-  const [explainerMaintainBackground, setExplainerMaintainBackground] = useState(true);
+  const [pendingImgScene, setPendingImgScene] = useState<number | null>(null);
+  const [uploadingScene, setUploadingScene] = useState<number | null>(null);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [musicTrackId, setMusicTrackId] = useState(''); // '' = auto-match vibe
+  const [musicVolume, setMusicVolume] = useState(0.22);
 
   const [showCreateAvatar, setShowCreateAvatar] = useState(false);
   const [newAvatarName, setNewAvatarName] = useState('');
@@ -101,7 +103,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
   const [createAvatarStatus, setCreateAvatarStatus] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
-  const musicFileRef = useRef<HTMLInputElement>(null);
+  const sceneImgRef = useRef<HTMLInputElement>(null);
   const sceneFileRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
   const isSales = mode === 'sales';
@@ -128,13 +130,11 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       onSubmitExplainer(
         text.trim(), title.trim() || 'Explainer Video', author.trim() || 'Unknown',
         voiceId, aspectRatio, JSON.stringify(explainerScenes),
-        explainerLogoUrl, explainerBrandName.trim() || title.trim() || author.trim(), explainerPrimaryColor, explainerSecondaryColor,
+        explainerLogoUrl, explainerPrimaryColor, explainerSecondaryColor,
         explainerBgColor, explainerTextColor, explainerAccentColor,
         explainerImageUrls.filter(u => u.trim()),
         explainerRenderQuality,
-        explainerMusicUrl.trim(),
-        explainerMusicVolume,
-        explainerMaintainBackground,
+        musicEnabled, musicTrackId, musicVolume,
       );
     }
   };
@@ -181,6 +181,40 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
     }
   };
 
+  const TEMPLATE_OPTIONS: { value: string; label: string }[] = [
+    { value: 'heroStatement', label: 'Hero statement' },
+    { value: 'aiCall', label: 'AI call (voice)' },
+    { value: 'callTranscript', label: 'Call transcript' },
+    { value: 'productShowcase', label: 'Product showcase' },
+    { value: 'heroImage', label: 'Hero image' },
+    { value: 'screenshotCarousel', label: 'Screenshot carousel' },
+    { value: 'featureSplit', label: 'Feature split' },
+    { value: 'browserDashboard', label: 'Browser dashboard' },
+    { value: 'phoneDemo', label: 'Phone demo' },
+    { value: 'statsGrid', label: 'Stats grid' },
+    { value: 'revenueCounter', label: 'Revenue counter' },
+    { value: 'workflowSteps', label: 'Workflow steps' },
+    { value: 'featureHighlight', label: 'Feature highlight' },
+    { value: 'beforeAfter', label: 'Before / after' },
+    { value: 'testimonialQuote', label: 'Testimonial' },
+    { value: 'pricingTiers', label: 'Pricing tiers' },
+    { value: 'typewriterCommand', label: 'Command bar' },
+    { value: 'calendarBooking', label: 'Calendar booking' },
+    { value: 'logoWall', label: 'Logo wall' },
+    { value: 'logoReveal', label: 'Logo reveal' },
+    { value: 'brandLockup', label: 'Brand lockup (CTA)' },
+  ];
+  const BG_OPTIONS: { value: string; label: string }[] = [
+    { value: '', label: 'Auto' },
+    { value: 'auroraMesh', label: 'Aurora mesh' },
+    { value: 'gradientWash', label: 'Gradient wash' },
+    { value: 'gridStage', label: 'Grid stage' },
+    { value: 'dotGrid', label: 'Dot grid' },
+    { value: 'centerSpotlight', label: 'Spotlight' },
+    { value: 'subtleGlow', label: 'Subtle glow' },
+    { value: 'cleanDark', label: 'Clean dark' },
+  ];
+
   const getVisualPlan = (template: string, type: string) => {
     const plans: Record<string, string> = {
       heroStatement: 'Massive bold centered text. No decoration. One sentence dominates the frame. Clean entrance/exit.',
@@ -197,6 +231,14 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       calendarBooking: 'Calendar grid with a selected date block. Booking CTA.',
       revenueCounter: 'Big animated revenue/counter number. Dollar sign. Rising value.',
       brandLockup: 'Logo + brand name + URL centered. Final scene. Hold longer.',
+      productShowcase: 'Your screenshot in a device frame beside the copy, with a subtle 3D tilt. Attach an image below.',
+      heroImage: 'One large product screenshot as the centerpiece with the headline beneath. Attach an image below.',
+      screenshotCarousel: 'Several screenshots fanned in 3D depth. Attach 2–3 images below.',
+      featureSplit: 'Copy + a tight screenshot detail, side by side. Attach an image below.',
+      logoReveal: 'Your brand logo, large and centered. Uses the uploaded logo.',
+      logoWall: '“Trusted by” grid of customer logos. Attach logos, or they fall back to names.',
+      aiCall: 'Live AI-call card: pulsing avatar, reactive voice waveform, streaming transcript, outcome chips. No screenshot needed.',
+      callTranscript: 'Clean transcript card — caller/AI turns stream in with a live caret. Great call proof.',
     };
     return plans[template] || 'Clean text scene with minimal motion. One thought per frame.';
   };
@@ -207,6 +249,81 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
       next[idx] = { ...next[idx], scene_text: newText };
       return next;
     });
+  };
+
+  const updateSceneField = (idx: number, key: string, value: any) => {
+    setExplainerScenes(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [key]: value };
+      return next;
+    });
+  };
+
+  // Image-friendly templates default to a sensible device frame.
+  const defaultDeviceFor = (tpl: string): string => {
+    if (tpl === 'phoneDemo') return 'phone';
+    if (tpl === 'heroImage' || tpl === 'screenshotCarousel') return 'window';
+    if (tpl === 'featureSplit') return 'bare';
+    return 'browser';
+  };
+
+  // Read an image's natural dimensions (works cross-origin for sizing).
+  const measureImage = (url: string): Promise<{ w: number; h: number }> =>
+    new Promise(resolve => {
+      const img = new window.Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve({ w: 0, h: 0 });
+      img.src = url;
+    });
+
+  // Choose the best device frame + fit from an image's aspect ratio.
+  const frameForAspect = (w: number, h: number): { device: string; fit: string } => {
+    if (!w || !h) return { device: 'browser', fit: 'cover' };
+    const a = w / h;
+    if (a < 0.72) return { device: 'phone', fit: 'cover' };       // tall → phone
+    if (a > 1.45) return { device: 'browser', fit: 'cover' };     // wide → browser
+    return { device: 'bare', fit: 'contain' };                    // square-ish → no crop
+  };
+
+  // Measure an image and auto-assign device/fit for a scene (respecting an
+  // explicit phoneDemo template, which always wants a phone).
+  const autoFrameScene = async (idx: number, url: string) => {
+    if (!url) return;
+    const { w, h } = await measureImage(url);
+    const auto = frameForAspect(w, h);
+    setExplainerScenes(prev => {
+      const next = [...prev];
+      const tpl = next[idx]?.template || '';
+      next[idx] = {
+        ...next[idx],
+        device: tpl === 'phoneDemo' ? 'phone' : auto.device,
+        imageFit: auto.fit,
+      };
+      return next;
+    });
+  };
+
+  const handleSceneImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const idx = pendingImgScene;
+    e.target.value = '';
+    if (!file || idx === null) return;
+    setUploadingScene(idx);
+    try {
+      const result = await onUploadAsset(file);
+      setExplainerScenes(prev => {
+        const next = [...prev];
+        next[idx] = { ...next[idx], imageUrl: result.url };
+        return next;
+      });
+      // Auto-pick the device frame + fit from the image's real aspect ratio.
+      await autoFrameScene(idx, result.url);
+    } catch (err: any) {
+      alert(err.message || 'Image upload failed');
+    } finally {
+      setUploadingScene(null);
+      setPendingImgScene(null);
+    }
   };
 
   const moveScene = (idx: number, dir: number) => {
@@ -543,18 +660,13 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
             {/* Explainer extras */}
             {isExplainer && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Aspect Ratio</label>
                     <select value={aspectRatio} onChange={e => setAspectRatio(e.target.value)} disabled={isLoading}
                       style={{ ...inputStyle, appearance: 'auto' }}>
                       {ASPECT_RATIOS.map(r => <option key={r.id} value={r.id}>{r.label} — {r.desc}</option>)}
                     </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Brand Name</label>
-                    <input type="text" placeholder="Brand name" value={explainerBrandName} onChange={e => setExplainerBrandName(e.target.value)} disabled={isLoading}
-                      style={inputStyle} onFocus={e => Object.assign(e.target.style, focusGlow('#6366f1'))} onBlur={e => e.target.style.cssText = ''} />
                   </div>
                   <div>
                     <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', display: 'block' }}>Logo</label>
@@ -583,6 +695,28 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                 }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Palette size={14} /> Brand Colors
+                  </div>
+                  {/* One-click brand presets */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {[
+                      { name: 'Voice Blue', p: '#2a93f5', s: '#6cbef9', a: '#1f86f0', bg: '#060912' },
+                      { name: 'Indigo', p: '#6366f1', s: '#a5b4fc', a: '#818cf8', bg: '#0a0a14' },
+                      { name: 'Emerald', p: '#10b981', s: '#6ee7b7', a: '#059669', bg: '#04100c' },
+                      { name: 'Violet', p: '#8b5cf6', s: '#c4b5fd', a: '#7c3aed', bg: '#0c0814' },
+                      { name: 'Sunset', p: '#f97316', s: '#fdba74', a: '#ea580c', bg: '#120a06' },
+                      { name: 'Mono', p: '#e5e7eb', s: '#9ca3af', a: '#ffffff', bg: '#0a0a0a' },
+                    ].map(preset => (
+                      <button key={preset.name} type="button" disabled={isLoading}
+                        onClick={() => { setExplainerPrimaryColor(preset.p); setExplainerSecondaryColor(preset.s); setExplainerAccentColor(preset.a); setExplainerBgColor(preset.bg); setExplainerTextColor('#ffffff'); }}
+                        title={preset.name}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', borderRadius: '100px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: isLoading ? 'not-allowed' : 'pointer', fontSize: '11px', fontWeight: 600 }}>
+                        <span style={{ display: 'flex' }}>
+                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: preset.p, border: '1.5px solid var(--bg-input)' }} />
+                          <span style={{ width: 12, height: 12, borderRadius: '50%', background: preset.s, marginLeft: -5, border: '1.5px solid var(--bg-input)' }} />
+                        </span>
+                        {preset.name}
+                      </button>
+                    ))}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
                     {[
@@ -620,6 +754,37 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                       </div>
                     ))}
                   </div>
+                  {/* Background music */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingTop: '4px', borderTop: '1px solid var(--border-subtle)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#818cf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Music size={14} /> Background Music
+                      </div>
+                      <button type="button" onClick={() => setMusicEnabled(v => !v)} disabled={isLoading}
+                        style={{ padding: '5px 12px', borderRadius: '100px', border: '1px solid var(--border-medium)', cursor: isLoading ? 'not-allowed' : 'pointer', fontSize: '12px', fontWeight: 600,
+                          background: musicEnabled ? '#6366f1' : 'var(--bg-input)', color: musicEnabled ? '#fff' : 'var(--text-secondary)' }}>
+                        {musicEnabled ? 'On' : 'Off'}
+                      </button>
+                    </div>
+                    {musicEnabled && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+                        <select value={musicTrackId} onChange={e => setMusicTrackId(e.target.value)} disabled={isLoading}
+                          style={{ padding: '7px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', flex: 1, minWidth: 180 }}>
+                          <option value="">Auto — match the vibe</option>
+                          {musicTracks.map(t => <option key={t.id} value={t.id}>{t.id} · {t.bpm}bpm · {t.energy}</option>)}
+                        </select>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 160 }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Vol</span>
+                          <input type="range" min={0} max={0.6} step={0.02} value={musicVolume} onChange={e => setMusicVolume(parseFloat(e.target.value))} disabled={isLoading} style={{ flex: 1 }} />
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', width: 30 }}>{Math.round(musicVolume * 100)}%</span>
+                        </div>
+                      </div>
+                    )}
+                    {musicEnabled && musicTracks.length === 0 && (
+                      <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>No tracks in the library yet — add royalty-free tracks to R2 and they’ll appear here. Renders stay silent until then.</div>
+                    )}
+                  </div>
+
                   <div style={{ fontSize: '11px', color: 'var(--text-faint)' }}>Optional scene images (max 3) — paste a URL or upload</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[0, 1, 2].map(i => (
@@ -639,34 +804,6 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                       </div>
                     ))}
                   </div>
-                  <div style={{ height: 1, background: 'rgba(99,102,241,0.12)', margin: '2px 0' }} />
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 150px', gap: '10px', alignItems: 'end' }}>
-                    <div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Music size={12} /> Music bed
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <input type="url" placeholder="Music file URL or upload" value={explainerMusicUrl} onChange={e => setExplainerMusicUrl(e.target.value)} disabled={isLoading}
-                          style={{ ...inputStyle, flex: 1, padding: '8px 10px', fontSize: '12px' }} />
-                        <input type="file" ref={musicFileRef} accept="audio/*" style={{ display: 'none' }}
-                          onChange={e => { const f = e.target.files?.[0]; if (f) handleImageUpload(f, setExplainerMusicUrl); }} />
-                        <button type="button" onClick={() => musicFileRef.current?.click()} disabled={isLoading}
-                          style={{ padding: '8px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
-                          <Upload size={12} />
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-faint)', marginBottom: '6px' }}>Volume {Math.round(explainerMusicVolume * 100)}%</div>
-                      <input type="range" min={0} max={0.75} step={0.01} value={explainerMusicVolume} onChange={e => setExplainerMusicVolume(Number(e.target.value))} disabled={isLoading}
-                        style={{ width: '100%', accentColor: '#818cf8' }} />
-                    </div>
-                  </div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    <input type="checkbox" checked={explainerMaintainBackground} onChange={e => setExplainerMaintainBackground(e.target.checked)} disabled={isLoading}
-                      style={{ accentColor: '#818cf8' }} />
-                    Maintain background throughout
-                  </label>
                 </div>
               </>
             )}
@@ -793,6 +930,7 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
             )}
             {isExplainer && showExplainerPreview && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <input type="file" ref={sceneImgRef} accept="image/*" style={{ display: 'none' }} onChange={handleSceneImageFile} />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <label style={{ fontSize: '13px', fontWeight: 700, color: '#a5b4fc', letterSpacing: '0.02em' }}>
                     Scene Script & Visual Plan
@@ -846,6 +984,31 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                           </div>
                         </div>
 
+                        {/* Template + background controls */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 150 }}>
+                            <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Template</span>
+                            <select value={tpl} onChange={e => updateSceneField(idx, 'template', e.target.value)} disabled={isLoading}
+                              style={{ padding: '7px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                              {TEMPLATE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 150 }}>
+                            <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Background</span>
+                            <select value={scene.background || ''} onChange={e => updateSceneField(idx, 'background', e.target.value)} disabled={isLoading}
+                              style={{ padding: '7px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                              {BG_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            </select>
+                          </div>
+                          {tpl === 'heroStatement' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 150 }}>
+                              <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Highlight word</span>
+                              <input type="text" value={scene.highlight || ''} onChange={e => updateSceneField(idx, 'highlight', e.target.value)} disabled={isLoading} placeholder="e.g. never"
+                                style={{ padding: '7px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }} />
+                            </div>
+                          )}
+                        </div>
+
                         {/* Voice script — editable */}
                         <div style={{ marginBottom: '10px' }}>
                           <div style={{ fontSize: '10px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Voice Script</div>
@@ -874,6 +1037,39 @@ export default function StoryInput({ onSubmitUrl, onSubmitText, onSubmitSales, o
                         }}>
                           <div style={{ fontSize: '10px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Visual Plan</div>
                           <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>{visualPlan}</div>
+                        </div>
+
+                        {/* Per-scene product image / screenshot */}
+                        <div style={{ marginTop: '10px' }}>
+                          <div style={{ fontSize: '10px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <Image size={11} /> Product image {scene.imageUrl ? '' : '(optional)'}
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <input type="url" placeholder="Paste image URL or upload a screenshot" value={scene.imageUrl || ''} onChange={e => updateSceneField(idx, 'imageUrl', e.target.value)} onBlur={e => { if (e.target.value.trim()) autoFrameScene(idx, e.target.value.trim()); }} disabled={isLoading}
+                              style={{ ...inputStyle, flex: 1, padding: '8px 10px', fontSize: '12px' }} />
+                            <button type="button" onClick={() => { setPendingImgScene(idx); sceneImgRef.current?.click(); }} disabled={isLoading || uploadingScene === idx}
+                              style={{ padding: '8px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                              {uploadingScene === idx ? <Loader2 size={12} className="spin" /> : <Upload size={12} />} Upload
+                            </button>
+                          </div>
+                          {scene.imageUrl && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                              <img src={scene.imageUrl} alt="" style={{ width: 64, height: 40, borderRadius: 6, objectFit: 'cover', border: '1px solid var(--border-subtle)' }} />
+                              <select value={scene.device || defaultDeviceFor(tpl)} onChange={e => updateSceneField(idx, 'device', e.target.value)} disabled={isLoading}
+                                style={{ padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                                <option value="browser">Browser</option>
+                                <option value="phone">Phone</option>
+                                <option value="tablet">Tablet</option>
+                                <option value="window">Window</option>
+                                <option value="bare">Bare</option>
+                              </select>
+                              <select value={scene.imageFit || 'cover'} onChange={e => updateSceneField(idx, 'imageFit', e.target.value)} disabled={isLoading}
+                                style={{ padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-secondary)' }}>
+                                <option value="cover">Fill frame</option>
+                                <option value="contain">Fit inside</option>
+                              </select>
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     );

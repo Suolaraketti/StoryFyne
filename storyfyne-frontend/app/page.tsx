@@ -37,6 +37,7 @@ export default function Home() {
   const [charCount, setCharCount] = useState<number | undefined>();
   const [progressMode, setProgressMode] = useState<'standard' | 'influencer' | 'explainer'>('standard');
   const [avatars, setAvatars] = useState<Avatar[]>([]);
+  const [musicTracks, setMusicTracks] = useState<any[]>([]);
 
   const fetchStories = useCallback(async () => {
     try {
@@ -62,12 +63,25 @@ export default function Home() {
     }
   }, []);
 
+  const fetchMusic = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/music-library`);
+      if (res.ok) {
+        const data = await res.json();
+        setMusicTracks(data.tracks || []);
+      }
+    } catch {
+      // silent fail
+    }
+  }, []);
+
   useEffect(() => {
     fetchStories();
     fetchAvatars();
+    fetchMusic();
     const interval = setInterval(fetchStories, 5000);
     return () => clearInterval(interval);
-  }, [fetchStories, fetchAvatars]);
+  }, [fetchStories, fetchAvatars, fetchMusic]);
 
   useEffect(() => {
     if (!activeStoryId) return;
@@ -247,8 +261,9 @@ export default function Home() {
 
   const handleSubmitExplainer = async (
     text: string, title: string, author: string, voiceId: string, aspectRatio: string, scenesJson: string,
-    logoUrl: string, brandName: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string,
-    imageUrls: string[], renderQuality: string, musicUrl: string, musicVolume: number, maintainBackground: boolean,
+    logoUrl: string, primaryColor: string, secondaryColor: string, bgColor: string, textColor: string, accentColor: string,
+    imageUrls: string[], renderQuality: string,
+    musicEnabled: boolean, musicTrackId: string, musicVolume: number,
   ) => {
     setIsLoading(true);
     setProgressMode('explainer');
@@ -262,7 +277,6 @@ export default function Home() {
         body: JSON.stringify({
           text, title, author, voice_id: voiceId, aspect_ratio: aspectRatio,
           logo_url: logoUrl,
-          brand_name: brandName,
           primary_color: primaryColor,
           secondary_color: secondaryColor,
           bg_color: bgColor,
@@ -270,10 +284,10 @@ export default function Home() {
           accent_color: accentColor,
           image_urls: imageUrls,
           render_quality: renderQuality,
-          music_url: musicUrl,
-          music_volume: musicVolume,
-          maintain_background: maintainBackground,
           scenes_json: scenesJson,
+          music_enabled: musicEnabled,
+          music_track_id: musicTrackId,
+          music_volume: musicVolume,
         }),
       });
       if (!res.ok) {
@@ -485,6 +499,7 @@ export default function Home() {
           onUploadAsset={handleUploadAsset}
           avatars={avatars}
           isLoading={isLoading}
+          musicTracks={musicTracks}
         />
 
         {/* Progress */}

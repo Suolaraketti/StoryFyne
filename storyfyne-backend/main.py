@@ -60,6 +60,7 @@ from storage import (
 )
 import heygen as heygen_client
 from video_muxer import replace_audio_in_video
+from music_library import select_music, list_music, get_by_id
 
 # In-memory cache for stories index
 _stories_cache: Optional[Dict] = None
@@ -122,6 +123,11 @@ class ExplainerRequest(BaseModel):
     image_urls: list[str] = []
     render_quality: str = "standard"  # "standard" = Lambda, "premium" = GPU worker
     scenes_json: str = ""  # Optional pre-built scenes JSON (from preview/edit)
+    music_enabled: bool = True       # auto-score a background track to the vibe
+    music_track_id: str = ""         # explicit track override (from the editor)
+    music_url: str = ""              # explicit URL override
+    music_bpm: int = 0               # explicit BPM (with music_url)
+    music_volume: float = 0.22       # 0..1 mix level under narration
 
 
 class PreviewExplainerResponse(BaseModel):
@@ -178,6 +184,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve the bundled royalty-free music beds at /music (used by the renderer).
+_MUSIC_DIR = os.path.join(os.path.dirname(__file__), "assets", "music")
+if os.path.isdir(_MUSIC_DIR):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/music", StaticFiles(directory=_MUSIC_DIR), name="music")
 
 
 async def get_cached_stories() -> Dict:
@@ -1249,6 +1261,12 @@ async def upload_asset_endpoint(request: Request):
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
+@app.get("/api/music-library")
+async def music_library_endpoint():
+    """Curated background-music catalog for the editor."""
+    return {"tracks": list_music()}
+
+
 @app.post("/api/preview-explainer", response_model=PreviewExplainerResponse)
 async def preview_explainer(request: ExplainerRequest):
     """Break text into explainer scenes without generating audio."""
@@ -1361,6 +1379,11 @@ async def _process_explainer(
     image_urls: list[str] = None,
     render_quality: str = "standard",
     prebuilt_scenes: list[dict] = None,
+    music_enabled: bool = True,
+    music_track_id: str = "",
+    music_url: str = "",
+    music_bpm: int = 0,
+    music_volume: float = 0.22,
 ):
     """Background task: break text into scenes, generate audio, render via Remotion Lambda."""
     start_time = time.time()
@@ -1472,6 +1495,12 @@ async def _process_explainer(
             "plans": scene.get("plans", []),
             "cta": scene.get("cta", ""),
             "url": scene.get("url", ""),
+            "imageUrl": scene.get("imageUrl", scene.get("image_url", "")),
+            "imageUrls": scene.get("imageUrls", scene.get("image_urls", [])),
+            "imageFit": scene.get("imageFit", scene.get("image_fit", "cover")),
+            "device": scene.get("device", "browser"),
+            "background": scene.get("background", ""),
+            "highlight": scene.get("highlight", ""),
             "audioUrl": audio_url,
             "durationInFrames": max(int(duration_seconds * REMOTION_FPS), 1),
             "audioMarkers": audio_markers,
@@ -1499,14 +1528,40 @@ async def _process_explainer(
     # Step 3: Submit to Render Gateway
     update_job_progress(story_id, "rendering", "Submitting video render to Remotion Lambda...")
 
-    image_list = image_urls or []
-    for idx, sa in enumerate(scene_audios):
-        if idx < len(image_list) and image_list[idx]:
-            sa["imageUrl"] = image_list[idx]
+    # Per-scene images (from the editor) win. Positional image_urls only
+    # backfill scenes that don't already carry their own asset.
+    image_list = [u for u in (image_urls or []) if u]
+    fill_iter = iter(image_list)
+    for sa in scene_audios:
+        if not sa.get("imageUrl") and not sa.get("imageUrls"):
+            nxt = next(fill_iter, "")
+            if nxt:
+                sa["imageUrl"] = nxt
 
     composition_id = "ExplainerVideoMobile" if aspect_ratio == "9:16" else REMOTION_COMPOSITION_ID
     # Extract mood from Claude response if present
     mood = scene_data.get("mood", "clean") if isinstance(scene_data, dict) else "clean"
+
+    # ─── Background music: vibe-matched from the curated library ──────
+    final_music_url, final_music_bpm = "", 0
+    if music_url:
+        final_music_url, final_music_bpm = music_url, music_bpm
+    elif music_track_id:
+        chosen = get_by_id(music_track_id)
+        if chosen:
+            final_music_url, final_music_bpm = chosen["url"], chosen.get("bpm", 0)
+    elif music_enabled:
+        directive = scene_data.get("music", {}) if isinstance(scene_data, dict) else {}
+        chosen = select_music(
+            mood=mood,
+            energy=str(directive.get("energy", "")),
+            bpm=int(directive.get("bpm", 0) or 0),
+        )
+        if chosen:
+            final_music_url, final_music_bpm = chosen["url"], chosen.get("bpm", 0)
+            logger.info(f"[story {story_id}] MUSIC SELECTED | id={chosen.get('id')} | bpm={final_music_bpm} | mood={mood}")
+    if music_enabled and not final_music_url:
+        logger.info(f"[story {story_id}] MUSIC | none available (catalog empty or disabled)")
 
     input_props = {
         "scenes": scene_audios,
@@ -1523,6 +1578,9 @@ async def _process_explainer(
         "musicVolume": max(0, min(1, music_volume)),
         "maintainBackground": maintain_background,
         "mood": mood,
+        "musicUrl": final_music_url,
+        "musicBpm": final_music_bpm,
+        "musicVolume": music_volume,
     }
     logger.info(f"[story {story_id}] RENDER SUBMIT | composition={composition_id} | serve_url={REMOTION_SERVE_URL[:80]}... | scenes={len(scene_audios)}")
     logger.info(f"[story {story_id}] RENDER PROPS | logo={logo_url!r} | colors={primary_color},{secondary_color},{bg_color},{text_color},{accent_color}")
@@ -1804,6 +1862,11 @@ async def process_explainer(request: ExplainerRequest):
                 music_volume=request.music_volume,
                 maintain_background=request.maintain_background,
                 prebuilt_scenes=prebuilt_scenes,
+                music_enabled=request.music_enabled,
+                music_track_id=request.music_track_id,
+                music_url=request.music_url,
+                music_bpm=request.music_bpm,
+                music_volume=request.music_volume,
             )
         except Exception as e:
             import traceback

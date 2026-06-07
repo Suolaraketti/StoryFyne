@@ -12,7 +12,8 @@ import {
 } from "./animations";
 import { getSyncedStagger, getSyncedExitStart, getAudioPulse } from "./audio-sync";
 
-export const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+export { FONT } from "./theme";
+import { FONT } from "./theme";
 
 // ─── Responsive Size Hook ───────────────────────────────────────────
 
@@ -33,7 +34,8 @@ export function useSceneSizes() {
 }
 
 // ─── Cinematic Headline ─────────────────────────────────────────────
-// Word-level reveal. Keeps glyphs stable and prevents mid-word wrapping.
+// Character-by-character reveal with spring + blur clearing.
+// Each letter has weight. Feels expensive.
 
 export const CinematicHeadline: React.FC<{
   text: string;
@@ -47,40 +49,59 @@ export const CinematicHeadline: React.FC<{
   delay?: number;
   audioMarkers?: number[];
 }> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
-  const words = text.split(/\s+/).filter(Boolean);
+  // Split into words, but animate per-character. Each word is an unbreakable
+  // unit so the headline wraps between words \u2014 never mid-word.
+  const words = text.split(/(\s+)/).filter((w) => w.length > 0);
+  const totalChars = text.replace(/\s/g, "").length;
   const revealWindow = duration * 0.45;
+  let charCounter = 0;
 
   return (
-    <div style={{ textAlign: align, maxWidth: "92%" }}>
+    <div style={{ textAlign: align, maxWidth: "94%" }}>
       <div
         style={{
           display: "flex",
           flexWrap: "wrap",
-          columnGap: size * 0.22,
-          rowGap: size * 0.12,
           justifyContent: align === "center" ? "center" : "flex-start",
           lineHeight: 1.08,
         }}
       >
-        {words.map((word, wordIndex) => {
-          const wordDelay = delay + getSyncedStagger(wordIndex, words.length, audioMarkers, 0, revealWindow / Math.max(1, words.length - 1));
-          const opacity = interpolate(frame, [wordDelay, wordDelay + 8], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+        {words.map((word, wi) => {
+          if (/^\s+$/.test(word)) {
+            return <span key={`s-${wi}`} style={{ display: "inline-block", width: size * 0.26 }} />;
+          }
           return (
-            <span
-              key={`${word}-${wordIndex}`}
-              style={{
-                fontFamily: FONT,
-                fontSize: size,
-                fontWeight: weight,
-                color,
-                letterSpacing: 0,
-                display: "inline-block",
-                whiteSpace: "nowrap",
-                opacity,
-                willChange: "opacity",
-              }}
-            >
-              {word}
+            <span key={`w-${wi}`} style={{ display: "inline-flex", whiteSpace: "nowrap" }}>
+              {word.split("").map((char, ci) => {
+                const globalIdx = charCounter++;
+                const charDelay = delay + getSyncedStagger(globalIdx, totalChars, audioMarkers, 0, revealWindow / Math.max(1, totalChars - 1));
+                const s = spring({ frame: Math.max(0, frame - charDelay), fps, config: SNAPPY_SPRING });
+                const reveal = {
+                  opacity: interpolate(s, [0, 0.15, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
+                  y: interpolate(s, [0, 1], [18, 0]),
+                  scale: interpolate(s, [0, 1], [0.9, 1]),
+                  blur: interpolate(s, [0, 0.5], [3, 0], { extrapolateLeft: "clamp" }),
+                };
+                return (
+                  <span
+                    key={ci}
+                    style={{
+                      fontFamily: FONT,
+                      fontSize: size,
+                      fontWeight: weight,
+                      color,
+                      letterSpacing: "-0.035em",
+                      opacity: reveal.opacity,
+                      transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
+                      filter: `blur(${reveal.blur}px)`,
+                      display: "inline-block",
+                      willChange: "transform, opacity, filter",
+                    }}
+                  >
+                    {char}
+                  </span>
+                );
+              })}
             </span>
           );
         })}
@@ -104,9 +125,13 @@ export const ClipHeadline: React.FC<{
   weight?: number;
   delay?: number;
   audioMarkers?: number[];
-}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers }) => {
+  highlight?: string;
+  highlightColor?: string;
+}> = ({ text, frame, fps, duration, color, size, align = "center", weight = 800, delay = 0, audioMarkers, highlight = "", highlightColor }) => {
   const clip = getClipReveal(frame, delay, 40);
   const words = text.split(/\s+/).filter(Boolean);
+  const norm = (w: string) => w.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const hiSet = new Set(highlight.split(/\s+/).map(norm).filter(Boolean));
 
   return (
     <div
@@ -130,23 +155,36 @@ export const ClipHeadline: React.FC<{
           // Audio-driven: words pop at phrase markers
           const wordDelay = delay + 6 + getSyncedStagger(i, words.length, audioMarkers, 0, duration * 0.35 / Math.max(1, words.length - 1));
           const s = spring({ frame: Math.max(0, frame - wordDelay), fps, config: SNAPPY_SPRING });
+          const isHi = hiSet.size > 0 && hiSet.has(norm(word));
+          const hiCol = highlightColor || color;
+          // Marker sweeps in just after the highlighted word settles.
+          const markerS = spring({ frame: Math.max(0, frame - wordDelay - 6), fps, config: SNAPPY_SPRING });
+          const markerW = interpolate(markerS, [0, 1], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
           return (
             <span
               key={i}
               style={{
+                position: "relative",
                 fontFamily: FONT,
                 fontSize: size,
                 fontWeight: weight,
-                color,
-                letterSpacing: 0,
+                color: isHi ? hiCol : color,
+                letterSpacing: "-0.035em",
                 opacity: interpolate(s, [0, 0.2, 1], [0, 1, 1], { extrapolateLeft: "clamp" }),
-                transform: "none",
-                filter: "none",
+                transform: `translateY(${interpolate(s, [0, 1], [14, 0])}px) scale(${interpolate(s, [0, 1], [0.95, 1])})`,
+                filter: `blur(${interpolate(s, [0, 0.4], [2, 0], { extrapolateLeft: "clamp" })}px)`,
                 display: "inline-block",
-                willChange: "opacity",
+                willChange: "transform, opacity, filter",
               }}
             >
               {word}
+              {isHi && (
+                <span style={{
+                  position: "absolute", left: 0, right: 0, bottom: -size * 0.06, height: size * 0.1,
+                  background: hiCol, borderRadius: 99, transformOrigin: "left center",
+                  transform: `scaleX(${markerW})`, opacity: 0.9,
+                }} />
+              )}
             </span>
           );
         })}
@@ -194,12 +232,12 @@ export const CinematicBody: React.FC<{
                 fontSize: size,
                 fontWeight: 500,
                 color,
-                letterSpacing: 0,
+                letterSpacing: "-0.01em",
                 opacity: reveal.opacity,
-                transform: "none",
-                filter: "none",
+                transform: `translateY(${reveal.y}px) scale(${reveal.scale})`,
+                filter: `blur(${reveal.blur}px)`,
                 display: "inline-block",
-                willChange: "opacity",
+                willChange: "transform, opacity, filter",
               }}
             >
               {word}
@@ -216,15 +254,18 @@ export const CinematicBody: React.FC<{
 // Entrance: blur + scale + opacity + translateY stack.
 // Exit: blur INCREASES as it leaves.
 
+export type EntranceStyle = "rise" | "zoom" | "slide" | "tilt" | "drift";
+
 export const SceneMotion: React.FC<{
   frame: number;
   duration: number;
   entranceDirection?: "left" | "right" | "up" | "down";
   exitDirection?: "left" | "right" | "up" | "down";
+  entranceStyle?: EntranceStyle;
   children: React.ReactNode;
   bgChildren?: React.ReactNode;
   audioMarkers?: number[];
-}> = ({ frame, duration, entranceDirection = "up", exitDirection = "down", children, bgChildren, audioMarkers }) => {
+}> = ({ frame, duration, entranceDirection = "up", exitDirection = "down", entranceStyle = "rise", children, bgChildren, audioMarkers }) => {
   const entrance = getCinematicEntrance(frame, 0, 30);
   // Audio-driven: exit starts at last phrase marker instead of fixed offset
   const exitStart = getSyncedExitStart(duration, audioMarkers, TRANSITION_FRAMES);
@@ -243,6 +284,24 @@ export const SceneMotion: React.FC<{
     down: { x: 0, y: -entranceOffset },
   };
   const eDir = entranceMap[entranceDirection];
+
+  // ── Entrance flavor ──────────────────────────────────────────────
+  // Per-scene variety so consecutive beats don't all arrive identically.
+  // `p` is the eased entrance progress (0→1); each style remaps the start.
+  const p = entrance.opacity;
+  const inv = 1 - p;
+  const styleMap: Record<EntranceStyle, { scale: number; rot: number; xMul: number; yMul: number }> = {
+    rise:  { scale: 0.94, rot: 0,    xMul: 1,   yMul: 1 },
+    zoom:  { scale: 0.82, rot: 0,    xMul: 0.3, yMul: 0.3 },
+    slide: { scale: 0.97, rot: 0,    xMul: 2.4, yMul: 2.4 },
+    tilt:  { scale: 0.9,  rot: -3.5, xMul: 1,   yMul: 1.2 },
+    drift: { scale: 1.05, rot: 1.5,  xMul: 0.6, yMul: 0.6 },
+  };
+  const st = styleMap[entranceStyle] || styleMap.rise;
+  const entScale = st.scale + (1 - st.scale) * p;
+  const entRot = st.rot * inv;
+  const exX = exit.x + eDir.x * inv * st.xMul;
+  const exY = entrance.y * (st.yMul) + exit.y + eDir.y * inv * st.yMul;
 
   // Combined opacity (entrance fade in + exit fade out)
   const opacity = entrance.opacity * exit.opacity;
@@ -264,7 +323,7 @@ export const SceneMotion: React.FC<{
         </div>
       )}
 
-      {/* Content layer */}
+      {/* Content layer — stacks blur + scale + translate */}
       <div
         style={{
           position: "absolute",
@@ -274,12 +333,13 @@ export const SceneMotion: React.FC<{
           alignItems: "center",
           opacity,
           transform: `
-            translateX(${Math.round(exit.x + eDir.x * (1 - entrance.opacity))}px)
-            translateY(${Math.round(entrance.y + exit.y + eDir.y * (1 - entrance.opacity))}px)
-            scale(${entrance.scale * exit.scale * cam.scale})
+            translateX(${exX}px)
+            translateY(${exY}px)
+            rotate(${entRot}deg)
+            scale(${entScale * exit.scale * cam.scale * (1 + beatPulse * 0.008)})
           `,
-          filter: "none",
-          willChange: "transform, opacity",
+          filter: `blur(${entrance.blur + exit.blur}px)`,
+          willChange: "transform, opacity, filter",
         }}
       >
         <div style={{ transform: `translateY(${cam.y}px)`, width: "100%", height: "100%" }}>
