@@ -120,9 +120,10 @@ def _build_html(
     total_duration += 1.0
 
     # Build clip HTML for each scene
+    colors = {"primary": primary, "accent": accent, "secondary": secondary}
     clips_html = []
     for i, scene in enumerate(timed_scenes):
-        clip = _build_scene_clip(scene, i, width, height)
+        clip = _build_scene_clip(scene, i, width, height, colors)
         clips_html.append(clip)
 
     # Build audio elements
@@ -159,7 +160,7 @@ def _build_html(
     resolution_attr = "landscape" if width > height else "portrait"
 
     html = f'''<!doctype html>
-<html lang="en" data-composition-id="main" data-composition-duration="{total_duration:.1f}" data-resolution="{resolution_attr}">
+<html lang="en" data-composition-duration="{total_duration:.1f}" data-resolution="{resolution_attr}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width={width}, height={height}" />
@@ -196,6 +197,28 @@ def _build_html(
         position: absolute;
         inset: 0;
         z-index: 0;
+        overflow: hidden;
+      }}
+      .scene-bg::before {{
+        content: '';
+        position: absolute;
+        inset: -50%;
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.03) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 70%, rgba(255,255,255,0.02) 0%, transparent 40%);
+        animation: bgDrift 20s ease-in-out infinite;
+      }}
+      @keyframes bgDrift {{
+        0%, 100% {{ transform: translate(0, 0) rotate(0deg); }}
+        33% {{ transform: translate(2%, 1%) rotate(1deg); }}
+        66% {{ transform: translate(-1%, 2%) rotate(-1deg); }}
+      }}
+      .glow-orb {{
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.15;
+        z-index: 0;
+        pointer-events: none;
       }}
       .scene-content {{
         position: relative;
@@ -209,59 +232,68 @@ def _build_html(
         text-align: center;
       }}
       .headline {{
-        font-size: {72 if width > height else 96}px;
+        font-size: {56 if width > height else 72}px;
         font-weight: 700;
         color: {text};
-        line-height: 1.1;
-        margin-bottom: 24px;
-        max-width: 90%;
+        line-height: 1.15;
+        margin-bottom: 20px;
+        max-width: 85%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
       }}
       .subheadline {{
-        font-size: {36 if width > height else 48}px;
+        font-size: {28 if width > height else 36}px;
         font-weight: 400;
         color: {secondary};
-        line-height: 1.3;
-        max-width: 85%;
+        line-height: 1.4;
+        max-width: 80%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
       }}
       .eyebrow {{
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.15em;
+        letter-spacing: 0.12em;
         color: {accent};
-        margin-bottom: 16px;
+        margin-bottom: 12px;
       }}
       .metric-value {{
-        font-size: {120 if width > height else 160}px;
+        font-size: {80 if width > height else 100}px;
         font-weight: 800;
         color: {primary};
         line-height: 1;
       }}
       .metric-label {{
-        font-size: 28px;
+        font-size: 22px;
         color: {text};
-        margin-top: 12px;
+        margin-top: 10px;
       }}
       .feature-title {{
-        font-size: 42px;
+        font-size: 36px;
         font-weight: 700;
         color: {text};
-        margin-bottom: 12px;
+        margin-bottom: 10px;
+        max-width: 85%;
       }}
       .feature-desc {{
-        font-size: 24px;
+        font-size: 20px;
         color: {secondary};
-        max-width: 80%;
+        max-width: 75%;
+        line-height: 1.5;
       }}
       .cta-text {{
-        font-size: {64 if width > height else 80}px;
+        font-size: {48 if width > height else 56}px;
         font-weight: 700;
         color: {text};
+        max-width: 85%;
+        line-height: 1.15;
       }}
       .cta-sub {{
-        font-size: 28px;
+        font-size: 22px;
         color: {secondary};
-        margin-top: 16px;
+        margin-top: 14px;
+        max-width: 75%;
       }}
       .stats-grid {{
         display: grid;
@@ -274,26 +306,26 @@ def _build_html(
         text-align: center;
       }}
       .stat-value {{
-        font-size: 56px;
+        font-size: 48px;
         font-weight: 700;
         color: {primary};
       }}
       .stat-label {{
-        font-size: 20px;
+        font-size: 18px;
         color: {text};
-        margin-top: 8px;
+        margin-top: 6px;
       }}
       .quote-text {{
-        font-size: 36px;
+        font-size: 28px;
         font-style: italic;
         color: {text};
-        max-width: 80%;
-        line-height: 1.4;
+        max-width: 75%;
+        line-height: 1.5;
       }}
       .quote-attrib {{
-        font-size: 22px;
+        font-size: 18px;
         color: {secondary};
-        margin-top: 20px;
+        margin-top: 16px;
       }}
       .step-list {{
         display: flex;
@@ -305,9 +337,10 @@ def _build_html(
       .step-item {{
         display: flex;
         align-items: center;
-        gap: 16px;
-        font-size: 24px;
+        gap: 14px;
+        font-size: 20px;
         color: {text};
+        max-width: 90%;
       }}
       .step-num {{
         width: 40px;
@@ -336,14 +369,18 @@ def _build_html(
       .before-box {{ background: rgba(255,255,255,0.05); }}
       .after-box {{ background: rgba({ _hex_to_rgb(primary) }, 0.15); }}
       .problem-text {{
-        font-size: 48px;
+        font-size: 36px;
         font-weight: 700;
         color: #ef4444;
+        line-height: 1.2;
+        max-width: 90%;
       }}
       .solution-text {{
-        font-size: 48px;
+        font-size: 36px;
         font-weight: 700;
         color: {primary};
+        line-height: 1.2;
+        max-width: 90%;
       }}
     </style>
   </head>
@@ -377,22 +414,35 @@ def _hex_to_rgb(hex_color: str) -> str:
     return f"{r}, {g}, {b}"
 
 
-def _build_scene_clip(scene: Dict, index: int, width: int, height: int) -> str:
+def _build_scene_clip(scene: Dict, index: int, width: int, height: int, colors: Dict[str, str]) -> str:
     """Build a single scene clip HTML."""
     start = scene["start"]
     duration = scene["duration"]
     scene_type = scene.get("type", "statement")
     track = index + 1
+    primary = colors.get("primary", "#10a37f")
+    accent = colors.get("accent", "#10a37f")
+    secondary = colors.get("secondary", "#19c59f")
 
     # Background gradient
     bg_gradient = _get_background_gradient(scene_type, scene.get("background", ""))
 
     content = _build_scene_content(scene, scene_type)
 
+    # Add decorative glow orbs for visual interest
+    orb_colors = [primary, accent, secondary]
+    orbs_html = ""
+    for oi, oc in enumerate(orb_colors[:2]):
+        ox = 20 + oi * 45
+        oy = 15 + (oi % 2) * 50
+        ow = 200 + oi * 100
+        oh = 200 + oi * 80
+        orbs_html += f'        <div class="glow-orb" style="left:{ox}%;top:{oy}%;width:{ow}px;height:{oh}px;background:{oc};"></div>\n'
+
     return f'''      <!-- Scene {index + 1}: {scene_type} -->
       <div id="scene-{index}" class="clip" data-start="{start:.3f}" data-duration="{duration:.3f}" data-track-index="{track}">
         <div class="scene-bg" style="background: {bg_gradient}"></div>
-        <div class="scene-content">
+{orbs_html}        <div class="scene-content">
 {content}
         </div>
       </div>'''
@@ -492,32 +542,100 @@ def _build_scene_content(scene: Dict, scene_type: str) -> str:
 
 
 def _build_gsap_timeline(scenes: List[Dict], music_volume: float, has_music: bool = False) -> str:
-    """Build GSAP timeline JavaScript for scene animations."""
+    """Build rich GSAP timeline with dynamic transitions per scene type."""
     lines = []
+    transitions = ["slide", "zoom", "flip", "blur", "split"]
 
     for i, scene in enumerate(scenes):
         start = scene["start"]
         duration = scene["duration"]
         sid = f"scene-{i}"
+        stype = scene.get("type", "statement")
+        trans = transitions[i % len(transitions)]
 
-        # Entrance animation
-        lines.append(f"      // Scene {i+1} entrance")
-        lines.append(f"      tl.from('#{sid} .scene-content', {{ opacity: 0, y: 40, duration: 0.6, ease: 'power2.out' }}, {start:.2f});")
+        # ── Background entrance ──
+        lines.append(f"      // Scene {i+1} ({stype}) - {trans} transition")
+        lines.append(f"      tl.fromTo('#{sid} .scene-bg', {{ opacity: 0, scale: 1.1 }}, {{ opacity: 1, scale: 1, duration: 0.8, ease: 'power2.out' }}, {start:.2f});")
 
-        # Stagger children if there are multiple elements
-        lines.append(f"      tl.from('#{sid} .scene-content > *', {{ opacity: 0, y: 20, duration: 0.4, stagger: 0.1, ease: 'power2.out' }}, {start + 0.2:.2f});")
+        # ── Content entrance based on scene type ──
+        if stype == "title":
+            lines.append(f"      tl.from('#{sid} .eyebrow', {{ opacity: 0, y: -30, letterSpacing: '0.5em', duration: 0.6, ease: 'power3.out' }}, {start + 0.1:.2f});")
+            lines.append(f"      tl.from('#{sid} .headline', {{ opacity: 0, y: 60, scale: 0.9, duration: 0.9, ease: 'back.out(1.2)' }}, {start + 0.3:.2f});")
+            lines.append(f"      tl.from('#{sid} .subheadline', {{ opacity: 0, y: 30, duration: 0.7, ease: 'power2.out' }}, {start + 0.6:.2f});")
+        elif stype == "problem":
+            lines.append(f"      tl.from('#{sid} .headline', {{ opacity: 0, x: -80, duration: 0.7, ease: 'power3.out' }}, {start + 0.1:.2f});")
+            lines.append(f"      tl.from('#{sid} .subheadline', {{ opacity: 0, x: -40, duration: 0.6, ease: 'power2.out' }}, {start + 0.35:.2f});")
+            lines.append(f"      tl.to('#{sid} .headline', {{ x: '+=5', y: '+=3', duration: 0.08, repeat: 5, yoyo: true, ease: 'none' }}, {start + 0.8:.2f});")
+        elif stype == "solution":
+            lines.append(f"      tl.from('#{sid} .headline', {{ opacity: 0, scale: 0.5, rotation: -3, duration: 0.8, ease: 'back.out(1.5)' }}, {start + 0.1:.2f});")
+            lines.append(f"      tl.from('#{sid} .subheadline', {{ opacity: 0, y: 40, duration: 0.6, ease: 'power2.out' }}, {start + 0.45:.2f});")
+            lines.append(f"      tl.fromTo('#{sid} .scene-bg', {{ backgroundPosition: '0% 50%' }}, {{ backgroundPosition: '100% 50%', duration: {duration * 0.6:.1f}, ease: 'none' }}, {start + 0.2:.2f});")
+        elif stype == "metric":
+            child_sel = f"#{sid} .metric-value, #{sid} .stat-value"
+            lines.append(f"      tl.from('{child_sel}', {{ opacity: 0, scale: 0, duration: 0.7, stagger: 0.15, ease: 'back.out(2)' }}, {start + 0.1:.2f});")
+            lines.append(f"      tl.from('#{sid} .metric-label, #{sid} .stat-label', {{ opacity: 0, y: 20, duration: 0.5, stagger: 0.1, ease: 'power2.out' }}, {start + 0.4:.2f});")
+        elif stype == "stats":
+            lines.append(f"      tl.from('#{sid} .stat-item', {{ opacity: 0, y: 50, scale: 0.9, duration: 0.6, stagger: 0.12, ease: 'power3.out' }}, {start + 0.1:.2f});")
+        elif stype == "cta":
+            lines.append(f"      tl.from('#{sid} .cta-text', {{ opacity: 0, y: 50, scale: 0.8, duration: 0.8, ease: 'back.out(1.4)' }}, {start + 0.1:.2f});")
+            lines.append(f"      tl.from('#{sid} .cta-sub', {{ opacity: 0, y: 30, duration: 0.6, ease: 'power2.out' }}, {start + 0.45:.2f});")
+            lines.append(f"      tl.to('#{sid} .cta-text', {{ scale: 1.03, duration: 0.4, repeat: -1, yoyo: true, ease: 'sine.inOut' }}, {start + 1.0:.2f});")
+        elif stype == "feature":
+            lines.append(f"      tl.from('#{sid} .feature-title', {{ opacity: 0, x: -50, duration: 0.6, ease: 'power3.out' }}, {start + 0.1:.2f});")
+            lines.append(f"      tl.from('#{sid} .feature-desc', {{ opacity: 0, x: -30, duration: 0.5, ease: 'power2.out' }}, {start + 0.3:.2f});")
+        elif stype == "socialProof":
+            lines.append(f"      tl.from('#{sid} .quote-text', {{ opacity: 0, y: 30, filter: 'blur(8px)', duration: 0.8, ease: 'power2.out' }}, {start + 0.1:.2f});")
+            lines.append(f"      tl.from('#{sid} .quote-attrib', {{ opacity: 0, x: 30, duration: 0.5, ease: 'power2.out' }}, {start + 0.5:.2f});")
+        elif stype == "process":
+            lines.append(f"      tl.from('#{sid} .step-item', {{ opacity: 0, x: -40, duration: 0.5, stagger: 0.15, ease: 'power3.out' }}, {start + 0.1:.2f});")
+        elif stype in ("beforeAfter", "comparison"):
+            lines.append(f"      tl.from('#{sid} .before-box', {{ opacity: 0, x: -60, duration: 0.6, ease: 'power3.out' }}, {start + 0.1:.2f});")
+            lines.append(f"      tl.from('#{sid} .after-box', {{ opacity: 0, x: 60, duration: 0.6, ease: 'power3.out' }}, {start + 0.25:.2f});")
+        else:
+            # Default: staggered reveal
+            lines.append(f"      tl.from('#{sid} .scene-content > *', {{ opacity: 0, y: 35, duration: 0.55, stagger: 0.12, ease: 'power3.out' }}, {start + 0.1:.2f});")
 
-        # Exit animation (fade out near end)
+        # ── Transition between scenes ──
         exit_start = start + duration - 0.5
-        if exit_start > start + 0.5:
-            lines.append(f"      tl.to('#{sid}', {{ opacity: 0, duration: 0.4, ease: 'power2.in' }}, {exit_start:.2f});")
+        if exit_start > start + 0.8:
+            if trans == "slide":
+                lines.append(f"      tl.to('#{sid}', {{ x: -100, opacity: 0, duration: 0.45, ease: 'power3.in' }}, {exit_start:.2f});")
+                if i + 1 < len(scenes):
+                    nsid = f"scene-{i+1}"
+                    lines.append(f"      tl.fromTo('#{nsid}', {{ x: 100, opacity: 0 }}, {{ x: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }}, {exit_start + 0.15:.2f});")
+            elif trans == "zoom":
+                lines.append(f"      tl.to('#{sid}', {{ scale: 1.15, opacity: 0, duration: 0.5, ease: 'power2.in' }}, {exit_start:.2f});")
+                if i + 1 < len(scenes):
+                    nsid = f"scene-{i+1}"
+                    lines.append(f"      tl.fromTo('#{nsid}', {{ scale: 0.85, opacity: 0 }}, {{ scale: 1, opacity: 1, duration: 0.5, ease: 'power2.out' }}, {exit_start + 0.15:.2f});")
+            elif trans == "flip":
+                lines.append(f"      tl.to('#{sid}', {{ rotationY: 90, opacity: 0, duration: 0.45, ease: 'power2.in' }}, {exit_start:.2f});")
+                if i + 1 < len(scenes):
+                    nsid = f"scene-{i+1}"
+                    lines.append(f"      tl.fromTo('#{nsid}', {{ rotationY: -90, opacity: 0 }}, {{ rotationY: 0, opacity: 1, duration: 0.5, ease: 'power2.out' }}, {exit_start + 0.15:.2f});")
+            elif trans == "blur":
+                lines.append(f"      tl.to('#{sid}', {{ filter: 'blur(12px)', opacity: 0, duration: 0.5, ease: 'power2.in' }}, {exit_start:.2f});")
+                if i + 1 < len(scenes):
+                    nsid = f"scene-{i+1}"
+                    lines.append(f"      tl.fromTo('#{nsid}', {{ filter: 'blur(12px)', opacity: 0 }}, {{ filter: 'blur(0px)', opacity: 1, duration: 0.5, ease: 'power2.out' }}, {exit_start + 0.15:.2f});")
+            elif trans == "split":
+                lines.append(f"      tl.to('#{sid} .scene-content > *:nth-child(odd)', {{ x: -80, opacity: 0, duration: 0.4, ease: 'power2.in' }}, {exit_start:.2f});")
+                lines.append(f"      tl.to('#{sid} .scene-content > *:nth-child(even)', {{ x: 80, opacity: 0, duration: 0.4, ease: 'power2.in' }}, {exit_start:.2f});")
+
+    # ── Ambient motion (subtle background pulse on all scenes) ──
+    for i, scene in enumerate(scenes):
+        sid = f"scene-{i}"
+        start = scene["start"]
+        duration = scene["duration"]
+        lines.append(f"      tl.fromTo('#{sid} .scene-bg', {{ scale: 1 }}, {{ scale: 1.03, duration: {duration * 0.5:.1f}, ease: 'sine.inOut', yoyo: true, repeat: 1 }}, {start + 0.2:.2f});")
 
     if has_music and music_volume > 0:
         total_dur = sum(s['duration'] for s in scenes)
-        lines.append(f"      // Music volume fade in")
-        lines.append(f"      if (document.querySelector('audio[loop]')) {{")
-        lines.append(f"        tl.fromTo('audio[loop]', {{ volume: 0 }}, {{ volume: {music_volume}, duration: 1.5 }}, 0);")
-        lines.append(f"        tl.to('audio[loop]', {{ volume: 0, duration: 1.5 }}, {max(0, total_dur - 1.5):.2f});")
+        lines.append(f"      // Music volume fade in/out")
+        lines.append(f"      const musicEl = document.querySelector('audio[loop]');")
+        lines.append(f"      if (musicEl) {{")
+        lines.append(f"        tl.fromTo(musicEl, {{ volume: 0 }}, {{ volume: {music_volume}, duration: 1.5 }}, 0);")
+        lines.append(f"        tl.to(musicEl, {{ volume: 0, duration: 1.5 }}, {max(0, total_dur - 1.5):.2f});")
         lines.append(f"      }}")
 
     return "\n".join(lines)
