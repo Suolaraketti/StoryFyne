@@ -3,3 +3,4 @@ renders/
 frames/
 *.log
 .DS_Store
+snapshots/

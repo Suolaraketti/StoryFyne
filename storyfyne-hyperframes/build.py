@@ -288,11 +288,11 @@ def enter_exit(sid, t0, t1, idx):
     IN = {
         "rise":  "{opacity:0,y:70,scale:0.97}", "zoom": "{opacity:0,scale:0.82}",
         "slideR":"{opacity:0,x:160}", "slideL":"{opacity:0,x:-160}",
-        "blur":  "{opacity:0,filter:'blur(18px)',scale:1.05}", "drift":"{opacity:0,y:-44,scale:1.06}",
+        "blur":  "{opacity:0,filter:'blur(10px)',scale:1.05}", "drift":"{opacity:0,y:-44,scale:1.06}",
     }[f]
     OUT = {  # transform-only (opacity added in the tween)
         "rise": "y:-54,scale:1.03", "zoom": "scale:1.14", "slideR": "x:-130",
-        "blur": "filter:'blur(16px)'", "slideL": "x:130", "drift": "y:46",
+        "blur": "filter:'blur(10px)'", "slideL": "x:130", "drift": "y:46",
     }[f]
     lines = [
         "tl.fromTo('%s',%s,{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},%.2f);" % (sid, IN, t0),
@@ -320,7 +320,7 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:__BG__;
   linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:64px 64px;
   -webkit-mask-image:radial-gradient(ellipse 75% 65% at 50% 45%,#000,transparent 75%);
           mask-image:radial-gradient(ellipse 75% 65% at 50% 45%,#000,transparent 75%);}
-.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.16;}
+.orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.16;}
 .orb.a{width:760px;height:760px;left:-160px;top:-200px;background:__PRIMARY__;animation:drift1 26s ease-in-out infinite}
 .orb.b{width:680px;height:680px;right:-160px;bottom:-220px;background:__SECONDARY__;animation:drift2 30s ease-in-out infinite}
 @keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(80px,60px)}}
@@ -346,9 +346,9 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:__BG__;
 .split-l{flex:1;text-align:left}
 
 /* glass card */
-.card{background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.03));
+.card{background:linear-gradient(180deg,rgba(34,44,66,.72),rgba(16,22,38,.66));
   border:1px solid rgba(255,255,255,.12);border-radius:26px;
-  box-shadow:0 40px 110px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14);backdrop-filter:blur(16px)}
+  box-shadow:0 40px 110px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14)}
 .card-top{display:flex;align-items:center;gap:9px;padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.08)}
 .dot{width:12px;height:12px;border-radius:50%}.dot.r{background:#ff5f56}.dot.y{background:#ffbd2e}.dot.g{background:#27c93f}
 .card-title{margin-left:10px;font-size:16px;color:rgba(255,255,255,.5);font-weight:600}
@@ -477,7 +477,7 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:__BG__;
 /* captions */
 .cap{position:absolute;left:0;right:0;bottom:78px;display:flex;justify-content:center;pointer-events:none}
 .cap-inner{display:inline-flex;flex-wrap:wrap;justify-content:center;gap:0 14px;max-width:1400px;padding:16px 34px;border-radius:18px;
-  background:rgba(8,12,22,.62);border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(10px);
+  background:rgba(8,12,22,.74);border:1px solid rgba(255,255,255,.10);
   box-shadow:0 18px 50px rgba(0,0,0,.45)}
 .cap .w{font-size:38px;font-weight:700;letter-spacing:-.01em;color:#fff;display:inline-block;will-change:transform,opacity}
 .cap .w.key{color:__SECONDARY__}
@@ -567,11 +567,12 @@ def build():
     # captions
     for k, (cs, ce, words) in enumerate(caption_lines()):
         spans = "".join('<span class="w%s">%s</span>' % (" key" if is_key(w) else "", esc(w)) for w in words)
-        cdur = (ce - cs) + 0.12
+        cdur = ce - cs                       # back-to-back, no same-time overlap
+        fade_out = max(cs + 0.08, ce - 0.16)
         body.append('<div id="cap-%d" class="cap clip" data-start="%.2f" data-duration="%.2f" data-track-index="%d">'
                     '<div class="cap-inner">%s</div></div>' % (k, cs, cdur, 90 + (k % 2), spans))
-        gsap.append("tl.from('#cap-%d .w',{opacity:0,yPercent:55,scale:0.9,duration:0.26,stagger:0.035,ease:'power2.out'},%.2f);" % (k, cs))
-        gsap.append("tl.to('#cap-%d',{opacity:0,duration:0.18,ease:'power1.in'},%.2f);" % (k, ce))
+        gsap.append("tl.from('#cap-%d .w',{opacity:0,yPercent:55,scale:0.9,duration:0.24,stagger:0.03,ease:'power2.out'},%.2f);" % (k, cs))
+        gsap.append("tl.to('#cap-%d',{opacity:0,duration:0.16,ease:'power1.in'},%.2f);" % (k, fade_out))
 
     # audio (pre-mixed VO + ducked music)
     body.append('<audio id="soundtrack" src="assets/soundtrack.mp3" data-start="0" data-duration="%.2f" data-track-index="100"></audio>' % TOTAL)
