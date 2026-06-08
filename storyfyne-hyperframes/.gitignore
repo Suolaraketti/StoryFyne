@@ -4,3 +4,4 @@ frames/
 *.log
 .DS_Store
 snapshots/
+.env

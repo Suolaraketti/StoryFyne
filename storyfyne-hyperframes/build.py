@@ -13,7 +13,7 @@ Renders fully offline:
 
 Timings are locked to the supplied SRT so captions + visuals stay in sync with the VO.
 """
-import sys, html as _html
+import os, sys, html as _html
 
 # ── Canvas / brand ──────────────────────────────────────────────────
 # `python build.py portrait`  -> 1080x1920 (9:16);  default -> 1920x1080 (16:9)
@@ -78,6 +78,23 @@ def svg_secondnature():
     g = '<path d="M9 33 Q19 6 34 31 Q22 31 9 33 Z" fill="%s"/>' % MUTED
     return svg_comp(g, "Second Nature")
 
+# ── Real logos (preferred over the SVG fallbacks when present) ───────
+# Drop real files in assets/logos/<key>.(svg|png|webp) — or run fetch_logos.py
+# with a logo.dev key — and they're used automatically as <icon + wordmark>.
+LOGO_DIR = "assets/logos"
+
+def disk_logo(key, name):
+    for ext in ("svg", "png", "webp", "jpg"):
+        p = "%s/%s.%s" % (LOGO_DIR, key, ext)
+        if os.path.exists(p):
+            return ('<span class="logo-lockup"><img class="logo-mark" src="%s" alt="%s"/>'
+                    '<span class="lw">%s</span></span>' % (p, esc(name), esc(name)))
+    return None
+
+def brand_logo(key, name, fallback_svg):
+    """Real logo file if one exists, else the inlined SVG lockup."""
+    return disk_logo(key, name) or fallback_svg
+
 # ── Scene timeline (locked to SRT) ──────────────────────────────────
 # (start, end) seconds. 14 scenes spanning 0 -> 72.0
 BOUNDS = [0.0, 7.76, 13.96, 20.28, 23.48, 29.16, 34.48, 40.28,
@@ -99,8 +116,11 @@ def scene1(sid, t0):  # PROBLEM
     return inner, []
 
 def scene2(sid, t0):  # COMPETITORS
-    chips = "".join(chip(s + '<div class="chip-sub">AI roleplay</div>')
-                    for s in (svg_hyperbound(), svg_mindtickle(), svg_secondnature()))
+    comp = [("hyperbound", "Hyperbound", svg_hyperbound()),
+            ("mindtickle", "Mindtickle", svg_mindtickle()),
+            ("secondnature", "Second Nature", svg_secondnature())]
+    chips = "".join(chip(brand_logo(k, n, s) + '<div class="chip-sub">AI roleplay</div>')
+                    for k, n, s in comp)
     inner = (
         '<div class="eyebrow anim">THE STATUS QUO</div>'
         '<div class="headline mid anim">They\'re all the same playbook.</div>'
@@ -138,10 +158,11 @@ def scene4(sid, t0):  # BRAND PIVOT
     return inner, []
 
 def scene5(sid, t0):  # INTEGRATIONS
-    chips = "".join(chip(s) for s in (svg_salesforce(), svg_gong(), svg_hubspot()))
-    sub = ['Your CRM', 'Your Gong calls', 'Your HubSpot data']
-    chips = "".join(chip(s + '<div class="chip-sub">%s</div>' % sub[i])
-                    for i, s in enumerate((svg_salesforce(), svg_gong(), svg_hubspot())))
+    items = [("salesforce", "Salesforce", "Your CRM", svg_salesforce()),
+             ("gong", "Gong", "Your Gong calls", svg_gong()),
+             ("hubspot", "HubSpot", "Your HubSpot data", svg_hubspot())]
+    chips = "".join(chip(brand_logo(k, n, s) + '<div class="chip-sub">%s</div>' % sub)
+                    for k, n, sub, s in items)
     inner = (
         '<div class="eyebrow anim">CONNECTED TO YOUR STACK</div>'
         '<div class="headline mid anim">Pulled straight from your data.</div>'
@@ -363,6 +384,9 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:__BG__;
   border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 60px rgba(0,0,0,.34)}
 .logo-svg{height:46px;width:auto;display:block}
 .lw{font-family:Inter,sans-serif;font-weight:800;letter-spacing:-.01em}
+.logo-lockup{display:inline-flex;align-items:center;gap:14px}
+.logo-mark{height:42px;width:auto;max-width:210px;object-fit:contain;display:block}
+.logo-lockup .lw{font-size:25px;color:#fff}
 .chip-sub{font-size:18px;color:rgba(255,255,255,.5);font-weight:600}
 .stamp{margin-top:42px;font-size:24px;font-weight:800;letter-spacing:.16em;color:__MUTED__;
   border:2px dashed rgba(154,163,184,.5);padding:12px 26px;border-radius:14px;transform:rotate(-3deg)}
