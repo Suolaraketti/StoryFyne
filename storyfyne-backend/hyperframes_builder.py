@@ -382,6 +382,193 @@ def _build_html(
         line-height: 1.2;
         max-width: 90%;
       }}
+      /* ── UI Mockups ── */
+      .phone-mockup {{
+        width: 260px;
+        height: 520px;
+        background: #1a1a2e;
+        border-radius: 36px;
+        border: 4px solid #333;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(255,255,255,0.05);
+        flex-shrink: 0;
+      }}
+      .phone-notch {{
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 28px;
+        background: #1a1a2e;
+        border-radius: 0 0 16px 16px;
+        z-index: 10;
+      }}
+      .phone-screen {{
+        width: 100%;
+        height: 100%;
+        padding: 40px 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }}
+      .phone-msg {{
+        padding: 10px 14px;
+        border-radius: 16px;
+        font-size: 13px;
+        max-width: 85%;
+        line-height: 1.4;
+      }}
+      .phone-msg-in {{
+        background: rgba(255,255,255,0.08);
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+      }}
+      .phone-msg-out {{
+        background: {primary};
+        color: #fff;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+      }}
+      .laptop-mockup {{
+        width: 480px;
+        height: 300px;
+        background: #1a1a2e;
+        border-radius: 12px 12px 0 0;
+        border: 3px solid #333;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        flex-shrink: 0;
+      }}
+      .laptop-screen {{
+        width: 100%;
+        height: 100%;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }}
+      .laptop-bar {{
+        height: 8px;
+        background: rgba(255,255,255,0.06);
+        border-radius: 4px;
+      }}
+      .laptop-bar-short {{ width: 60%; }}
+      .laptop-bar-med {{ width: 80%; }}
+      .laptop-bar-full {{ width: 100%; }}
+      .laptop-header {{
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }}
+      .laptop-dot {{
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.15);
+      }}
+      .dashboard-mockup {{
+        width: 420px;
+        height: 280px;
+        background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.06);
+        padding: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr 1fr;
+        gap: 12px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        flex-shrink: 0;
+      }}
+      .dash-title {{
+        grid-column: 1 / -1;
+        font-size: 14px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }}
+      .dash-card {{
+        background: rgba(255,255,255,0.04);
+        border-radius: 10px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }}
+      .dash-num {{
+        font-size: 28px;
+        font-weight: 700;
+        color: {primary};
+      }}
+      .dash-label {{
+        font-size: 12px;
+        color: rgba(255,255,255,0.4);
+      }}
+      .dash-trend {{
+        font-size: 12px;
+        color: #4ade80;
+      }}
+      .dash-trend-down {{ color: #f87171; }}
+      .browser-mockup {{
+        width: 500px;
+        height: 320px;
+        background: #1a1a2e;
+        border-radius: 12px;
+        border: 2px solid #333;
+        overflow: hidden;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+      }}
+      .browser-bar {{
+        height: 36px;
+        background: #252540;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        gap: 8px;
+      }}
+      .browser-dot {{
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }}
+      .browser-dot-r {{ background: #ef4444; }}
+      .browser-dot-y {{ background: #f59e0b; }}
+      .browser-dot-g {{ background: #22c55e; }}
+      .browser-url {{
+        flex: 1;
+        height: 22px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 6px;
+        margin-left: 8px;
+      }}
+      .browser-body {{
+        flex: 1;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }}
+      .mockup-row {{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+        width: 100%;
+        margin-top: 20px;
+      }}
+      .mockup-col {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }}
     </style>
   </head>
   <body>
@@ -427,7 +614,7 @@ def _build_scene_clip(scene: Dict, index: int, width: int, height: int, colors: 
     # Background gradient
     bg_gradient = _get_background_gradient(scene_type, scene.get("background", ""))
 
-    content = _build_scene_content(scene, scene_type)
+    content = _build_scene_content(scene, scene_type, is_landscape=(width > height))
 
     # Add decorative glow orbs for visual interest
     orb_colors = [primary, accent, secondary]
@@ -472,7 +659,74 @@ def _get_background_gradient(scene_type: str, override: str) -> str:
     return gradients.get(scene_type, "transparent")
 
 
-def _build_scene_content(scene: Dict, scene_type: str) -> str:
+def _phone_mockup() -> str:
+    """Generate a phone chat mockup."""
+    return '''<div class="phone-mockup">
+  <div class="phone-notch"></div>
+  <div class="phone-screen">
+    <div class="phone-msg phone-msg-in">Hey, is this a real person?</div>
+    <div class="phone-msg phone-msg-out">Yes! I'm calling about your demo request.</div>
+    <div class="phone-msg phone-msg-in">Wow, you sound totally human!</div>
+    <div class="phone-msg phone-msg-out">Thanks! When works for a 15-min call?</div>
+    <div class="phone-msg phone-msg-in">Tuesday 2pm works</div>
+    <div class="phone-msg phone-msg-out">Perfect! I'll send a calendar invite.</div>
+  </div>
+</div>'''
+
+
+def _laptop_mockup() -> str:
+    """Generate a laptop dashboard mockup."""
+    return '''<div class="laptop-mockup">
+  <div class="laptop-screen">
+    <div class="laptop-header"><div class="laptop-dot"></div><div class="laptop-dot"></div><div class="laptop-dot"></div></div>
+    <div class="laptop-bar laptop-bar-short"></div>
+    <div class="laptop-bar laptop-bar-med"></div>
+    <div class="laptop-bar laptop-bar-full"></div>
+    <div class="laptop-bar laptop-bar-med"></div>
+    <div class="laptop-bar laptop-bar-short"></div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <div style="flex:1;height:60px;background:rgba(99,102,241,0.15);border-radius:8px"></div>
+      <div style="flex:1;height:60px;background:rgba(99,102,241,0.1);border-radius:8px"></div>
+    </div>
+  </div>
+</div>'''
+
+
+def _dashboard_mockup() -> str:
+    """Generate a stats dashboard mockup."""
+    return '''<div class="dashboard-mockup">
+  <div class="dash-title">Campaign Performance</div>
+  <div class="dash-card"><div class="dash-num">3,421</div><div class="dash-label">Calls Made</div><div class="dash-trend">+142%</div></div>
+  <div class="dash-card"><div class="dash-num">847</div><div class="dash-label">Meetings Booked</div><div class="dash-trend">+89%</div></div>
+  <div class="dash-card"><div class="dash-num">24.7%</div><div class="dash-label">Answer Rate</div><div class="dash-trend">+12%</div></div>
+  <div class="dash-card"><div class="dash-num">$12.4</div><div class="dash-label">Cost Per Meeting</div><div class="dash-trend dash-trend-down">-58%</div></div>
+</div>'''
+
+
+def _browser_mockup() -> str:
+    """Generate a browser window mockup."""
+    return '''<div class="browser-mockup">
+  <div class="browser-bar">
+    <div class="browser-dot browser-dot-r"></div>
+    <div class="browser-dot browser-dot-y"></div>
+    <div class="browser-dot browser-dot-g"></div>
+    <div class="browser-url"></div>
+  </div>
+  <div class="browser-body">
+    <div style="height:20px;width:40%;background:rgba(255,255,255,0.1);border-radius:4px"></div>
+    <div style="height:12px;width:100%;background:rgba(255,255,255,0.05);border-radius:4px"></div>
+    <div style="height:12px;width:85%;background:rgba(255,255,255,0.05);border-radius:4px"></div>
+    <div style="height:12px;width:90%;background:rgba(255,255,255,0.05);border-radius:4px"></div>
+    <div style="margin-top:8px;display:flex;gap:10px">
+      <div style="flex:1;height:80px;background:rgba(99,102,241,0.12);border-radius:8px"></div>
+      <div style="flex:1;height:80px;background:rgba(99,102,241,0.08);border-radius:8px"></div>
+      <div style="flex:1;height:80px;background:rgba(99,102,241,0.12);border-radius:8px"></div>
+    </div>
+  </div>
+</div>'''
+
+
+def _build_scene_content(scene: Dict, scene_type: str, is_landscape: bool = True) -> str:
     """Build the inner HTML content for a scene based on its type."""
     headline = scene.get("headline", scene.get("text", ""))[:120]
     subheadline = scene.get("subheadline", "")
@@ -497,6 +751,10 @@ def _build_scene_content(scene: Dict, scene_type: str) -> str:
             lbl = m.get("label", "")
             lines.append(f'          <div class="metric-value">{_escape_html(val)}</div>')
             lines.append(f'          <div class="metric-label">{_escape_html(lbl)}</div>')
+        if is_landscape:
+            lines.append('            </div>')
+            lines.append('            ' + _dashboard_mockup())
+            lines.append('          </div>')
     elif scene_type == "stats" and metrics:
         lines.append('          <div class="stats-grid">')
         for m in metrics[:4]:
@@ -517,12 +775,19 @@ def _build_scene_content(scene: Dict, scene_type: str) -> str:
             lines.append(f'            <div class="step-item"><div class="step-num">{i+1}</div><span>{_escape_html(step)}</span></div>')
         lines.append('          </div>')
     elif scene_type == "feature" and features:
+        if is_landscape:
+            lines.append('          <div class="mockup-row">')
+            lines.append('            <div class="mockup-col">')
         for f in features[:2]:
             ft = f.get("title", "")
             fd = f.get("description", "")
             lines.append(f'          <div class="feature-title">{_escape_html(ft)}</div>')
             if fd:
                 lines.append(f'          <div class="feature-desc">{_escape_html(fd)}</div>')
+        if is_landscape:
+            lines.append('            </div>')
+            lines.append('            ' + _browser_mockup())
+            lines.append('          </div>')
     elif scene_type == "socialProof" and quote:
         lines.append(f'          <div class="quote-text">&ldquo;{_escape_html(quote)}&rdquo;</div>')
         if attribution:
