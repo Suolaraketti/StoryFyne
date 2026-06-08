@@ -21,7 +21,8 @@ LOGOS = {
     "hyperbound":   "hyperbound.ai",
     "mindtickle":   "mindtickle.com",
     "secondnature": "secondnature.ai",
-    "dialfyne":     "dialfyne.com",   # overwrites the bundled PNG only if logo.dev has it
+    # NOTE: Dialfyne's own logo is intentionally NOT fetched — the curated
+    # assets/logos/dialfyne.png (white wordmark) is the brand hero asset.
 }
 
 HERE = os.path.dirname(os.path.abspath(__file__))
