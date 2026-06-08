@@ -28,9 +28,9 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;
   linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:64px 64px;
   -webkit-mask-image:radial-gradient(ellipse 75% 65% at 50% 45%,#000,transparent 75%);
           mask-image:radial-gradient(ellipse 75% 65% at 50% 45%,#000,transparent 75%);}
-.orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.16;}
-.orb.a{width:760px;height:760px;left:-160px;top:-200px;background:#2a93f5;animation:drift1 26s ease-in-out infinite}
-.orb.b{width:680px;height:680px;right:-160px;bottom:-220px;background:#6cbef9;animation:drift2 30s ease-in-out infinite}
+.orb{position:absolute;border-radius:50%;opacity:.55}
+.orb.a{width:1120px;height:1120px;left:-300px;top:-360px;background:radial-gradient(circle,rgba(42,147,245,.20),transparent 68%);animation:drift1 26s ease-in-out infinite}
+.orb.b{width:1000px;height:1000px;right:-280px;bottom:-360px;background:radial-gradient(circle,rgba(108,190,249,.15),transparent 68%);animation:drift2 30s ease-in-out infinite}
 @keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(80px,60px)}}
 @keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-70px,-50px)}}
 .vignette{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 320px rgba(0,0,0,.55)}
@@ -236,58 +236,58 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;
 <div id="cap-22" class="cap clip" data-start="62.58" data-duration="2.62" data-track-index="90"><div class="cap-inner"><span class="w">into</span><span class="w key">closers,</span><span class="w">head</span><span class="w">to</span><span class="w key">dialfyne.com/roleplay.</span></div></div>
 <div id="cap-23" class="cap clip" data-start="65.20" data-duration="2.89" data-track-index="91"><div class="cap-inner"><span class="w">We&#x27;ll</span><span class="w">give</span><span class="w">you</span><span class="w">an</span><span class="w">honest</span><span class="w">breakdown</span><span class="w">—</span></div></div>
 <div id="cap-24" class="cap clip" data-start="68.09" data-duration="3.71" data-track-index="90"><div class="cap-inner"><span class="w">and</span><span class="w">see</span><span class="w">if</span><span class="w">it</span><span class="w">makes</span><span class="w">sense</span><span class="w">for</span><span class="w">your</span><span class="w">business.</span></div></div>
-<audio id="soundtrack" src="assets/soundtrack.mp3" data-start="0" data-duration="72.00" data-track-index="100"></audio>
+<audio id="soundtrack" preload="none" src="assets/soundtrack.mp3" data-start="0" data-duration="72.00" data-track-index="100"></audio>
 <script>
 window.__timelines = window.__timelines || {};
 const tl = gsap.timeline({ paused: true });
-tl.fromTo('#scene-0',{opacity:0,y:70,scale:0.97},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},0.00);
+tl.fromTo('#scene-0',{opacity:0,y:70,scale:0.97},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},0.00);
 tl.from('#scene-0 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},0.16);
 tl.to('#scene-0',{opacity:0,y:-54,scale:1.03,duration:0.45,ease:'power2.in'},7.76);
-tl.fromTo('#scene-1',{opacity:0,scale:0.82},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},7.76);
+tl.fromTo('#scene-1',{opacity:0,scale:0.82},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},7.76);
 tl.from('#scene-1 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},7.92);
 tl.to('#scene-1',{opacity:0,scale:1.14,duration:0.45,ease:'power2.in'},13.96);
 tl.from('#scene-1 .stamp',{opacity:0,scale:1.6,rotation:-8,duration:0.5,ease:'back.out(2)'},8.66);
-tl.fromTo('#scene-2',{opacity:0,x:160},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},13.96);
+tl.fromTo('#scene-2',{opacity:0,x:160},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},13.96);
 tl.from('#scene-2 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},14.12);
 tl.to('#scene-2',{opacity:0,x:-130,duration:0.45,ease:'power2.in'},20.28);
 tl.from('#scene-2 .redtag',{opacity:0,y:14,scale:0.8,duration:0.45,ease:'back.out(2)'},14.86);
-tl.fromTo('#scene-3',{opacity:0,filter:'blur(10px)',scale:1.05},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},20.28);
+tl.fromTo('#scene-3',{opacity:0,scale:1.08,y:24},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},20.28);
 tl.from('#scene-3 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},20.44);
-tl.to('#scene-3',{opacity:0,filter:'blur(10px)',duration:0.45,ease:'power2.in'},23.48);
-tl.fromTo('#scene-4',{opacity:0,x:-160},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},23.48);
+tl.to('#scene-3',{opacity:0,scale:1.12,y:-24,duration:0.45,ease:'power2.in'},23.48);
+tl.fromTo('#scene-4',{opacity:0,x:-160},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},23.48);
 tl.from('#scene-4 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},23.64);
 tl.to('#scene-4',{opacity:0,x:130,duration:0.45,ease:'power2.in'},29.16);
-tl.fromTo('#scene-5',{opacity:0,y:-44,scale:1.06},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},29.16);
+tl.fromTo('#scene-5',{opacity:0,y:-44,scale:1.06},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},29.16);
 tl.from('#scene-5 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},29.32);
 tl.to('#scene-5',{opacity:0,y:46,duration:0.45,ease:'power2.in'},34.48);
-tl.fromTo('#scene-6',{opacity:0,y:70,scale:0.97},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},34.48);
+tl.fromTo('#scene-6',{opacity:0,y:70,scale:0.97},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},34.48);
 tl.from('#scene-6 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},34.64);
 tl.to('#scene-6',{opacity:0,y:-54,scale:1.03,duration:0.45,ease:'power2.in'},40.28);
 tl.from('#scene-6 .lost',{opacity:0,scale:1.5,duration:0.4,stagger:0.12,ease:'back.out(2)'},35.18);
-tl.fromTo('#scene-7',{opacity:0,scale:0.82},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},40.28);
+tl.fromTo('#scene-7',{opacity:0,scale:0.82},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},40.28);
 tl.from('#scene-7 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},40.44);
 tl.to('#scene-7',{opacity:0,scale:1.14,duration:0.45,ease:'power2.in'},44.92);
-tl.fromTo('#scene-8',{opacity:0,x:160},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},44.92);
+tl.fromTo('#scene-8',{opacity:0,x:160},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},44.92);
 tl.from('#scene-8 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},45.08);
 tl.to('#scene-8',{opacity:0,x:-130,duration:0.45,ease:'power2.in'},49.60);
-tl.fromTo('#scene-9',{opacity:0,filter:'blur(10px)',scale:1.05},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},49.60);
+tl.fromTo('#scene-9',{opacity:0,scale:1.08,y:24},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},49.60);
 tl.from('#scene-9 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},49.76);
-tl.to('#scene-9',{opacity:0,filter:'blur(10px)',duration:0.45,ease:'power2.in'},53.44);
+tl.to('#scene-9',{opacity:0,scale:1.12,y:-24,duration:0.45,ease:'power2.in'},53.44);
 (function(){var o={v:0};tl.to(o,{v:2,duration:1.1,ease:'power1.out',onUpdate:function(){var e=document.getElementById('ct-a');if(e)e.textContent=Math.round(o.v);}},50.00);})();
 (function(){var o={v:0};tl.to(o,{v:18,duration:1.1,ease:'power1.out',onUpdate:function(){var e=document.getElementById('ct-b');if(e)e.textContent=Math.round(o.v);}},50.10);})();
 (function(){var o={v:0};tl.to(o,{v:27,duration:1.1,ease:'power1.out',onUpdate:function(){var e=document.getElementById('ct-c');if(e)e.textContent=Math.round(o.v);}},50.20);})();
-tl.fromTo('#scene-10',{opacity:0,x:-160},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},53.44);
+tl.fromTo('#scene-10',{opacity:0,x:-160},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},53.44);
 tl.from('#scene-10 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},53.60);
 tl.to('#scene-10',{opacity:0,x:130,duration:0.45,ease:'power2.in'},55.20);
-tl.fromTo('#scene-11',{opacity:0,y:-44,scale:1.06},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},55.20);
+tl.fromTo('#scene-11',{opacity:0,y:-44,scale:1.06},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},55.20);
 tl.from('#scene-11 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},55.36);
 tl.to('#scene-11',{opacity:0,y:46,duration:0.45,ease:'power2.in'},58.92);
 (function(){var o={v:0};tl.to(o,{v:60,duration:1.0,ease:'power2.out',onUpdate:function(){var e=document.getElementById('ct-price');if(e)e.textContent=Math.round(o.v);}},55.55);})();
-tl.fromTo('#scene-12',{opacity:0,y:70,scale:0.97},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},58.92);
+tl.fromTo('#scene-12',{opacity:0,y:70,scale:0.97},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},58.92);
 tl.from('#scene-12 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},59.08);
 tl.to('#scene-12',{opacity:0,y:-54,scale:1.03,duration:0.45,ease:'power2.in'},65.20);
 tl.to('#scene-12 .cta-btn',{scale:1.04,duration:0.7,yoyo:true,repeat:6,ease:'sine.inOut'},60.12);
-tl.fromTo('#scene-13',{opacity:0,scale:0.82},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},65.20);
+tl.fromTo('#scene-13',{opacity:0,scale:0.82},{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},65.20);
 tl.from('#scene-13 .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},65.36);
 tl.fromTo('.wm',{opacity:0},{opacity:0.9,duration:0.6},8.0);
 tl.from('#cap-0 .w',{opacity:0,yPercent:55,scale:0.9,duration:0.24,stagger:0.03,ease:'power2.out'},0.00);

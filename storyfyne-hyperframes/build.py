@@ -288,14 +288,14 @@ def enter_exit(sid, t0, t1, idx):
     IN = {
         "rise":  "{opacity:0,y:70,scale:0.97}", "zoom": "{opacity:0,scale:0.82}",
         "slideR":"{opacity:0,x:160}", "slideL":"{opacity:0,x:-160}",
-        "blur":  "{opacity:0,filter:'blur(10px)',scale:1.05}", "drift":"{opacity:0,y:-44,scale:1.06}",
+        "blur":  "{opacity:0,scale:1.08,y:24}", "drift":"{opacity:0,y:-44,scale:1.06}",
     }[f]
     OUT = {  # transform-only (opacity added in the tween)
         "rise": "y:-54,scale:1.03", "zoom": "scale:1.14", "slideR": "x:-130",
-        "blur": "filter:'blur(10px)'", "slideL": "x:130", "drift": "y:46",
+        "blur": "scale:1.12,y:-24", "slideL": "x:130", "drift": "y:46",
     }[f]
     lines = [
-        "tl.fromTo('%s',%s,{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.6,ease:'power3.out'},%.2f);" % (sid, IN, t0),
+        "tl.fromTo('%s',%s,{opacity:1,x:0,y:0,scale:1,duration:0.6,ease:'power3.out'},%.2f);" % (sid, IN, t0),
         "tl.from('%s .anim',{opacity:0,y:36,duration:0.55,stagger:0.07,ease:'power3.out'},%.2f);" % (sid, t0 + 0.16),
     ]
     if idx < len(SCENES) - 1:
@@ -320,9 +320,9 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:__BG__;
   linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:64px 64px;
   -webkit-mask-image:radial-gradient(ellipse 75% 65% at 50% 45%,#000,transparent 75%);
           mask-image:radial-gradient(ellipse 75% 65% at 50% 45%,#000,transparent 75%);}
-.orb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.16;}
-.orb.a{width:760px;height:760px;left:-160px;top:-200px;background:__PRIMARY__;animation:drift1 26s ease-in-out infinite}
-.orb.b{width:680px;height:680px;right:-160px;bottom:-220px;background:__SECONDARY__;animation:drift2 30s ease-in-out infinite}
+.orb{position:absolute;border-radius:50%;opacity:.55}
+.orb.a{width:1120px;height:1120px;left:-300px;top:-360px;background:radial-gradient(circle,rgba(42,147,245,.20),transparent 68%);animation:drift1 26s ease-in-out infinite}
+.orb.b{width:1000px;height:1000px;right:-280px;bottom:-360px;background:radial-gradient(circle,rgba(108,190,249,.15),transparent 68%);animation:drift2 30s ease-in-out infinite}
 @keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(80px,60px)}}
 @keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-70px,-50px)}}
 .vignette{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 320px rgba(0,0,0,.55)}
@@ -575,7 +575,7 @@ def build():
         gsap.append("tl.to('#cap-%d',{opacity:0,duration:0.16,ease:'power1.in'},%.2f);" % (k, fade_out))
 
     # audio (pre-mixed VO + ducked music)
-    body.append('<audio id="soundtrack" src="assets/soundtrack.mp3" data-start="0" data-duration="%.2f" data-track-index="100"></audio>' % TOTAL)
+    body.append('<audio id="soundtrack" preload="none" src="assets/soundtrack.mp3" data-start="0" data-duration="%.2f" data-track-index="100"></audio>' % TOTAL)
 
     html_doc = """<!doctype html>
 <html lang="en">
