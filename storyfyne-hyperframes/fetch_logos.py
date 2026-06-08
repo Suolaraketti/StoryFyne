@@ -27,9 +27,14 @@ LOGOS = {
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
+# logo.dev PUBLISHABLE key (pk_) — safe to embed, used in client-side image URLs.
+# Override anytime via a LOGODEV_TOKEN env var or a .env file. Restrict/rotate it
+# in the logo.dev dashboard if needed.
+DEFAULT_TOKEN = "pk_TYBEj0CGSSehRoxMo0ZDIQ"
+
 
 def load_env():
-    """LOGODEV_TOKEN from the environment, or a local .env file."""
+    """LOGODEV_TOKEN from an env var, a local .env file, or the embedded default."""
     for name in ("LOGODEV_TOKEN", "LOGO_DEV_TOKEN", "LOGODEV_API_KEY"):
         if os.environ.get(name):
             return os.environ[name].strip()
@@ -42,7 +47,7 @@ def load_env():
                 k, v = line.split("=", 1)
                 if k.strip() in ("LOGODEV_TOKEN", "LOGO_DEV_TOKEN", "LOGODEV_API_KEY"):
                     return v.strip().strip('"').strip("'")
-    return None
+    return DEFAULT_TOKEN or None
 
 
 def targets():
