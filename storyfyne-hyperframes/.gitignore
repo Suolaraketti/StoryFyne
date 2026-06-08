@@ -1,0 +1,5 @@
+node_modules/
+renders/
+frames/
+*.log
+.DS_Store
