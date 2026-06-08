@@ -1826,9 +1826,7 @@ async def process_explainer(request: ExplainerRequest):
                 prebuilt_scenes=prebuilt_scenes,
                 music_enabled=request.music_enabled,
                 music_track_id=request.music_track_id,
-                music_url=request.music_url,
                 music_bpm=request.music_bpm,
-                music_volume=request.music_volume,
             )
         except Exception as e:
             import traceback
