@@ -15,6 +15,10 @@ from .theme import (DEFAULT_THEME, LIGHT_OVERRIDES, LIGHT_CSS, fontface_css,
 
 _STAGE_EXTRA_CSS = r"""
 .chap{position:absolute;inset:0;pointer-events:none;opacity:0}
+.sweepbar{position:absolute;top:-20%;left:0;width:34%;height:140%;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  transform:translateX(-160%) skewX(-14deg);
+  background:linear-gradient(90deg,transparent,rgba(150,190,255,.0) 20%,rgba(180,210,255,.55) 50%,rgba(150,190,255,.0) 80%,transparent)}
+body.light .sweepbar{mix-blend-mode:multiply;background:linear-gradient(90deg,transparent,rgba(42,147,245,.0) 20%,rgba(42,147,245,.25) 50%,rgba(42,147,245,.0) 80%,transparent)}
 .dustlayer{position:absolute;inset:0;pointer-events:none}
 .dust{position:absolute;border-radius:50%;background:rgba(255,255,255,.35);filter:blur(1px);animation:dustf linear infinite}
 body.light .dust{background:rgba(30,60,110,.25)}
@@ -138,6 +142,15 @@ def assemble(script, project_dir, portrait=True):
                           14 + (j * 7) % 12, (j * 5) % 14) for j in range(18))
         body.append('<div class="dustlayer clip" data-start="0" data-duration="%.1f" '
                     'data-track-index="2">%s</div>' % (dur, dots))
+
+    # Light-sweep transitions at beat boundaries ("sweep": true)
+    if script.get("sweep"):
+        body.append('<div class="sweepbar clip" data-start="0" data-duration="%.1f" data-track-index="95"></div>' % dur)
+        for bb in script["beats"][1:]:
+            bs = float(bb.get("start", 0))
+            gsap.append("tl.set('.sweepbar',{xPercent:-160,opacity:0},%.3f);" % max(0, bs - 0.18))
+            gsap.append("tl.to('.sweepbar',{opacity:1,duration:0.12},%.3f);" % (bs - 0.16))
+            gsap.append("tl.to('.sweepbar',{xPercent:320,opacity:0,duration:0.42,ease:'power2.inOut'},%.3f);" % (bs - 0.16))
 
     bts = script["beats"]
     for i, b in enumerate(bts):

@@ -699,3 +699,145 @@ def isogrid(i, b, ctx, last):
     if not last:
         g += out(sid, t1 - 0.02, "rise")
     return html, g
+
+
+# ── logoreveal — the Dialfyne mark rebuilt in SVG; fork draws, bars fire, 3D turn ──
+_LOGOR_CSS = r"""
+.logostage{display:flex;flex-direction:column;align-items:center;gap:34px}
+.logo3dwrap{perspective:1200px}
+.logo3d{transform-style:preserve-3d;will-change:transform;position:relative;display:flex;align-items:center;justify-content:center}
+.logosvg{width:430px;height:auto;overflow:visible;filter:drop-shadow(0 0 26px rgba(70,140,255,.45))}
+.logobloom{position:absolute;left:50%;top:50%;width:420px;height:330px;transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse,rgba(90,160,255,.55),transparent 66%);filter:blur(30px);opacity:0;z-index:-1;pointer-events:none}
+.lockup{display:flex;align-items:center;gap:14px}
+.lword{font-size:70px;font-weight:850;letter-spacing:.01em;color:__TEXT__}
+.lwbars{display:flex;flex-direction:column;gap:9px}
+.lwbar{height:15px;border-radius:8px;background:linear-gradient(90deg,__SECONDARY__,__PRIMARY__)}
+.lwbar.x0{width:54px}.lwbar.x1{width:54px}.lwbar.x2{width:42px}
+.ltag{font-size:30px;font-weight:600;color:__MUTED__;letter-spacing:.05em}
+"""
+_LOGOR_PCSS = "body.p .logosvg{width:340px}body.p .lword{font-size:52px}body.p .lwbar.x0,body.p .lwbar.x1{width:42px}body.p .lwbar.x2{width:32px}body.p .ltag{font-size:24px}\n"
+
+def _dialfyne_svg():
+    return (
+      '<svg class="logosvg" viewBox="0 0 380 260">'
+      '<defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">'
+      '<stop offset="0" stop-color="__SECONDARY__"/><stop offset="1" stop-color="__PRIMARY__"/></linearGradient>'
+      '<linearGradient id="sw" x1="0" y1="0" x2="1" y2="0">'
+      '<stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.9"/>'
+      '<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+      '<clipPath id="mclip"><rect x="0" y="0" width="380" height="260"/></clipPath></defs>'
+      '<g fill="none" stroke="url(#lg)" stroke-width="26" stroke-linecap="round">'
+      '<path class="lf-left" d="M150,132 L96,132"/>'
+      '<path class="lf-top"  d="M150,132 Q158,98 188,80"/>'
+      '<path class="lf-bot"  d="M150,132 Q162,170 172,192"/></g>'
+      '<g fill="url(#lg)">'
+      '<circle class="lf-nl" cx="96"  cy="132" r="15"/>'
+      '<circle class="lf-nt" cx="188" cy="80"  r="15"/>'
+      '<circle class="lf-nb" cx="172" cy="192" r="15"/></g>'
+      '<g fill="url(#lg)">'
+      '<rect class="lf-b0" x="205" y="71"  width="150" height="30" rx="15"/>'
+      '<rect class="lf-b1" x="205" y="116" width="150" height="30" rx="15"/>'
+      '<rect class="lf-b2" x="230" y="161" width="125" height="30" rx="15"/></g>'
+      '<g clip-path="url(#mclip)"><g transform="skewX(-16)">'
+      '<rect class="lf-sweep" x="-180" y="-20" width="120" height="300" fill="url(#sw)" opacity="0"/></g></g>'
+      '</svg>')
+
+@beat("logoreveal", css=_LOGOR_CSS, pcss=_LOGOR_PCSS)
+def logoreveal(i, b, ctx, last):
+    t0, t1 = b["start"], b["end"]
+    sid = "#ev-%d" % i
+    lock = ('<div class="lockup"><div class="lword">DIALFYN</div>'
+            '<div class="lwbars"><div class="lwbar x0"></div><div class="lwbar x1"></div><div class="lwbar x2"></div></div></div>') if b.get("wordmark", True) else ""
+    tag = ('<div class="ltag">%s</div>' % esc(b["tagline"])) if b.get("tagline") else ""
+    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
+                  '<div class="logostage"><div class="logo3dwrap"><div class="logo3d">'
+                  '<div class="logobloom"></div>%s</div></div>%s%s</div>' % (_dialfyne_svg(), lock, tag))
+    g = []
+    # 3D turn-in of the whole mark
+    g.append("tl.set('%s .logo3d',{rotationY:-34,scale:0.9,opacity:0},%.3f);" % (sid, t0))
+    g.append("tl.to('%s .logo3d',{rotationY:0,scale:1,opacity:1,duration:0.9,ease:'power3.out'},%.3f);" % (sid, t0))
+    # fork strokes draw on
+    for k, cls in enumerate(["lf-left", "lf-top", "lf-bot"]):
+        st = t0 + 0.25 + k * 0.12
+        g.append("tl.set('%s .%s',{strokeDasharray:200,strokeDashoffset:200},%.3f);" % (sid, cls, t0))
+        g.append("tl.to('%s .%s',{strokeDashoffset:0,duration:0.5,ease:'power2.out'},%.3f);" % (sid, cls, st))
+    # nodes pop
+    for cls, ox, oy in [("lf-nl", 96, 132), ("lf-nt", 188, 80), ("lf-nb", 172, 192)]:
+        g.append("tl.set('%s .%s',{scale:0,svgOrigin:'%d %d'},%.3f);" % (sid, cls, ox, oy, t0))
+        g.append("tl.to('%s .%s',{scale:1,duration:0.4,ease:'back.out(2.2)'},%.3f);" % (sid, cls, t0 + 0.6))
+    # bars fire out to the right (scaleX from left edge) — the "signal" motion
+    for k, (cls, ox, oy) in enumerate([("lf-b0", 205, 86), ("lf-b1", 205, 131), ("lf-b2", 230, 176)]):
+        st = t0 + 0.8 + k * 0.13
+        g.append("tl.set('%s .%s',{scaleX:0,opacity:0,svgOrigin:'%d %d'},%.3f);" % (sid, cls, ox, oy, t0))
+        g.append("tl.to('%s .%s',{scaleX:1,opacity:1,duration:0.5,ease:'power3.out'},%.3f);" % (sid, cls, st))
+    # light sweep across the mark
+    g.append("tl.set('%s .lf-sweep',{attr:{x:-180},opacity:0},%.3f);" % (sid, t0))
+    g.append("tl.to('%s .lf-sweep',{opacity:0.9,duration:0.12},%.3f);" % (sid, t0 + 1.45))
+    g.append("tl.to('%s .lf-sweep',{attr:{x:430},opacity:0,duration:0.55,ease:'power2.in'},%.3f);" % (sid, t0 + 1.5))
+    # bloom pulse
+    g.append("tl.set('%s .logobloom',{opacity:0,scale:0.8},%.3f);" % (sid, t0))
+    g.append("tl.to('%s .logobloom',{opacity:1,scale:1.15,duration:0.25,ease:'power2.out'},%.3f);" % (sid, t0 + 1.45))
+    g.append("tl.to('%s .logobloom',{opacity:0.4,scale:1,duration:0.9,ease:'power2.out'},%.3f);" % (sid, t0 + 1.7))
+    # wordmark lockup reveal
+    if b.get("wordmark", True):
+        g += rev("%s .lword" % sid, {"opacity": "0", "y": "20", "filter": "'blur(6px)'"}, t0 + 1.9, t0, "duration:0.5,ease:'power3.out'")
+        for k in range(3):
+            g += rev("%s .lwbar.x%d" % (sid, k), {"opacity": "0", "scaleX": "0"}, t0 + 2.05 + k * 0.08, t0, "duration:0.4,ease:'power3.out'")
+    if b.get("tagline"):
+        g += rev("%s .ltag" % sid, {"opacity": "0", "y": "12"}, t0 + 2.35, t0, "duration:0.4,ease:'power2.out'")
+    if not last:
+        g += out(sid, t1 - 0.02, "blur")
+    return html, g
+
+
+# ── flythrough — real product cards suspended in 3D space, parallax drift ──
+_FLY_CSS = r"""
+.flywrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;perspective:1400px}
+.flyworld{position:relative;width:0;height:0;transform-style:preserve-3d;will-change:transform}
+.flycard{position:absolute;border-radius:14px;overflow:hidden;border:1px solid rgba(150,180,255,.22);
+  box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 50px rgba(42,147,245,.12);background:#0b0f18;transform-style:preserve-3d}
+.flycard img{display:block;width:100%;height:auto}
+.flytitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translateZ(80px);z-index:6;text-align:center;width:90%}
+.flytitle .k-title{text-shadow:0 0 34px rgba(42,147,245,.65)}
+"""
+_FLY_PCSS = "body.p .flytitle{width:94%}\n"
+
+@beat("flythrough", css=_FLY_CSS, pcss=_FLY_PCSS, required=("cards",))
+def flythrough(i, b, ctx, last):
+    t0, t1 = b["start"], b["end"]
+    sid = "#ev-%d" % i
+    P = ctx["PORTRAIT"]
+    # placements: (x, y, z, rotateY, width)
+    if P:
+        slots = [(-300, -560, -260, 16, 340), (320, -300, -180, -16, 360), (-340, 120, -120, 14, 340),
+                 (330, 360, -300, -18, 320), (-150, 560, -420, 8, 320), (200, -560, -360, -10, 300)]
+    else:
+        slots = [(-620, -180, -240, 20, 400), (600, -150, -180, -18, 420), (-680, 210, -120, 16, 380),
+                 (640, 230, -300, -22, 360), (-230, -320, -440, 10, 340), (300, 320, -380, -12, 340)]
+    cards = b["cards"][:6]
+    cdivs = []
+    for j, c in enumerate(cards):
+        x, y, z, ry, w = slots[j % len(slots)]
+        cdivs.append('<div class="flycard fc%d" style="width:%dpx;transform:translate3d(%dpx,%dpx,%dpx) rotateY(%ddeg)">'
+                     '<img src="%s"/></div>' % (j, w, x, y, z, ry, esc(c)))
+    eyebrow = ('<div class="k-eyebrow">%s</div>' % esc(b["eyebrow"])) if b.get("eyebrow") else ""
+    title = ('<div class="k-title">%s</div>' % kw(esc(b["title"]), b.get("acc", ""), ctx["color"](b.get("col")))) if b.get("title") else ""
+    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
+                  '<div class="flywrap"><div class="flyworld">%s</div>'
+                  '<div class="flytitle"><div class="kicker" style="margin:0">%s%s</div></div></div>'
+                  % ("".join(cdivs), eyebrow, title))
+    g = []
+    # world slow parallax turn + bob (the "camera" life)
+    spin = (t1 - t0) + 0.3
+    g.append("tl.fromTo('%s .flyworld',{rotationY:7,y:18},{rotationY:-7,y:-18,duration:%.2f,ease:'sine.inOut'},%.3f);" % (sid, spin, t0))
+    # cards fly in from deeper space (z back -> rest), staggered
+    for j in range(len(cards)):
+        g.append("tl.set('%s .fc%d',{z:-560,opacity:0},%.3f);" % (sid, j, t0))
+        g.append("tl.to('%s .fc%d',{z:0,opacity:1,duration:0.7,ease:'power3.out'},%.3f);" % (sid, j, t0 + 0.1 + j * 0.1))
+    if title or eyebrow:
+        g += rev("%s .kicker" % sid, {"opacity": "0", "y": "22", "filter": "'blur(6px)'"}, t0 + 0.5, t0, "duration:0.5,ease:'power3.out'")
+    if not last:
+        g.append("tl.to('%s .flycard',{z:340,opacity:0,duration:0.4,stagger:0.03,ease:'power3.in'},%.3f);" % (sid, t1 - 0.06))
+        g += out("%s .flytitle" % sid, t1 - 0.02, "blur")
+    return html, g

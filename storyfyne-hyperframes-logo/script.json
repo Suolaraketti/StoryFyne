@@ -1,0 +1,12 @@
+{
+  "title": "Dialfyne — logo reveal + 3D",
+  "duration": 16.0,
+  "soundtrack": "assets/music.mp3",
+  "dust": true,
+  "beats": [
+    { "type": "logoreveal", "start": 0.3, "end": 5.2, "tagline": "The revenue command center" },
+    { "type": "flythrough", "start": 5.2, "end": 10.0, "eyebrow": "One platform", "title": "The whole revenue stack.", "acc": "stack.",
+      "cards": ["assets/shots/revenue-command-center.png","assets/shots/connected-apps.png","assets/shots/metrics-row.png","assets/shots/roleplay-kit-card.png","assets/shots/email-assist.png","assets/shots/command-center-card.png"] },
+    { "type": "hero", "start": 10.0, "end": 16.0, "t": "Run it on autopilot.", "acc": "autopilot.", "size": "big" }
+  ]
+}

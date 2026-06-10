@@ -211,3 +211,31 @@ Best with: line, hero, grab, brand, cta, sting. The dark glass beats
 ```
 
 Reference reel using all of them: `storyfyne-hyperframes-reel/script.json`.
+
+## Flagship / cinematic (v1.3)
+
+### logoreveal — the Dialfyne mark rebuilt in SVG and animated
+3D turn-in → fork strokes draw → signal bars fire out → light sweep → bloom →
+DIALFYNE wordmark lands. The premium opener/closer.
+```json
+{ "type": "logoreveal", "start": 0.3, "end": 5.0,
+  "tagline": "The revenue command center", "wordmark": true }
+```
+
+### flythrough — real product screenshots suspended in 3D space, parallax drift
+```json
+{ "type": "flythrough", "start": 8.6, "end": 13.0,
+  "eyebrow": "One platform", "title": "Your whole revenue stack.", "acc": "stack.",
+  "cards": ["assets/shots/revenue-command-center.png", "assets/shots/connected-apps.png",
+            "assets/shots/metrics-row.png", "assets/shots/roleplay-kit-card.png"] }   // 3–6
+```
+Needs a real GPU for smooth 3D — render with `--browser-gpu`.
+
+### sweep — light-bar wipe transition at every beat boundary (stage option)
+```json
+"sweep": true
+```
+Pairs well with `chapters` + `dust` for a cinematic brand film.
+
+Flagship reference: `storyfyne-hyperframes-film/script.json` (logoreveal → flythrough
+→ stream → wave → metric → hero → cta; chapters + dust + sweep).

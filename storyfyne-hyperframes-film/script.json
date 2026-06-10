@@ -1,0 +1,26 @@
+{
+  "title": "Dialfyne — brand film",
+  "duration": 34.0,
+  "soundtrack": "assets/music.mp3",
+  "dust": true,
+  "sweep": true,
+  "chapters": [
+    { "at": 0,    "tint": "primary" },
+    { "at": 13.0, "tint": "#34d399" },
+    { "at": 24.0, "tint": "#9b7bff" }
+  ],
+  "beats": [
+    { "type": "logoreveal", "start": 0.3,  "end": 5.0,  "tagline": "The revenue command center" },
+    { "type": "hero",       "start": 5.0,  "end": 8.6,  "t": "Revenue runs on chaos.", "acc": "chaos." },
+    { "type": "flythrough", "start": 8.6,  "end": 13.0, "eyebrow": "One platform", "title": "Your whole revenue stack.", "acc": "stack.",
+      "cards": ["assets/shots/revenue-command-center.png","assets/shots/connected-apps.png","assets/shots/metrics-row.png","assets/shots/roleplay-kit-card.png","assets/shots/email-assist.png","assets/shots/command-center-card.png"] },
+    { "type": "stream",     "start": 13.0, "end": 17.0, "target": "AI", "eyebrow": "Live data, in motion",
+      "title": "Into one brain.", "acc": "brain.", "sources": ["CRM","Calls","Calendar","Email"] },
+    { "type": "wave",       "start": 17.0, "end": 20.6, "bars": 38, "eyebrow": "AI voice agents", "title": "It answers every call.", "acc": "every" },
+    { "type": "metric",     "start": 20.6, "end": 24.0, "value": 142, "decimals": 0, "label": "Calls handled this week",
+      "delta": "+15%", "eyebrow": "The outcome", "title": "Nothing slips." },
+    { "type": "hero",       "start": 24.0, "end": 28.4, "t": "Work, evolved.", "acc": "evolved.", "size": "big" },
+    { "type": "cta",        "start": 28.4, "end": 34.0, "headline": "Run revenue on autopilot.", "acc": "autopilot.",
+      "url": "dialfyne.com", "sub": "See it on your numbers." }
+  ]
+}
