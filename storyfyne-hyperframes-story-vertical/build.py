@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 """
-Dialfyne — STORY (full arc, ~20s, 16:9). Kinetic-text spine with product grabs and
-custom graphics woven in WHERE THEY SERVE THE STORY:
-  problem (kinetic type + strike-out) -> typewriter pivot -> brand -> ANIMATED product
-  grab (connected-apps cropped center, cursor click + "Synced" pop) -> custom count-up
-  metric -> custom "AI buyer born" graphic -> CTA.
-Center-anchored, cut to 95.7 BPM, constant secondary motion. Screenshots are PROOF, not the show.
+Dialfyne — STORY (full arc, ~20s). 16:9 + 9:16 (`python build.py portrait`).
+Kinetic-text spine with product grabs and custom graphics woven in as PROOF beats.
+Animation uses set()+to() (never from()) so the seek-based renderer never flickers.
 """
 import sys, json as _j
 PORTRAIT = any(a in ("portrait", "--portrait", "9:16", "vertical") for a in sys.argv[1:])
 W, H = (1080, 1920) if PORTRAIT else (1920, 1080)
-FPS, DUR = 30, 20.4
+FPS = 30
 PRIMARY, ACCENT, BG = "#2a93f5", "#1f86f0", "#060912"
 RED, GREEN, MUTED = "#ff5d6c", "#34d399", "#9aa3b8"
 FONT = "Inter,-apple-system,sans-serif"
@@ -18,12 +15,19 @@ B0, BEAT = 0.19, 0.644
 def b(i): return round(B0 + BEAT * i, 3)
 def js(s): return _j.dumps(s)
 
+# set(hidden)@clip-start + to(natural)@reveal-time — no from() => no seek flicker.
+NAT = {"opacity":"1","x":"0","y":"0","yPercent":"0","xPercent":"0","scale":"1","scaleX":"1",
+       "rotation":"0","filter":"'blur(0px)'","clipPath":"'inset(0 0% 0 0)'"}
+def rev(sel, init, at, t0, tail=""):
+    ij = "{" + ",".join("%s:%s" % (k, init[k]) for k in init) + "}"
+    tj = "{" + ",".join("%s:%s" % (k, NAT[k]) for k in init) + (("," + tail) if tail else "") + "}"
+    return ["tl.set('%s',%s,%.2f);" % (sel, ij, max(0, t0)),
+            "tl.to('%s',%s,%.2f);" % (sel, tj, at)]
+
 def kw(text, accent="", color=PRIMARY):
     aset = set(accent.split()) if accent else set()
     return "".join('<span class="w"%s>%s</span>' % ((' style="color:%s"' % color) if w.strip(".,!?") in aset else "", w)
                    for w in text.split(" "))
-
-# Connected-apps crop -> HubSpot row band (image 1320x1509)
 def crop(IMG_W, IMG_H, fx0, fy0, fw, fh, VW):
     imgW = VW / fw; imgH = imgW * IMG_H / IMG_W
     return dict(VW=round(VW), VH=round(fh*imgH), imgW=round(imgW), imgL=round(-fx0*imgW), imgT=round(-fy0*imgH))
@@ -37,9 +41,8 @@ EVENTS = [
     (b(10), b(11), "line", dict(t="Same generic scripts.", sm=True)),
     (b(11), b(12), "line", dict(t="Fake buyers.", acc="Fake", col=RED)),
     (b(12), b(15), "type", dict(t="What if it knew YOUR deals?")),
-    (b(15), b(17), "brand", dict(t="It does.", sub="Meet Dialfyne.")),
-    (b(17), b(21), "grab", dict(asset="connected-apps.png", img=(1320,1509),
-                                crop=(0.015,0.185,0.97,0.105), vw=1480,
+    (b(15), b(17), "brand", dict(sub="Meet Dialfyne.")),
+    (b(17), b(21), "grab", dict(asset="connected-apps.png", img=(1320,1509), crop=(0.015,0.185,0.97,0.105), vw=1480,
                                 eyebrow="Connected to your stack", title="Pulled from your CRM.")),
     (b(21), b(25), "metric", dict(value=9.0, suffix="/10", label="Team avg score", delta="+29%",
                                   eyebrow="The outcome", title="Reps get sharper.")),
@@ -47,7 +50,6 @@ EVENTS = [
     (b(28), b(31), "cta", dict(title="Build yours — free.", url="dialfyne.com/roleplay")),
 ]
 DUR = round(b(31) + 0.4, 1)
-
 FONTFACE = "\n".join("@font-face{font-family:'Inter';font-weight:%s;font-style:normal;font-display:block;"
     "src:url('assets/fonts/inter-latin-%s-normal.woff2') format('woff2')}" % (w,w) for w in (400,500,600,700,800,900))
 FLOATS = ["Too expensive","We already use one","No budget","Call me next quarter","Not interested","Send me an email"]
@@ -60,91 +62,92 @@ def build():
                   % ([8,72,15,78,40,60][i],[18,24,70,66,12,82][i],-i*1.7,f) for i,f in enumerate(FLOATS)) + '</div>')
 
     for i,(t0,t1,kind,p) in enumerate(EVENTS):
-        sid="#ev-%d"%i; win=(t1-t0)+0.35; tk=10+i
+        sid="#ev-%d"%i; win=(t1-t0)+0.35; tk=10+i; xt=t1-0.02
 
         if kind=="line":
             cls="line"+(" big" if p.get("big") else "")+(" sm" if p.get("sm") else "")
             body.append('<div id="ev-%d" class="ev clip" data-start="%.2f" data-duration="%.2f" data-track-index="%d"><div class="%s">%s</div></div>'%(i,t0,win,tk,cls,kw(p["t"],p.get("acc",""),p.get("col",PRIMARY))))
-            gsap.append("tl.from('%s .w',{opacity:0,yPercent:95,filter:'blur(7px)',stagger:0.045,duration:0.42,ease:'back.out(1.5)'},%.2f);"%(sid,t0))
+            gsap+=rev("%s .w"%sid,{"opacity":"0","yPercent":"95","filter":"'blur(7px)'"},t0,t0,"duration:0.42,ease:'back.out(1.5)',stagger:0.045")
             gsap.append("tl.to('%s .w',{opacity:0,yPercent:-60,filter:'blur(6px)',stagger:0.02,duration:0.26,ease:'power3.in'},%.2f);"%(sid,t1-0.04))
 
         elif kind=="strike":
             rows="".join('<div class="srow" id="ev-%d-r%d"><span>%s</span><i class="strike"></i></div>'%(i,j,nm) for j,(nm,_) in enumerate(p["names"]))
             body.append('<div id="ev-%d" class="ev clip" data-start="%.2f" data-duration="%.2f" data-track-index="%d"><div class="strikewrap">%s</div></div>'%(i,t0,win,tk,rows))
             for j,(nm,nt) in enumerate(p["names"]):
-                gsap.append("tl.from('#ev-%d-r%d span',{opacity:0,x:-40,filter:'blur(6px)',duration:0.3,ease:'power3.out'},%.2f);"%(i,j,nt))
-                gsap.append("tl.fromTo('#ev-%d-r%d .strike',{scaleX:0},{scaleX:1,duration:0.22,ease:'power3.out'},%.2f);"%(i,j,nt+0.22))
+                gsap+=rev("#ev-%d-r%d span"%(i,j),{"opacity":"0","x":"-40","filter":"'blur(6px)'"},nt,t0,"duration:0.3,ease:'power3.out'")
+                gsap+=rev("#ev-%d-r%d .strike"%(i,j),{"scaleX":"0"},nt+0.22,t0,"duration:0.22,ease:'power3.out'")
                 gsap.append("tl.to('#ev-%d-r%d span',{opacity:0.4,duration:0.3},%.2f);"%(i,j,nt+0.34))
-            gsap.append("tl.to('%s',{opacity:0,scale:0.95,filter:'blur(8px)',duration:0.28,ease:'power3.in'},%.2f);"%(sid,t1-0.02))
+            gsap.append("tl.to('%s',{opacity:0,scale:0.95,filter:'blur(8px)',duration:0.28,ease:'power3.in'},%.2f);"%(sid,xt))
 
         elif kind=="type":
             body.append('<div id="ev-%d" class="ev clip" data-start="%.2f" data-duration="%.2f" data-track-index="%d"><div class="typed"><span class="brak">&gt;_</span> <span id="tw-%d"></span><span class="caret"></span></div></div>'%(i,t0,win,tk,i))
             txt=p["t"]
-            gsap.append("(function(){var o={n:0};tl.fromTo('%s',{opacity:0,y:20},{opacity:1,y:0,duration:0.4,ease:'power3.out'},%.2f);tl.to(o,{n:%d,duration:%.2f,ease:'none',onUpdate:function(){var e=document.getElementById('tw-%d');if(e)e.textContent=%s.slice(0,Math.round(o.n));}},%.2f);tl.to('%s',{opacity:0,y:-16,duration:0.25,ease:'power3.in'},%.2f);})();"%(sid,t0,len(txt),(t1-t0)*0.55,i,js(txt),t0+0.25,sid,t1-0.04))
+            gsap+=rev(sid,{"opacity":"0","y":"20"},t0,t0,"duration:0.4,ease:'power3.out'")
+            gsap.append("(function(){var o={n:0};tl.to(o,{n:%d,duration:%.2f,ease:'none',onUpdate:function(){var e=document.getElementById('tw-%d');if(e)e.textContent=%s.slice(0,Math.round(o.n));}},%.2f);})();"%(len(txt),(t1-t0)*0.55,i,js(txt),t0+0.3))
+            gsap.append("tl.to('%s',{opacity:0,y:-16,duration:0.25,ease:'power3.in'},%.2f);"%(sid,t1-0.04))
 
         elif kind=="brand":
             body.append('<div id="ev-%d" class="ev clip" data-start="%.2f" data-duration="%.2f" data-track-index="%d"><div class="brandwrap"><img class="b-logo" src="assets/logos/dialfyne.png"/><div class="b-sub">%s</div></div></div>'%(i,t0,win,tk,p["sub"]))
-            gsap.append("tl.from('%s .b-logo',{opacity:0,scale:0.6,filter:'blur(10px)',duration:0.55,ease:'back.out(1.7)'},%.2f);"%(sid,t0))
-            gsap.append("tl.from('%s .b-sub',{opacity:0,y:18,duration:0.4,ease:'power3.out'},%.2f);"%(sid,t0+0.25))
-            gsap.append("tl.to('%s',{opacity:0,scale:1.08,filter:'blur(8px)',duration:0.28,ease:'power3.in'},%.2f);"%(sid,t1-0.02))
+            gsap+=rev("%s .b-logo"%sid,{"opacity":"0","scale":"0.6","filter":"'blur(10px)'"},t0,t0,"duration:0.55,ease:'back.out(1.7)'")
+            gsap+=rev("%s .b-sub"%sid,{"opacity":"0","y":"18"},t0+0.25,t0,"duration:0.4,ease:'power3.out'")
+            gsap.append("tl.to('%s',{opacity:0,scale:1.08,filter:'blur(8px)',duration:0.28,ease:'power3.in'},%.2f);"%(sid,xt))
 
         elif kind=="grab":
             vw = round(W*0.92) if PORTRAIT else p["vw"]
             c=crop(*p["img"],*p["crop"],vw)
             body.append(('<div id="ev-%d" class="ev clip grabwrap" data-start="%.2f" data-duration="%.2f" data-track-index="%d">'
                 '<div class="kicker"><div class="k-eyebrow">%s</div><div class="k-title">%s</div></div>'
-                '<div class="crop" style="width:%dpx;height:%dpx"><img src="assets/shots/%s" style="width:%dpx;left:%dpx;top:%dpx"/>'
-                '<div class="hlbox"></div></div>'
-                '<div class="pop">&#10003; Synced</div><svg class="cursor" viewBox="0 0 24 24"><path d="M4 2 L4 20 L9 15 L12.5 22 L15 21 L11.5 14 L18 14 Z" fill="#fff" stroke="#0a0a0a" stroke-width="1.2"/></svg>'
-                '</div>')%(i,t0,win,tk,p["eyebrow"],kw(p["title"],"",PRIMARY),c["VW"],c["VH"],p["asset"],c["imgW"],c["imgL"],c["imgT"]))
-            gsap.append("tl.from('%s .crop',{opacity:0,scale:0.94,filter:'blur(8px)',duration:0.4,ease:'back.out(1.3)'},%.2f);"%(sid,t0))
-            gsap.append("tl.fromTo('%s .crop img',{clipPath:'inset(0 100%% 0 0)'},{clipPath:'inset(0 0%% 0 0)',duration:0.5,ease:'power3.out'},%.2f);"%(sid,t0+0.05))
-            gsap.append("tl.from('%s .k-eyebrow',{opacity:0,y:14,duration:0.3},%.2f);"%(sid,t0+0.15))
-            gsap.append("tl.from('%s .k-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.4,ease:'power3.out'},%.2f);"%(sid,t0+0.22))
+                '<div class="crop" style="width:%dpx;height:%dpx"><img src="assets/shots/%s" style="width:%dpx;left:%dpx;top:%dpx"/><div class="hlbox"></div></div>'
+                '<div class="pop">&#10003; Synced</div><svg class="cursor" viewBox="0 0 24 24"><path d="M4 2 L4 20 L9 15 L12.5 22 L15 21 L11.5 14 L18 14 Z" fill="#fff" stroke="#0a0a0a" stroke-width="1.2"/></svg></div>')
+                %(i,t0,win,tk,p["eyebrow"],kw(p["title"],"",PRIMARY),c["VW"],c["VH"],p["asset"],c["imgW"],c["imgL"],c["imgT"]))
+            gsap+=rev("%s .crop"%sid,{"opacity":"0","scale":"0.94","filter":"'blur(8px)'"},t0,t0,"duration:0.4,ease:'back.out(1.3)'")
+            gsap+=rev("%s .crop img"%sid,{"clipPath":"'inset(0 100% 0 0)'"},t0+0.05,t0,"duration:0.5,ease:'power3.out'")
+            gsap+=rev("%s .k-eyebrow"%sid,{"opacity":"0","y":"14"},t0+0.15,t0,"duration:0.3")
+            gsap+=rev("%s .k-title .w"%sid,{"opacity":"0","yPercent":"90","filter":"'blur(6px)'"},t0+0.22,t0,"duration:0.4,ease:'power3.out',stagger:0.05")
             gsap.append("tl.set('%s .cursor',{x:%d,y:%d},%.2f);"%(sid,W//2+360,H//2+120,t0))
-            gsap.append("tl.to('%s .cursor',{x:%d,y:%d,duration:0.55,ease:'power3.inOut'},%.2f);"%(sid,W//2+c["VW"]*0.34,H//2,t0+0.5))
+            gsap.append("tl.to('%s .cursor',{x:%d,y:%d,duration:0.55,ease:'power3.inOut'},%.2f);"%(sid,round(W//2+c["VW"]*0.34),H//2,t0+0.5))
             cb=t0+(t1-t0)*0.5
             gsap.append("tl.to('%s .cursor',{scale:0.85,duration:0.08,yoyo:true,repeat:1},%.2f);"%(sid,cb))
-            gsap.append("tl.fromTo('%s .hlbox',{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.22,ease:'back.out(2)'},%.2f);"%(sid,cb))
-            gsap.append("tl.fromTo('%s .pop',{opacity:0,y:14,scale:0.8},{opacity:1,y:0,scale:1,duration:0.3,ease:'back.out(2)'},%.2f);"%(sid,cb+0.12))
-            gsap.append("tl.to('%s',{opacity:0,scale:1.05,filter:'blur(9px)',duration:0.3,ease:'power3.in'},%.2f);"%(sid,t1-0.02))
+            gsap+=rev("%s .hlbox"%sid,{"opacity":"0","scale":"1.12"},cb,t0,"duration:0.22,ease:'back.out(2)'")
+            gsap+=rev("%s .pop"%sid,{"opacity":"0","y":"14","scale":"0.8"},cb+0.12,t0,"duration:0.3,ease:'back.out(2)'")
+            gsap.append("tl.to('%s',{opacity:0,scale:1.05,filter:'blur(9px)',duration:0.3,ease:'power3.in'},%.2f);"%(sid,xt))
 
         elif kind=="metric":
             body.append(('<div id="ev-%d" class="ev clip" data-start="%.2f" data-duration="%.2f" data-track-index="%d">'
                 '<div class="kicker"><div class="k-eyebrow">%s</div><div class="k-title">%s</div></div>'
-                '<div class="metcard"><div class="met-lbl">%s</div>'
-                '<div class="met-v"><span id="mn-%d">0.0</span>%s <span class="met-d">%s</span></div>'
+                '<div class="metcard"><div class="met-lbl">%s</div><div class="met-v"><span id="mn-%d">0.0</span>%s <span class="met-d">%s</span></div>'
                 '<svg class="spark" viewBox="0 0 320 70" preserveAspectRatio="none"><path id="sp-%d" d="M0,58 L40,52 L80,55 L120,40 L160,44 L200,28 L240,30 L280,16 L320,8" fill="none" stroke="%s" stroke-width="4" stroke-linecap="round"/></svg></div></div>')
                 %(i,t0,win,tk,p["eyebrow"],kw(p["title"],"",PRIMARY),p["label"],i,p["suffix"],p["delta"],i,PRIMARY))
-            gsap.append("tl.from('%s .metcard',{opacity:0,y:40,scale:0.94,filter:'blur(8px)',duration:0.45,ease:'back.out(1.3)'},%.2f);"%(sid,t0))
-            gsap.append("tl.from('%s .k-eyebrow',{opacity:0,y:14,duration:0.3},%.2f);"%(sid,t0+0.1))
-            gsap.append("tl.from('%s .k-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.4,ease:'power3.out'},%.2f);"%(sid,t0+0.18))
+            gsap+=rev("%s .metcard"%sid,{"opacity":"0","y":"40","scale":"0.94","filter":"'blur(8px)'"},t0,t0,"duration:0.45,ease:'back.out(1.3)'")
+            gsap+=rev("%s .k-eyebrow"%sid,{"opacity":"0","y":"14"},t0+0.1,t0,"duration:0.3")
+            gsap+=rev("%s .k-title .w"%sid,{"opacity":"0","yPercent":"90","filter":"'blur(6px)'"},t0+0.18,t0,"duration:0.4,ease:'power3.out',stagger:0.05")
             gsap.append("(function(){var o={v:0};tl.to(o,{v:%s,duration:1.0,ease:'power2.out',onUpdate:function(){var e=document.getElementById('mn-%d');if(e)e.textContent=o.v.toFixed(1);}},%.2f);})();"%(p["value"],i,t0+0.4))
-            gsap.append("tl.fromTo('#sp-%d',{strokeDasharray:520,strokeDashoffset:520},{strokeDashoffset:0,duration:1.1,ease:'power2.out'},%.2f);"%(i,t0+0.45))
-            gsap.append("tl.from('%s .met-d',{opacity:0,scale:0.6,duration:0.3,ease:'back.out(2)'},%.2f);"%(sid,t0+1.1))
-            gsap.append("tl.to('%s',{opacity:0,scale:1.05,filter:'blur(9px)',duration:0.3,ease:'power3.in'},%.2f);"%(sid,t1-0.02))
+            gsap.append("tl.set('#sp-%d',{strokeDasharray:520,strokeDashoffset:520},%.2f);"%(i,t0))
+            gsap.append("tl.to('#sp-%d',{strokeDashoffset:0,duration:1.1,ease:'power2.out'},%.2f);"%(i,t0+0.45))
+            gsap+=rev("%s .met-d"%sid,{"opacity":"0","scale":"0.6"},t0+1.1,t0,"duration:0.3,ease:'back.out(2)'")
+            gsap.append("tl.to('%s',{opacity:0,scale:1.05,filter:'blur(9px)',duration:0.3,ease:'power3.in'},%.2f);"%(sid,xt))
 
         elif kind=="born":
-            lines="".join('<i class="dl" style="transform:rotate(%ddeg)"></i>'%(a) for a in range(0,360,30))
+            lines="".join('<i class="dl" style="transform:rotate(%ddeg)"></i>'%a for a in range(0,360,30))
             body.append(('<div id="ev-%d" class="ev clip" data-start="%.2f" data-duration="%.2f" data-track-index="%d">'
                 '<div class="bornwrap"><div class="kicker"><div class="k-eyebrow">%s</div><div class="k-title">%s</div></div>'
                 '<div class="born"><div class="dls">%s</div><div class="ring r1"></div><div class="ring r2"></div><div class="node">AI</div></div></div></div>')
                 %(i,t0,win,tk,p["eyebrow"],kw(p["title"],"deal.",PRIMARY),lines))
-            gsap.append("tl.from('%s .dl',{scaleX:0,opacity:0,stagger:0.03,duration:0.5,ease:'power3.out'},%.2f);"%(sid,t0+0.1))
-            gsap.append("tl.from('%s .node',{scale:0,opacity:0,duration:0.5,ease:'back.out(1.8)'},%.2f);"%(sid,t0+0.55))
-            gsap.append("tl.from('%s .ring',{scale:0,opacity:0,stagger:0.12,duration:0.5,ease:'back.out(1.6)'},%.2f);"%(sid,t0+0.7))
-            gsap.append("tl.from('%s .k-eyebrow',{opacity:0,y:14,duration:0.3},%.2f);"%(sid,t0+0.2))
-            gsap.append("tl.from('%s .k-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.4,ease:'power3.out'},%.2f);"%(sid,t0+0.3))
-            gsap.append("tl.to('%s',{opacity:0,scale:1.06,filter:'blur(9px)',duration:0.3,ease:'power3.in'},%.2f);"%(sid,t1-0.02))
+            gsap+=rev("%s .dl"%sid,{"opacity":"0","scaleX":"0"},t0+0.1,t0,"duration:0.5,ease:'power3.out',stagger:0.03")
+            gsap+=rev("%s .node"%sid,{"opacity":"0","scale":"0"},t0+0.55,t0,"duration:0.5,ease:'back.out(1.8)'")
+            gsap+=rev("%s .ring"%sid,{"opacity":"0","scale":"0"},t0+0.7,t0,"duration:0.5,ease:'back.out(1.6)',stagger:0.12")
+            gsap+=rev("%s .k-eyebrow"%sid,{"opacity":"0","y":"14"},t0+0.2,t0,"duration:0.3")
+            gsap+=rev("%s .k-title .w"%sid,{"opacity":"0","yPercent":"90","filter":"'blur(6px)'"},t0+0.3,t0,"duration:0.4,ease:'power3.out',stagger:0.05")
+            gsap.append("tl.to('%s',{opacity:0,scale:1.06,filter:'blur(9px)',duration:0.3,ease:'power3.in'},%.2f);"%(sid,xt))
 
         elif kind=="cta":
             body.append(('<div id="ev-%d" class="ev clip" data-start="%.2f" data-duration="%.2f" data-track-index="%d"><div class="ctawrap">'
-                '<img class="b-logo" src="assets/logos/dialfyne.png"/><div class="cta-title">%s</div>'
-                '<div class="cta-url">%s</div></div></div>')%(i,t0,win,tk,kw(p["title"],"free.",PRIMARY),p["url"]))
-            gsap.append("tl.from('%s .b-logo',{opacity:0,scale:0.7,filter:'blur(8px)',duration:0.5,ease:'back.out(1.7)'},%.2f);"%(sid,t0))
-            gsap.append("tl.from('%s .cta-title .w',{opacity:0,yPercent:90,stagger:0.05,duration:0.4,ease:'power3.out'},%.2f);"%(sid,t0+0.2))
-            gsap.append("tl.fromTo('%s .cta-url',{opacity:0,y:16},{opacity:1,y:0,duration:0.4,ease:'power3.out'},%.2f);"%(sid,t0+0.5))
-            gsap.append("tl.to('%s .cta-url',{scale:1.04,duration:0.6,yoyo:true,repeat:6,ease:'sine.inOut'},%.2f);"%(sid,t0+0.9))
+                '<img class="b-logo" src="assets/logos/dialfyne.png"/><div class="cta-title">%s</div><div class="cta-url">%s</div></div></div>')
+                %(i,t0,win,tk,kw(p["title"],"free.",PRIMARY),p["url"]))
+            gsap+=rev("%s .b-logo"%sid,{"opacity":"0","scale":"0.7","filter":"'blur(8px)'"},t0,t0,"duration:0.5,ease:'back.out(1.7)'")
+            gsap+=rev("%s .cta-title .w"%sid,{"opacity":"0","yPercent":"90"},t0+0.2,t0,"duration:0.4,ease:'power3.out',stagger:0.05")
+            gsap+=rev("%s .cta-url"%sid,{"opacity":"0","y":"16"},t0+0.5,t0,"duration:0.4,ease:'power3.out'")
+            gsap.append("tl.to('%s .cta-url',{scale:1.04,duration:0.6,yoyo:true,repeat:6,ease:'sine.inOut'},%.2f);"%(sid,t0+0.95))
 
     body.append('<audio id="music" preload="none" src="assets/music.mp3" data-start="0" data-duration="%.1f" data-track-index="100"></audio>'%DUR)
     css=CSS + (PORTRAIT_CSS if PORTRAIT else "")
@@ -153,7 +156,7 @@ def build():
         css=css.replace(k,v)
     doc=DOC.replace("__CSS__",css).replace("__W__",str(W)).replace("__H__",str(H)).replace("__DUR__",str(DUR)).replace("__BODY__","\n".join(body)).replace("__GSAP__","\n".join(gsap)).replace("__BODYCLASS__","p" if PORTRAIT else "")
     open("index.html","w",encoding="utf-8").write(doc)
-    print("wrote full story (%d events, %.1fs)"%(len(EVENTS),DUR))
+    print("wrote story (%s %dx%d, %d events, %.1fs)"%("PORTRAIT" if PORTRAIT else "landscape",W,H,len(EVENTS),DUR))
 
 CSS=r"""
 __FONTFACE__
