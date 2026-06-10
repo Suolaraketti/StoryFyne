@@ -109,6 +109,7 @@ def assemble(script, project_dir, portrait=True):
     logo = (script.get("brand") or {}).get("logo", "assets/logos/dialfyne.png")
     ctx = {
         "W": W, "H": H, "PORTRAIT": portrait, "theme": theme, "logo": logo,
+        "project_dir": project_dir,
         "color": lambda name: resolve_color(name, theme),
     }
 

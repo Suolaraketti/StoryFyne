@@ -214,13 +214,26 @@ Reference reel using all of them: `storyfyne-hyperframes-reel/script.json`.
 
 ## Flagship / cinematic (v1.3)
 
-### logoreveal — the Dialfyne mark rebuilt in SVG and animated
-3D turn-in → fork strokes draw → signal bars fire out → light sweep → bloom →
-DIALFYNE wordmark lands. The premium opener/closer.
+### logoreveal — the brand mark, animated. The premium opener/closer.
+Reads `brand.logo`. Works two ways automatically:
+
+- **PNG** (default `assets/logos/dialfyne.png`): 3D turn-in → left→right build-on
+  wipe → light sweep → bloom. One clean reveal of the whole lockup.
+- **SVG** (`brand.logo` ends in `.svg`): the SVG is **inlined** (resolution-
+  independent), and if it carries the piece ids below, each one animates on its
+  own — the dot pops, the tube grows in, the **bars fire out one at a time**,
+  then the wordmark wipes on. With no ids, the whole SVG does the build-on wipe.
+
 ```json
 { "type": "logoreveal", "start": 0.3, "end": 5.0,
-  "tagline": "The revenue command center", "wordmark": true }
+  "tagline": "The revenue command center" }
 ```
+3D turn-in → dot pop → tube → bars fire (staggered) → sweep → bloom → wordmark wipe.
+
+**To unlock per-piece animation**, give the SVG these ids (any subset works):
+`#mark-dot`, `#mark-tube`, `#bar-1`, `#bar-2`, `#bar-3`, `#wordmark`. Drop your
+SVG in `brand-source/` and point `brand.logo` at it. See
+`brand-source/dialfyne-mark-example.svg` for the exact structure.
 
 ### flythrough — real product screenshots suspended in 3D space, parallax drift
 ```json

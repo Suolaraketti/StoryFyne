@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- EXAMPLE structure for the engine's per-piece logo reveal.
+     Replace with your real exported SVG; keep these ids and the engine animates
+     each piece on its own (dot pops, tube draws, bars fire out, wordmark wipes). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 320" fill="none">
+  <defs>
+    <linearGradient id="df-grad" x1="40" y1="40" x2="380" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6cbef9"/>
+      <stop offset="0.55" stop-color="#2a93f5"/>
+      <stop offset="1" stop-color="#1f86f0"/>
+    </linearGradient>
+  </defs>
+
+  <g id="mark">
+    <circle id="mark-dot" cx="58" cy="160" r="30" fill="url(#df-grad)"/>
+    <path id="mark-tube" d="M204 58 C150 58 132 96 132 128 C132 150 120 160 96 160 C120 160 132 170 132 192 C132 224 150 262 204 262"
+          stroke="url(#df-grad)" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <rect id="bar-1" x="214" y="105" width="168" height="36" rx="18" fill="url(#df-grad)"/>
+    <rect id="bar-2" x="214" y="178" width="168" height="36" rx="18" fill="url(#df-grad)"/>
+    <rect id="bar-3" x="214" y="251" width="120" height="36" rx="18" fill="url(#df-grad)"/>
+  </g>
+
+  <g id="wordmark">
+    <text x="430" y="212" font-family="Inter, Arial, sans-serif" font-size="190"
+          font-weight="800" letter-spacing="2" fill="#ffffff">DIALFYNE</text>
+  </g>
+</svg>

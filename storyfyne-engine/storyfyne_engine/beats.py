@@ -8,6 +8,7 @@ Beat builder signature:
     build(i, beat, ctx, last) -> (html_str, [gsap_str])
 ctx: dict with W, H, PORTRAIT, theme, and helper color().
 """
+import os
 from .anim import rev, out, kw, crop_box, esc, js
 
 REGISTRY = {}          # kind -> dict(build=fn, css=str, pcss=str, required=tuple)
@@ -701,14 +702,18 @@ def isogrid(i, b, ctx, last):
     return html, g
 
 
-# ── logoreveal — animate the REAL Dialfyne lockup (perfect fidelity) ──
-# Horizontal lockup = mark(left) -> wordmark(right), so a left->right build-on wipe
-# reveals it in brand order: dot -> tube -> bars firing -> DIALFYNE typing on.
+# ── logoreveal — real Dialfyne lockup (PNG) or an inlined SVG (per-piece anim) ──
+# PNG: 3D tilt + left->right build-on wipe (mark -> bars -> wordmark) + sweep + bloom.
+# SVG: inlined so each piece animates by id when present (#mark-dot, #mark-tube,
+#      #bar-1/2/3, #wordmark); otherwise the whole SVG does the same build-on wipe.
 _LOGOR_CSS = r"""
 .logostage{display:flex;flex-direction:column;align-items:center;gap:32px}
 .logo3dwrap{perspective:1300px}
 .logo3d{transform-style:preserve-3d;will-change:transform;position:relative;display:inline-block}
 .logo-img{display:block;height:auto;filter:drop-shadow(0 16px 46px rgba(40,110,230,.42))}
+.logosvgbox{position:relative}
+.logosvgbox svg{display:block;width:100%;height:auto;filter:drop-shadow(0 16px 46px rgba(40,110,230,.42))}
+.logosvgbox [id^=bar-],.logosvgbox #mark-dot,.logosvgbox #mark-tube{transform-box:fill-box}
 .logosweep{position:absolute;top:-14%;left:0;width:20%;height:128%;pointer-events:none;opacity:0;mix-blend-mode:screen;
   transform:translateX(-230%) skewX(-12deg);
   background:linear-gradient(90deg,transparent,rgba(180,210,255,0) 22%,rgba(205,228,255,.9) 50%,rgba(180,210,255,0) 78%,transparent)}
@@ -718,33 +723,64 @@ _LOGOR_CSS = r"""
 """
 _LOGOR_PCSS = "body.p .ltag{font-size:25px}\n"
 
+def _inline_svg(path):
+    try:
+        txt = open(path, encoding="utf-8").read()
+    except Exception:
+        return None
+    i = txt.find("<svg")
+    return txt[i:] if i >= 0 else None  # strip <?xml?>/doctype prefix
+
 @beat("logoreveal", css=_LOGOR_CSS, pcss=_LOGOR_PCSS)
 def logoreveal(i, b, ctx, last):
     t0, t1 = b["start"], b["end"]
     sid = "#ev-%d" % i
     W = ctx["W"]
     iw = round(W * (0.80 if ctx["PORTRAIT"] else 0.60))
+    logo = ctx["logo"]
+    svg = _inline_svg(os.path.join(ctx.get("project_dir", ""), logo)) if str(logo).lower().endswith(".svg") else None
     tag = ('<div class="ltag">%s</div>' % esc(b["tagline"])) if b.get("tagline") else ""
-    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
-                  '<div class="logostage"><div class="logo3dwrap"><div class="logo3d">'
-                  '<div class="logobloom"></div><img class="logo-img" src="%s" style="width:%dpx"/>'
-                  '<div class="logosweep"></div></div></div>%s</div>' % (ctx["logo"], iw, tag))
+
     g = []
-    # 3D tilt-in
+    # shared: 3D tilt-in, sweep, bloom
     g.append("tl.set('%s .logo3d',{rotationY:-26,scale:0.92,opacity:0},%.3f);" % (sid, t0))
     g.append("tl.to('%s .logo3d',{rotationY:0,scale:1,opacity:1,duration:0.9,ease:'power3.out'},%.3f);" % (sid, t0))
-    # build-on wipe (left->right) + focus pull
-    g.append("tl.set('%s .logo-img',{clipPath:'inset(0%% 100%% 0%% 0%%)',filter:'blur(7px)'},%.3f);" % (sid, t0))
-    g.append("tl.to('%s .logo-img',{clipPath:'inset(0%% 0%% 0%% 0%%)',duration:1.25,ease:'power2.out'},%.3f);" % (sid, t0 + 0.3))
-    g.append("tl.to('%s .logo-img',{filter:'blur(0px)',duration:0.6,ease:'power2.out'},%.3f);" % (sid, t0 + 0.95))
-    # sweep rides across the reveal edge
     g.append("tl.set('%s .logosweep',{xPercent:-230,opacity:0},%.3f);" % (sid, t0))
     g.append("tl.to('%s .logosweep',{opacity:1,duration:0.15},%.3f);" % (sid, t0 + 0.4))
     g.append("tl.to('%s .logosweep',{xPercent:520,opacity:0,duration:1.05,ease:'power1.inOut'},%.3f);" % (sid, t0 + 0.45))
-    # bloom
     g.append("tl.set('%s .logobloom',{opacity:0,scale:0.8},%.3f);" % (sid, t0))
     g.append("tl.to('%s .logobloom',{opacity:1,scale:1.12,duration:0.4,ease:'power2.out'},%.3f);" % (sid, t0 + 0.4))
     g.append("tl.to('%s .logobloom',{opacity:0.42,scale:1,duration:1.0,ease:'power2.out'},%.3f);" % (sid, t0 + 0.95))
+
+    if svg:
+        inner = ('<div class="logobloom"></div><div class="logosvgbox" style="width:%dpx">%s</div>'
+                 '<div class="logosweep"></div>' % (iw, svg))
+        pieces = [p for p in ("mark-dot", "mark-tube", "bar-1", "bar-2", "bar-3", "wordmark") if ('id="%s"' % p) in svg]
+        if pieces:
+            # transformOrigin is a static set (never tweened), so it lives outside rev().
+            if "mark-dot" in pieces:
+                g.append("tl.set('%s #mark-dot',{transformOrigin:'50%% 50%%'},%.3f);" % (sid, t0))
+                g += rev("%s #mark-dot" % sid, {"opacity": "0", "scale": "0"}, t0 + 0.25, t0, "duration:0.4,ease:'back.out(2.2)'")
+            if "mark-tube" in pieces:
+                g.append("tl.set('%s #mark-tube',{transformOrigin:'50%% 50%%'},%.3f);" % (sid, t0))
+                g += rev("%s #mark-tube" % sid, {"opacity": "0", "scale": "0.5"}, t0 + 0.4, t0, "duration:0.5,ease:'back.out(1.7)'")
+            for k in range(1, 4):
+                if ("bar-%d" % k) in pieces:
+                    g.append("tl.set('%s #bar-%d',{transformOrigin:'0%% 50%%'},%.3f);" % (sid, k, t0))
+                    g += rev("%s #bar-%d" % (sid, k), {"opacity": "0", "scaleX": "0"}, t0 + 0.7 + (k - 1) * 0.13, t0, "duration:0.5,ease:'power3.out'")
+            if "wordmark" in pieces:
+                g += rev("%s #wordmark" % sid, {"clipPath": "'inset(0% 100% 0% 0%)'"}, t0 + 1.2, t0, "duration:0.7,ease:'power2.out'")
+        else:
+            g += rev("%s .logosvgbox svg" % sid, {"clipPath": "'inset(0% 100% 0% 0%)'", "filter": "'blur(7px)'"}, t0 + 0.3, t0, "duration:1.25,ease:'power2.out'")
+    else:
+        inner = ('<div class="logobloom"></div><img class="logo-img" src="%s" style="width:%dpx"/>'
+                 '<div class="logosweep"></div>' % (logo, iw))
+        g.append("tl.set('%s .logo-img',{clipPath:'inset(0%% 100%% 0%% 0%%)',filter:'blur(7px)'},%.3f);" % (sid, t0))
+        g.append("tl.to('%s .logo-img',{clipPath:'inset(0%% 0%% 0%% 0%%)',duration:1.25,ease:'power2.out'},%.3f);" % (sid, t0 + 0.3))
+        g.append("tl.to('%s .logo-img',{filter:'blur(0px)',duration:0.6,ease:'power2.out'},%.3f);" % (sid, t0 + 0.95))
+
+    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
+                  '<div class="logostage"><div class="logo3dwrap"><div class="logo3d">%s</div></div>%s</div>' % (inner, tag))
     if b.get("tagline"):
         g += rev("%s .ltag" % sid, {"opacity": "0", "y": "14"}, t0 + 1.7, t0, "duration:0.5,ease:'power3.out'")
     if not last:

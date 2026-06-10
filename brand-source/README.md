@@ -33,3 +33,8 @@ the dot pulsing in, the tube drawing on, the three bars firing out one at a time
 
 Most export tools (Figma: name the layers, then "Export as SVG") carry the names
 through as ids. If yours don't, no problem — the whole-logo reveal still looks great.
+
+**Working example:** `dialfyne-mark-example.svg` in this folder is a clean SVG
+built to this exact structure. The engine already animates it per-piece (dot pops,
+tube grows, the three bars fire out one at a time, then DIALFYNE wipes on). Open it
+to see how the ids are wired, or just swap in your real export with the same names.
