@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="UTF-8"/>
-<meta name="viewport" content="width=1920, height=1080"/>
+<meta name="viewport" content="width=1080, height=1920"/>
 <title>Dialfyne — motion look-test v2</title>
 <script src="assets/gsap.min.js"></script>
 <style>
@@ -11,8 +11,8 @@
 @font-face{font-family:'Inter';font-weight:800;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-800-normal.woff2') format('woff2')}
 @font-face{font-family:'Inter';font-weight:900;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-900-normal.woff2') format('woff2')}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;font-family:Inter,-apple-system,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
-#main{position:relative;width:1920px;height:1080px;overflow:hidden}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#060912;font-family:Inter,-apple-system,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+#main{position:relative;width:1080px;height:1920px;overflow:hidden}
 .bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 34%,rgba(42,147,245,.12),transparent 60%),
   radial-gradient(circle at 84% 88%,rgba(108,190,249,.06),transparent 45%),#060912}
 .grid{position:absolute;inset:0;opacity:.05;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),
@@ -69,8 +69,8 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;font-fam
 body.p .canvas-title{width:700px;max-width:700px;white-space:normal;font-size:34px;line-height:1.18}
 body.p .prompt{font-size:28px}
 </style></head>
-<body class="">
-<div id="main" data-composition-id="main" data-width="1920" data-height="1080" data-start="0" data-duration="9.8">
+<body class="p">
+<div id="main" data-composition-id="main" data-width="1080" data-height="1920" data-start="0" data-duration="9.8">
   <div class="bg clip" data-start="0" data-duration="9.8" data-track-index="1"><div class="grid"></div></div>
   <div id="cam" class="clip" data-start="0" data-duration="9.8" data-track-index="2"><div id="amb"><div id="world">
     <div class="appwin" id="appwin">
@@ -103,7 +103,7 @@ body.p .prompt{font-size:28px}
   </div></div></div>
 <script>
 window.__timelines = window.__timelines || {};
-const CFG={"portrait": false, "W": 1920, "H": 1080, "app": [90, 96, 1740, 888], "hdr": 74, "side": 320, "box": [480, 500, 1280, 150], "title_y": 420, "start": [1120.0, 724], "phone": [758.0, 116.0, 404, 848], "cam_estab": [0, 0, 1], "cam_box": [-720.0, -367.5, 1.5], "cam_phone": [-115.2, -64.8, 1.12], "cursor_box": [524, 575.0], "cursor_start": [1120.0, 724], "prompt": "Practice the pricing objection that lost us the Acme deal.", "reply": "Totally fair \u2014 let me show the ROI in your own numbers.", "ailine": "Honestly, you're pricier than the tool we run today."};
+const CFG={"portrait": true, "W": 1080, "H": 1920, "app": [50, 300, 980, 740], "hdr": 70, "side": 210, "box": [300, 620, 690, 210], "title_y": 520, "start": [645.0, 908], "phone": [228.0, 300.0, 624, 1320], "cam_estab": [-208.2, 142.2, 1.16], "cam_box": [-395.2, -105.8, 1.45], "cam_phone": [-64.8, -115.2, 1.12], "cursor_box": [344, 725.0], "cursor_start": [645.0, 908], "prompt": "Practice the pricing objection that lost us the Acme deal.", "reply": "Totally fair \u2014 let me show the ROI in your own numbers.", "ailine": "Honestly, you're pricier than the tool we run today."};
 const $ = s => document.querySelector(s);
 function place(el, l, t, w, h){ el.style.left=l+'px'; el.style.top=t+'px'; if(w!=null)el.style.width=w+'px'; if(h!=null)el.style.height=h+'px'; }
 
