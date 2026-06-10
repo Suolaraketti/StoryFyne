@@ -1,6 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"/>
-<meta name="viewport" content="width=1920, height=1080"/><title>Dialfyne — Story</title>
-<script src="assets/gsap.min.js"></script><style>
+<!doctype html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=1920, height=1080"/>
+<title>Dialfyne — Story</title><script src="assets/gsap.min.js"></script><style>
 @font-face{font-family:'Inter';font-weight:400;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-400-normal.woff2') format('woff2')}
 @font-face{font-family:'Inter';font-weight:500;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2')}
 @font-face{font-family:'Inter';font-weight:600;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2')}
@@ -11,34 +10,54 @@
 html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;font-family:Inter,-apple-system,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
 #main{position:relative;width:1920px;height:1080px;overflow:hidden}
 .bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 45%,rgba(42,147,245,.10),transparent 62%),#060912}
-.grid{position:absolute;inset:0;opacity:.045;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),
-  linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:64px 64px;
-  -webkit-mask-image:radial-gradient(ellipse 75% 65% at 50% 50%,#000,transparent 78%)}
+.grid{position:absolute;inset:0;opacity:.045;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(ellipse 75% 65% at 50% 50%,#000,transparent 78%)}
 .orb{position:absolute;border-radius:50%;opacity:.5}
 .orb.a{width:1000px;height:1000px;left:-280px;top:-300px;background:radial-gradient(circle,rgba(42,147,245,.16),transparent 68%);animation:d1 22s ease-in-out infinite}
 .orb.b{width:900px;height:900px;right:-260px;bottom:-300px;background:radial-gradient(circle,rgba(108,190,249,.12),transparent 68%);animation:d2 26s ease-in-out infinite}
-@keyframes d1{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,44px)}}
-@keyframes d2{0%,100%{transform:translate(0,0)}50%{transform:translate(-54px,-40px)}}
+@keyframes d1{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,44px)}}@keyframes d2{0%,100%{transform:translate(0,0)}50%{transform:translate(-54px,-40px)}}
 .flt{position:absolute;font-size:26px;font-weight:600;color:rgba(154,163,184,.16);white-space:nowrap;animation:flt 14s ease-in-out infinite}
 @keyframes flt{0%,100%{transform:translate(0,0)}50%{transform:translate(0,-26px)}}
-
-.ev{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 8%}
+.ev{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 7%}
 .line{font-size:104px;font-weight:850;letter-spacing:-.03em;line-height:1.05;max-width:90%}
 .line.big{font-size:150px}.line.sm{font-size:84px}
 .line .w{display:inline-block;margin:0 .14em;will-change:transform,opacity,filter}
-
-.strikewrap{display:flex;flex-direction:column;gap:18px;align-items:center}
+.strikewrap{display:flex;flex-direction:column;gap:16px;align-items:center}
 .srow{position:relative;display:inline-block}
-.srow span{font-size:84px;font-weight:800;letter-spacing:-.02em;color:#fff}
+.srow span{font-size:82px;font-weight:800;letter-spacing:-.02em;color:#fff}
 .srow .strike{position:absolute;left:-6px;right:-6px;top:52%;height:7px;border-radius:4px;background:#ff5d6c;transform-origin:left center;box-shadow:0 0 18px rgba(255,93,108,.7)}
-
-.typed{font-size:84px;font-weight:800;letter-spacing:-.02em;font-family:ui-monospace,monospace;color:#fff;display:flex;align-items:center;gap:.3em}
+.typed{font-size:80px;font-weight:800;letter-spacing:-.02em;font-family:ui-monospace,monospace;color:#fff;display:flex;align-items:center;gap:.3em}
 .typed .brak{color:#2a93f5;font-weight:700}
-.caret{display:inline-block;width:5px;height:.92em;background:#2a93f5;margin-left:4px;animation:blink 1.05s step-end infinite}
+.caret{display:inline-block;width:5px;height:.9em;background:#2a93f5;margin-left:4px;animation:blink 1.05s step-end infinite}
 @keyframes blink{50%{opacity:0}}
+.brandwrap{display:flex;flex-direction:column;align-items:center;gap:18px}
+.b-logo{height:120px;filter:drop-shadow(0 18px 50px rgba(42,147,245,.35))}
+.b-sub{font-size:42px;font-weight:800;letter-spacing:-.02em;color:rgba(255,255,255,.85)}
+.kicker{margin-bottom:40px}
+.k-eyebrow{font-size:19px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2a93f5;margin-bottom:14px}
+.k-title{font-size:72px;font-weight:850;letter-spacing:-.03em}.k-title .w{display:inline-block;margin:0 .12em}
+.crop{position:relative;overflow:hidden;border-radius:16px;box-shadow:0 50px 120px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08),0 0 80px rgba(42,147,245,.12)}
+.crop img{position:absolute;display:block}
+.hlbox{position:absolute;inset:8px;border:3px solid #2a93f5;border-radius:10px;box-shadow:0 0 34px rgba(42,147,245,.65),inset 0 0 22px rgba(42,147,245,.2);opacity:0}
+.pop{position:absolute;top:calc(50% - 150px);background:#34d399;color:#04130c;font-size:24px;font-weight:800;padding:10px 20px;border-radius:999px;box-shadow:0 14px 40px rgba(52,211,153,.5);opacity:0}
+.cursor{position:absolute;top:0;left:0;width:36px;height:36px;z-index:6;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55))}
+.metcard{background:linear-gradient(180deg,rgba(34,44,66,.9),rgba(16,22,38,.92));border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:44px 60px;box-shadow:0 50px 120px rgba(0,0,0,.55),0 0 80px rgba(42,147,245,.14);text-align:center}
+.met-lbl{font-size:20px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.met-v{font-size:140px;font-weight:850;letter-spacing:-.04em;line-height:1.05;color:#fff;font-variant-numeric:tabular-nums}
+.met-d{font-size:40px;font-weight:800;color:#34d399;vertical-align:super}
+.spark{width:340px;height:74px;margin:8px auto 0;display:block}
+.bornwrap{display:flex;flex-direction:column;align-items:center}
+.born{position:relative;width:360px;height:360px;display:flex;align-items:center;justify-content:center;margin-top:10px}
+.dls{position:absolute;inset:0}
+.dl{position:absolute;left:50%;top:50%;width:180px;height:2px;background:linear-gradient(90deg,transparent,rgba(42,147,245,.7));transform-origin:left center}
+.ring{position:absolute;border-radius:50%;border:2px solid rgba(42,147,245,.5)}
+.ring.r1{width:200px;height:200px}.ring.r2{width:280px;height:280px;border-color:rgba(42,147,245,.28)}
+.node{width:120px;height:120px;border-radius:30px;background:linear-gradient(135deg,#2a93f5,#1f86f0);display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:850;color:#fff;box-shadow:0 0 60px rgba(42,147,245,.6);z-index:2}
+.ctawrap{display:flex;flex-direction:column;align-items:center;gap:26px}
+.cta-title{font-size:84px;font-weight:850;letter-spacing:-.03em}.cta-title .w{display:inline-block;margin:0 .12em}
+.cta-url{font-size:34px;font-weight:800;color:#fff;background:linear-gradient(135deg,#2a93f5,#1f86f0);padding:18px 40px;border-radius:14px;box-shadow:0 22px 60px rgba(42,147,245,.5)}
 </style></head><body>
-<div id="main" data-composition-id="main" data-width="1920" data-height="1080" data-start="0" data-duration="9.7">
-<div class="bg clip" data-start="0" data-duration="9.7" data-track-index="1"><div class="grid"></div><div class="orb a"></div><div class="orb b"></div><span class="flt" style="left:8%;top:18%;animation-delay:0.0s">Too expensive</span><span class="flt" style="left:72%;top:24%;animation-delay:-1.7s">We already use one</span><span class="flt" style="left:15%;top:70%;animation-delay:-3.4s">No budget</span><span class="flt" style="left:78%;top:66%;animation-delay:-5.1s">Call me next quarter</span><span class="flt" style="left:40%;top:12%;animation-delay:-6.8s">Not interested</span><span class="flt" style="left:60%;top:82%;animation-delay:-8.5s">Send me an email</span></div>
+<div id="main" data-composition-id="main" data-width="1920" data-height="1080" data-start="0" data-duration="20.6">
+<div class="bg clip" data-start="0" data-duration="20.6" data-track-index="1"><div class="grid"></div><div class="orb a"></div><div class="orb b"></div><span class="flt" style="left:8%;top:18%;animation-delay:0.0s">Too expensive</span><span class="flt" style="left:72%;top:24%;animation-delay:-1.7s">We already use one</span><span class="flt" style="left:15%;top:70%;animation-delay:-3.4s">No budget</span><span class="flt" style="left:78%;top:66%;animation-delay:-5.1s">Call me next quarter</span><span class="flt" style="left:40%;top:12%;animation-delay:-6.8s">Not interested</span><span class="flt" style="left:60%;top:82%;animation-delay:-8.5s">Send me an email</span></div>
 <div id="ev-0" class="ev clip" data-start="0.19" data-duration="1.64" data-track-index="10"><div class="line"><span class="w">Every</span><span class="w">call</span><span class="w">is</span><span class="w">practice.</span></div></div>
 <div id="ev-1" class="ev clip" data-start="1.48" data-duration="1.64" data-track-index="11"><div class="line"><span class="w">On</span><span class="w">a</span><span class="w" style="color:#ff5d6c">real</span><span class="w">customer.</span></div></div>
 <div id="ev-2" class="ev clip" data-start="2.77" data-duration="0.99" data-track-index="12"><div class="line big"><span class="w">That's</span><span class="w">expensive.</span></div></div>
@@ -47,7 +66,12 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;font-fam
 <div id="ev-5" class="ev clip" data-start="6.63" data-duration="0.99" data-track-index="15"><div class="line sm"><span class="w">Same</span><span class="w">generic</span><span class="w">scripts.</span></div></div>
 <div id="ev-6" class="ev clip" data-start="7.27" data-duration="0.99" data-track-index="16"><div class="line"><span class="w" style="color:#ff5d6c">Fake</span><span class="w">buyers.</span></div></div>
 <div id="ev-7" class="ev clip" data-start="7.92" data-duration="2.28" data-track-index="17"><div class="typed"><span class="brak">&gt;_</span> <span id="tw-7"></span><span class="caret"></span></div></div>
-<audio id="music" preload="none" src="assets/music.mp3" data-start="0" data-duration="9.7" data-track-index="100"></audio>
+<div id="ev-8" class="ev clip" data-start="9.85" data-duration="1.64" data-track-index="18"><div class="brandwrap"><img class="b-logo" src="assets/logos/dialfyne.png"/><div class="b-sub">Meet Dialfyne.</div></div></div>
+<div id="ev-9" class="ev clip grabwrap" data-start="11.14" data-duration="2.93" data-track-index="19"><div class="kicker"><div class="k-eyebrow">Connected to your stack</div><div class="k-title"><span class="w">Pulled</span><span class="w">from</span><span class="w">your</span><span class="w">CRM.</span></div></div><div class="crop" style="width:1480px;height:183px"><img src="assets/shots/connected-apps.png" style="width:1526px;left:-23px;top:-323px"/><div class="hlbox"></div></div><div class="pop">&#10003; Synced</div><svg class="cursor" viewBox="0 0 24 24"><path d="M4 2 L4 20 L9 15 L12.5 22 L15 21 L11.5 14 L18 14 Z" fill="#fff" stroke="#0a0a0a" stroke-width="1.2"/></svg></div>
+<div id="ev-10" class="ev clip" data-start="13.71" data-duration="2.93" data-track-index="20"><div class="kicker"><div class="k-eyebrow">The outcome</div><div class="k-title"><span class="w">Reps</span><span class="w">get</span><span class="w">sharper.</span></div></div><div class="metcard"><div class="met-lbl">Team avg score</div><div class="met-v"><span id="mn-10">0.0</span>/10 <span class="met-d">+29%</span></div><svg class="spark" viewBox="0 0 320 70" preserveAspectRatio="none"><path id="sp-10" d="M0,58 L40,52 L80,55 L120,40 L160,44 L200,28 L240,30 L280,16 L320,8" fill="none" stroke="#2a93f5" stroke-width="4" stroke-linecap="round"/></svg></div></div>
+<div id="ev-11" class="ev clip" data-start="16.29" data-duration="2.28" data-track-index="21"><div class="bornwrap"><div class="kicker"><div class="k-eyebrow">Built from your reality</div><div class="k-title"><span class="w">An</span><span class="w">AI</span><span class="w">buyer</span><span class="w">that</span><span class="w">knows</span><span class="w">the</span><span class="w">deal.</span></div></div><div class="born"><div class="dls"><i class="dl" style="transform:rotate(0deg)"></i><i class="dl" style="transform:rotate(30deg)"></i><i class="dl" style="transform:rotate(60deg)"></i><i class="dl" style="transform:rotate(90deg)"></i><i class="dl" style="transform:rotate(120deg)"></i><i class="dl" style="transform:rotate(150deg)"></i><i class="dl" style="transform:rotate(180deg)"></i><i class="dl" style="transform:rotate(210deg)"></i><i class="dl" style="transform:rotate(240deg)"></i><i class="dl" style="transform:rotate(270deg)"></i><i class="dl" style="transform:rotate(300deg)"></i><i class="dl" style="transform:rotate(330deg)"></i></div><div class="ring r1"></div><div class="ring r2"></div><div class="node">AI</div></div></div></div>
+<div id="ev-12" class="ev clip" data-start="18.22" data-duration="2.28" data-track-index="22"><div class="ctawrap"><img class="b-logo" src="assets/logos/dialfyne.png"/><div class="cta-title"><span class="w">Build</span><span class="w">yours</span><span class="w">—</span><span class="w">free.</span></div><div class="cta-url">dialfyne.com/roleplay</div></div></div>
+<audio id="music" preload="none" src="assets/music.mp3" data-start="0" data-duration="20.6" data-track-index="100"></audio>
 <script>window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});
 tl.from('#ev-0 .w',{opacity:0,yPercent:95,filter:'blur(7px)',stagger:0.045,duration:0.42,ease:'back.out(1.5)'},0.19);
 tl.to('#ev-0 .w',{opacity:0,yPercent:-60,filter:'blur(6px)',stagger:0.02,duration:0.26,ease:'power3.in'},1.44);
@@ -71,5 +95,35 @@ tl.from('#ev-5 .w',{opacity:0,yPercent:95,filter:'blur(7px)',stagger:0.045,durat
 tl.to('#ev-5 .w',{opacity:0,yPercent:-60,filter:'blur(6px)',stagger:0.02,duration:0.26,ease:'power3.in'},7.23);
 tl.from('#ev-6 .w',{opacity:0,yPercent:95,filter:'blur(7px)',stagger:0.045,duration:0.42,ease:'back.out(1.5)'},7.27);
 tl.to('#ev-6 .w',{opacity:0,yPercent:-60,filter:'blur(6px)',stagger:0.02,duration:0.26,ease:'power3.in'},7.88);
-(function(){var o={n:0};tl.fromTo('#ev-7',{opacity:0,y:20},{opacity:1,y:0,duration:0.4,ease:'power3.out'},7.92);tl.to(o,{n:27,duration:1.20,ease:'none',onUpdate:function(){var e=document.getElementById('tw-7');if(e)e.textContent="What if it knew YOUR deals?".slice(0,Math.round(o.n));}},8.17);})();
+(function(){var o={n:0};tl.fromTo('#ev-7',{opacity:0,y:20},{opacity:1,y:0,duration:0.4,ease:'power3.out'},7.92);tl.to(o,{n:27,duration:1.06,ease:'none',onUpdate:function(){var e=document.getElementById('tw-7');if(e)e.textContent="What if it knew YOUR deals?".slice(0,Math.round(o.n));}},8.17);tl.to('#ev-7',{opacity:0,y:-16,duration:0.25,ease:'power3.in'},9.81);})();
+tl.from('#ev-8 .b-logo',{opacity:0,scale:0.6,filter:'blur(10px)',duration:0.55,ease:'back.out(1.7)'},9.85);
+tl.from('#ev-8 .b-sub',{opacity:0,y:18,duration:0.4,ease:'power3.out'},10.10);
+tl.to('#ev-8',{opacity:0,scale:1.08,filter:'blur(8px)',duration:0.28,ease:'power3.in'},11.12);
+tl.from('#ev-9 .crop',{opacity:0,scale:0.94,filter:'blur(8px)',duration:0.4,ease:'back.out(1.3)'},11.14);
+tl.fromTo('#ev-9 .crop img',{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)',duration:0.5,ease:'power3.out'},11.19);
+tl.from('#ev-9 .k-eyebrow',{opacity:0,y:14,duration:0.3},11.29);
+tl.from('#ev-9 .k-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.4,ease:'power3.out'},11.36);
+tl.set('#ev-9 .cursor',{x:1320,y:660},11.14);
+tl.to('#ev-9 .cursor',{x:1463,y:540,duration:0.55,ease:'power3.inOut'},11.64);
+tl.to('#ev-9 .cursor',{scale:0.85,duration:0.08,yoyo:true,repeat:1},12.43);
+tl.fromTo('#ev-9 .hlbox',{opacity:0,scale:1.12},{opacity:1,scale:1,duration:0.22,ease:'back.out(2)'},12.43);
+tl.fromTo('#ev-9 .pop',{opacity:0,y:14,scale:0.8},{opacity:1,y:0,scale:1,duration:0.3,ease:'back.out(2)'},12.55);
+tl.to('#ev-9',{opacity:0,scale:1.05,filter:'blur(9px)',duration:0.3,ease:'power3.in'},13.69);
+tl.from('#ev-10 .metcard',{opacity:0,y:40,scale:0.94,filter:'blur(8px)',duration:0.45,ease:'back.out(1.3)'},13.71);
+tl.from('#ev-10 .k-eyebrow',{opacity:0,y:14,duration:0.3},13.81);
+tl.from('#ev-10 .k-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.4,ease:'power3.out'},13.89);
+(function(){var o={v:0};tl.to(o,{v:9.0,duration:1.0,ease:'power2.out',onUpdate:function(){var e=document.getElementById('mn-10');if(e)e.textContent=o.v.toFixed(1);}},14.11);})();
+tl.fromTo('#sp-10',{strokeDasharray:520,strokeDashoffset:520},{strokeDashoffset:0,duration:1.1,ease:'power2.out'},14.16);
+tl.from('#ev-10 .met-d',{opacity:0,scale:0.6,duration:0.3,ease:'back.out(2)'},14.81);
+tl.to('#ev-10',{opacity:0,scale:1.05,filter:'blur(9px)',duration:0.3,ease:'power3.in'},16.27);
+tl.from('#ev-11 .dl',{scaleX:0,opacity:0,stagger:0.03,duration:0.5,ease:'power3.out'},16.39);
+tl.from('#ev-11 .node',{scale:0,opacity:0,duration:0.5,ease:'back.out(1.8)'},16.84);
+tl.from('#ev-11 .ring',{scale:0,opacity:0,stagger:0.12,duration:0.5,ease:'back.out(1.6)'},16.99);
+tl.from('#ev-11 .k-eyebrow',{opacity:0,y:14,duration:0.3},16.49);
+tl.from('#ev-11 .k-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.4,ease:'power3.out'},16.59);
+tl.to('#ev-11',{opacity:0,scale:1.06,filter:'blur(9px)',duration:0.3,ease:'power3.in'},18.20);
+tl.from('#ev-12 .b-logo',{opacity:0,scale:0.7,filter:'blur(8px)',duration:0.5,ease:'back.out(1.7)'},18.22);
+tl.from('#ev-12 .cta-title .w',{opacity:0,yPercent:90,stagger:0.05,duration:0.4,ease:'power3.out'},18.42);
+tl.fromTo('#ev-12 .cta-url',{opacity:0,y:16},{opacity:1,y:0,duration:0.4,ease:'power3.out'},18.72);
+tl.to('#ev-12 .cta-url',{scale:1.04,duration:0.6,yoyo:true,repeat:6,ease:'sine.inOut'},19.12);
 window.__timelines['main']=tl;</script></div></body></html>
