@@ -1,0 +1,28 @@
+{
+  "title": "Dialfyne — capabilities reel (custom assets)",
+  "duration": 31.0,
+  "soundtrack": "assets/music.mp3",
+  "dust": true,
+  "chapters": [
+    { "at": 0,    "tint": "primary" },
+    { "at": 11.0, "tint": "#34d399" },
+    { "at": 21.0, "tint": "#9b7bff" }
+  ],
+  "beats": [
+    { "type": "sting",   "start": 0.3,  "end": 4.6,  "tagline": "The revenue command center" },
+    { "type": "isogrid", "start": 4.6,  "end": 7.6,  "t": "Built for revenue teams.", "acc": "revenue" },
+    { "type": "orbit",   "start": 7.6,  "end": 11.6, "node": "AI", "eyebrow": "One brain for your stack",
+      "title": "Everything, connected.", "acc": "connected.",
+      "items": ["&#9742;","&#9993;","&#9203;","&#9873;","&#9678;"] },
+    { "type": "stream",  "start": 11.6, "end": 15.6, "target": "AI", "eyebrow": "Live data, in motion",
+      "title": "Your pipeline, flowing.", "acc": "flowing.",
+      "sources": ["CRM","Calls","Calendar","Email"] },
+    { "type": "wave",    "start": 15.6, "end": 19.4, "bars": 38, "eyebrow": "AI voice agents",
+      "title": "It answers every call.", "acc": "every" },
+    { "type": "metric",  "start": 19.4, "end": 23.0, "value": 142, "decimals": 0, "label": "Calls handled this week",
+      "delta": "+15%", "eyebrow": "The outcome", "title": "Nothing slips." },
+    { "type": "hero",    "start": 23.0, "end": 27.0, "t": "Work, evolved.", "acc": "evolved.", "size": "big" },
+    { "type": "cta",     "start": 27.0, "end": 31.0, "headline": "Run your revenue on autopilot.",
+      "acc": "autopilot.", "url": "dialfyne.com", "sub": "See it on your numbers." }
+  ]
+}

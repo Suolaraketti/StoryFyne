@@ -182,3 +182,32 @@ contains the wordmark. Use a sting to open or close a video; pair with `hero`.
 ```
 Best with: line, hero, grab, brand, cta, sting. The dark glass beats
 (metric, ask, dash) keep their dark cards — readable, but preview first.
+
+## Custom code-drawn assets (v1.2) — zero external files, pure CSS/SVG/GSAP
+
+### orbit — your stack as a constellation around a core ("everything, connected")
+```json
+{ "type": "orbit", "start": 7.6, "end": 11.6, "node": "AI",
+  "eyebrow": "One brain for your stack", "title": "Everything, connected.", "acc": "connected.",
+  "items": ["&#9742;","&#9993;","&#9203;","&#9873;","&#9678;"] }   // 3–6 satellite glyphs
+```
+
+### stream — sources pipe live data into a target ("your pipeline, flowing")
+```json
+{ "type": "stream", "start": 11.6, "end": 15.6, "target": "AI",
+  "eyebrow": "Live data, in motion", "title": "Your pipeline, flowing.", "acc": "flowing.",
+  "sources": ["CRM","Calls","Calendar","Email"] }                 // 2–5
+```
+
+### wave — reactive voice waveform (for the voice-agent product)
+```json
+{ "type": "wave", "start": 15.6, "end": 19.4, "bars": 38,
+  "eyebrow": "AI voice agents", "title": "It answers every call.", "acc": "every" }
+```
+
+### isogrid — perspective floor+ceiling energy grid behind a centered title
+```json
+{ "type": "isogrid", "start": 4.6, "end": 7.6, "t": "Built for revenue teams.", "acc": "revenue" }
+```
+
+Reference reel using all of them: `storyfyne-hyperframes-reel/script.json`.

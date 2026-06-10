@@ -123,6 +123,7 @@ def brand(i, b, ctx, last):
 # ── cta ──────────────────────────────────────────────────────────────
 _CTA_CSS = r"""
 .ctawrap{display:flex;flex-direction:column;align-items:center;gap:24px}
+.ctawrap .b-logo{height:100px}
 .cta-head{font-size:84px;font-weight:850;letter-spacing:-.03em}.cta-head .w{display:inline-block;margin:0 .12em}
 .cta-url{font-size:58px;font-weight:850;letter-spacing:-.02em;color:#fff;background:linear-gradient(135deg,__PRIMARY__,__ACCENT__);padding:18px 44px;border-radius:18px;box-shadow:0 22px 60px rgba(42,147,245,.5)}
 .cta-sub{font-size:34px;font-weight:600;color:rgba(255,255,255,.72)}
@@ -518,4 +519,183 @@ def sting(i, b, ctx, last):
     g.append("tl.to('%s .star4',{x:%d,y:%d,rotation:140,opacity:0,duration:1.4,ease:'power1.out'},%.3f);" % (sid, cx + 330, cy - 230, arrive + 0.3))
     if not last:
         g += out(sid, t1 - 0.02, "blur")
+    return html, g
+
+
+# ── orbit (constellation of nodes spinning around a core; "your whole stack, one brain") ──
+_ORBIT_CSS = r"""
+.orbitwrap{display:flex;flex-direction:column;align-items:center}
+.orbit{position:relative;width:520px;height:520px}
+.orbit .core{position:absolute;left:50%;top:50%;width:128px;height:128px;margin:-64px 0 0 -64px;border-radius:34px;
+  background:linear-gradient(135deg,__PRIMARY__,__ACCENT__);display:flex;align-items:center;justify-content:center;
+  font-weight:850;font-size:46px;color:#fff;box-shadow:0 0 70px rgba(42,147,245,.7),inset 0 2px 0 rgba(255,255,255,.3);z-index:3}
+.orbit .ringline{position:absolute;left:50%;top:50%;border:1px solid rgba(120,170,255,.22);border-radius:50%;transform:translate(-50%,-50%)}
+.orbit .spoke{position:absolute;left:50%;top:50%;height:2px;transform-origin:left center;
+  background:linear-gradient(90deg,rgba(120,170,255,.55),transparent);z-index:1}
+.orbit .sat{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:16px;
+  background:rgba(20,28,46,.92);border:1px solid rgba(130,170,255,.35);display:flex;align-items:center;justify-content:center;
+  font-size:26px;color:#cfe0ff;box-shadow:0 10px 30px rgba(0,0,0,.45);z-index:2}
+"""
+_ORBIT_PCSS = "body.p .orbit{width:440px;height:440px}body.p .orbit .core{width:108px;height:108px;margin:-54px 0 0 -54px}\n"
+
+@beat("orbit", css=_ORBIT_CSS, pcss=_ORBIT_PCSS)
+def orbit(i, b, ctx, last):
+    import math
+    t0, t1 = b["start"], b["end"]
+    sid = "#ev-%d" % i
+    sats = b.get("items", ["&#9742;", "&#9993;", "&#9203;", "&#9873;", "&#9678;"])[:6]
+    R = 200
+    n = len(sats)
+    parts = ['<div class="ringline" style="width:%dpx;height:%dpx"></div>' % (R * 2, R * 2),
+             '<div class="ringline" style="width:%dpx;height:%dpx"></div>' % (R * 2 + 64, R * 2 + 64)]
+    spokes, satdivs = [], []
+    for j, ic in enumerate(sats):
+        ang = -90 + j * (360.0 / n)
+        rad = math.radians(ang)
+        dx, dy = math.cos(rad) * R, math.sin(rad) * R
+        spokes.append('<div class="spoke sp%d" style="width:%dpx;transform:rotate(%.1fdeg)"></div>' % (j, R, ang))
+        satdivs.append('<div class="sat st%d" style="transform:translate(%.0fpx,%.0fpx)">%s</div>' % (j, dx, dy, ic))
+    eyebrow = ('<div class="k-eyebrow">%s</div>' % esc(b["eyebrow"])) if b.get("eyebrow") else ""
+    title = ('<div class="k-title">%s</div>' % kw(esc(b["title"]), b.get("acc", ""), ctx["color"](b.get("col")))) if b.get("title") else ""
+    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
+                  '<div class="orbitwrap"><div class="kicker">%s%s</div><div class="orbit">%s%s%s'
+                  '<div class="core">%s</div></div></div>'
+                  % (eyebrow, title, "".join(parts), "".join(spokes), "".join(satdivs), esc(b.get("node", "AI"))))
+    g = rev("%s .core" % sid, {"opacity": "0", "scale": "0"}, t0 + 0.2, t0, "duration:0.55,ease:'back.out(1.8)'")
+    g += rev("%s .ringline" % sid, {"opacity": "0", "scale": "0.6"}, t0 + 0.35, t0, "duration:0.6,ease:'power3.out',stagger:0.08")
+    for j in range(n):
+        st = t0 + 0.55 + j * 0.12
+        g += rev("%s .sp%d" % (sid, j), {"opacity": "0", "scaleX": "0"}, st, t0, "duration:0.4,ease:'power3.out'")
+        g += rev("%s .st%d" % (sid, j), {"opacity": "0", "scale": "0.2"}, st + 0.1, t0, "duration:0.45,ease:'back.out(2)'")
+    # slow continuous orbit drift on the whole field (deterministic, seek-safe)
+    spin = (t1 - t0) + 0.3
+    g.append("tl.fromTo('%s .orbit',{rotation:0},{rotation:18,duration:%.2f,ease:'none'},%.3f);" % (sid, spin, t0))
+    g.append("tl.fromTo('%s .sat',{rotation:0},{rotation:-18,duration:%.2f,ease:'none'},%.3f);" % (sid, spin, t0))
+    if not last:
+        g += out(sid, t1 - 0.02, "blur")
+    return html, g
+
+
+# ── stream (data flowing through pipes into a target; "your data, connected") ──
+_STREAM_CSS = r"""
+.streamwrap{display:flex;flex-direction:column;align-items:center;gap:46px}
+.stream{position:relative;width:900px;height:300px}
+.snode{position:absolute;top:50%;transform:translateY(-50%);padding:16px 22px;border-radius:14px;font-size:24px;font-weight:700;
+  background:rgba(20,28,46,.92);border:1px solid rgba(130,170,255,.3);color:#dce8ff;box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.starget{position:absolute;right:0;top:50%;transform:translateY(-50%);width:120px;height:120px;border-radius:30px;
+  background:linear-gradient(135deg,__PRIMARY__,__ACCENT__);display:flex;align-items:center;justify-content:center;
+  font-weight:850;font-size:30px;color:#fff;box-shadow:0 0 60px rgba(42,147,245,.6);z-index:3}
+.pipe{position:absolute;left:0;top:50%;height:3px;background:rgba(120,170,255,.18);transform-origin:left center}
+.pulse{position:absolute;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:#fff;
+  box-shadow:0 0 16px 5px rgba(120,170,255,.9);z-index:2}
+"""
+_STREAM_PCSS = "body.p .stream{width:92vw;height:520px}\n"
+
+@beat("stream", css=_STREAM_CSS, pcss=_STREAM_PCSS, required=("sources",))
+def stream(i, b, ctx, last):
+    t0, t1 = b["start"], b["end"]
+    sid = "#ev-%d" % i
+    srcs = b["sources"][:5]
+    n = len(srcs)
+    portrait = ctx["PORTRAIT"]
+    # vertical layout in portrait, horizontal in landscape — express via inline coords
+    nodes, pipes, pulses = [], [], []
+    for j, s in enumerate(srcs):
+        top = 8 + j * (84.0 / max(1, n - 1)) if n > 1 else 50
+        nodes.append('<div class="snode sn%d" style="left:0;top:%.0f%%">%s</div>' % (j, top, esc(s)))
+        pipes.append('<div class="pipe pp%d" style="left:170px;top:%.0f%%;width:560px;transform:translateY(-50%%) rotate(%.1fdeg)"></div>'
+                     % (j, top, (50 - top) * 0.32))
+        pulses.append('<div class="pulse pl%d"></div>' % j)
+    eyebrow = ('<div class="k-eyebrow">%s</div>' % esc(b["eyebrow"])) if b.get("eyebrow") else ""
+    title = ('<div class="k-title">%s</div>' % kw(esc(b["title"]), b.get("acc", ""), ctx["color"](b.get("col")))) if b.get("title") else ""
+    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
+                  '<div class="streamwrap"><div class="kicker">%s%s</div><div class="stream">%s%s%s'
+                  '<div class="starget">%s</div></div></div>'
+                  % (eyebrow, title, "".join(nodes), "".join(pipes), "".join(pulses), esc(b.get("target", "AI"))))
+    g = rev("%s .starget" % sid, {"opacity": "0", "scale": "0.4"}, t0 + 0.2, t0, "duration:0.5,ease:'back.out(1.7)'")
+    for j in range(n):
+        st = t0 + 0.3 + j * 0.14
+        g += rev("%s .sn%d" % (sid, j), {"opacity": "0", "x": "-30"}, st, t0, "duration:0.35,ease:'power3.out'")
+        g += rev("%s .pp%d" % (sid, j), {"opacity": "0", "scaleX": "0"}, st + 0.1, t0, "duration:0.4,ease:'power2.out'")
+        # a light pulse travels the pipe, repeating through the beat
+        reps = max(1, int((t1 - t0) / 1.1))
+        g.append("tl.set('%s .pl%d',{left:180,opacity:0},%.3f);" % (sid, j, t0))
+        g.append("tl.fromTo('%s .pl%d',{left:180,opacity:1},{left:740,opacity:1,duration:0.9,ease:'power1.in',repeat:%d,repeatDelay:0.2},%.3f);"
+                 % (sid, j, reps, st + 0.3))
+    if not last:
+        g += out(sid, t1 - 0.02, "blur")
+    return html, g
+
+
+# ── wave (reactive voice waveform; for the voice-agent product) ──
+_WAVE_CSS = r"""
+.wavewrap{display:flex;flex-direction:column;align-items:center;gap:44px}
+.wave{display:flex;align-items:center;gap:7px;height:220px}
+.wave i{width:12px;border-radius:99px;background:linear-gradient(180deg,__PRIMARY__,__SECONDARY__);box-shadow:0 0 14px rgba(42,147,245,.5)}
+"""
+_WAVE_PCSS = "body.p .wave{height:180px;gap:6px}body.p .wave i{width:10px}\n"
+
+@beat("wave", css=_WAVE_CSS, pcss=_WAVE_PCSS)
+def wave(i, b, ctx, last):
+    import math
+    t0, t1 = b["start"], b["end"]
+    sid = "#ev-%d" % i
+    nbar = b.get("bars", 36)
+    bars = "".join('<i class="wb%d"></i>' % j for j in range(nbar))
+    eyebrow = ('<div class="k-eyebrow">%s</div>' % esc(b["eyebrow"])) if b.get("eyebrow") else ""
+    title = ('<div class="k-title">%s</div>' % kw(esc(b["title"]), b.get("acc", ""), ctx["color"](b.get("col")))) if b.get("title") else ""
+    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
+                  '<div class="wavewrap"><div class="wave">%s</div><div class="kicker" style="margin:0">%s%s</div></div>'
+                  % (bars, eyebrow, title))
+    g = []
+    dur = (t1 - t0) + 0.3
+    for j in range(nbar):
+        center = 1 - abs(j - (nbar - 1) / 2) / ((nbar - 1) / 2)   # tall in the middle
+        base = 18 + center * 150
+        g.append("tl.set('%s .wb%d',{height:6,opacity:0},%.3f);" % (sid, j, t0))
+        g.append("tl.to('%s .wb%d',{height:%d,opacity:1,duration:0.4,ease:'back.out(2)'},%.3f);"
+                 % (sid, j, int(base * 0.5), t0 + 0.1 + j * 0.012))
+        # breathe: deterministic sine, phase-offset per bar
+        lo = max(8, int(base * 0.35)); hi = int(base)
+        g.append("tl.to('%s .wb%d',{height:%d,duration:%.2f,yoyo:true,repeat:%d,ease:'sine.inOut'},%.3f);"
+                 % (sid, j, hi, 0.5 + (j % 4) * 0.06, max(1, int(dur / 0.7)), t0 + 0.5))
+    if title or eyebrow:
+        g += rev("%s .kicker" % sid, {"opacity": "0", "y": "16"}, t0 + 0.6, t0, "duration:0.4,ease:'power3.out'")
+    if not last:
+        g += out(sid, t1 - 0.02, "blur")
+    return html, g
+
+
+# ── isogrid (perspective floor sweep — Flash-Motion energy bed under a title) ──
+_ISO_CSS = r"""
+.isowrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.isofloor{position:absolute;left:50%;bottom:-10%;width:240%;height:120%;margin-left:-120%;
+  background-image:linear-gradient(rgba(42,147,245,.55) 2px,transparent 2px),linear-gradient(90deg,rgba(42,147,245,.55) 2px,transparent 2px);
+  background-size:90px 90px;transform:perspective(620px) rotateX(70deg);transform-origin:50% 100%;
+  -webkit-mask-image:linear-gradient(to top,#000 6%,transparent 70%);mask-image:linear-gradient(to top,#000 6%,transparent 70%);animation:isoscroll 5s linear infinite}
+@keyframes isoscroll{0%{background-position:0 0}100%{background-position:0 90px}}
+.isoroof{position:absolute;left:50%;top:-10%;width:240%;height:120%;margin-left:-120%;
+  background-image:linear-gradient(rgba(155,123,255,.4) 2px,transparent 2px),linear-gradient(90deg,rgba(155,123,255,.4) 2px,transparent 2px);
+  background-size:90px 90px;transform:perspective(620px) rotateX(-70deg);transform-origin:50% 0;
+  -webkit-mask-image:linear-gradient(to bottom,#000 6%,transparent 70%);mask-image:linear-gradient(to bottom,#000 6%,transparent 70%);animation:isoscroll 5s linear infinite}
+.isotitle{position:relative;z-index:2;font-size:120px;font-weight:850;letter-spacing:-.03em;text-align:center;
+  text-shadow:0 0 30px rgba(42,147,245,.6)}
+.isotitle .w{display:inline-block;margin:0 .12em}
+"""
+_ISO_PCSS = "body.p .isotitle{font-size:78px}\n"
+
+@beat("isogrid", css=_ISO_CSS, pcss=_ISO_PCSS, required=("t",))
+def isogrid(i, b, ctx, last):
+    t0, t1 = b["start"], b["end"]
+    sid = "#ev-%d" % i
+    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
+                  '<div class="isowrap"><div class="isofloor"></div><div class="isoroof"></div>'
+                  '<div class="isotitle">%s</div></div>'
+                  % kw(esc(b["t"]), b.get("acc", ""), ctx["color"](b.get("col"))))
+    g = rev("%s .isofloor" % sid, {"opacity": "0"}, t0, t0, "duration:0.6,ease:'power2.out'")
+    g += rev("%s .isoroof" % sid, {"opacity": "0"}, t0 + 0.1, t0, "duration:0.6,ease:'power2.out'")
+    g += rev("%s .isotitle .w" % sid, {"opacity": "0", "yPercent": "120", "filter": "'blur(8px)'"},
+             t0 + 0.25, t0, "duration:0.5,ease:'back.out(1.5)',stagger:0.06")
+    if not last:
+        g += out(sid, t1 - 0.02, "rise")
     return html, g
