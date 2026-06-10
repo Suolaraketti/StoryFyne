@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- EXAMPLE structure for the engine's per-piece logo reveal.
+     The Dialfyne mark is a SIGNAL TREE: a stem flows in from the left and forks
+     into two curved arms that distribute into three bars.
      Replace with your real exported SVG; keep these ids and the engine animates
-     each piece on its own (dot pops, tube draws, bars fire out, wordmark wipes). -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 320" fill="none">
+     each piece on its own (stem grows in, fork springs out, bars fire one at a
+     time, wordmark wipes on). Any subset of the ids works. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 320" fill="none">
   <defs>
-    <linearGradient id="df-grad" x1="40" y1="40" x2="380" y2="280" gradientUnits="userSpaceOnUse">
+    <linearGradient id="df-grad" x1="30" y1="60" x2="380" y2="280" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#6cbef9"/>
       <stop offset="0.55" stop-color="#2a93f5"/>
       <stop offset="1" stop-color="#1f86f0"/>
@@ -12,16 +15,22 @@
   </defs>
 
   <g id="mark">
-    <circle id="mark-dot" cx="58" cy="160" r="30" fill="url(#df-grad)"/>
-    <path id="mark-tube" d="M204 58 C150 58 132 96 132 128 C132 150 120 160 96 160 C120 160 132 170 132 192 C132 224 150 262 204 262"
-          stroke="url(#df-grad)" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <rect id="bar-1" x="214" y="105" width="168" height="36" rx="18" fill="url(#df-grad)"/>
-    <rect id="bar-2" x="214" y="178" width="168" height="36" rx="18" fill="url(#df-grad)"/>
-    <rect id="bar-3" x="214" y="251" width="120" height="36" rx="18" fill="url(#df-grad)"/>
+    <!-- the stem: a line flowing in from the left (NOT a dot) -->
+    <path id="mark-stem" d="M30 160 H124"
+          stroke="url(#df-grad)" stroke-width="38" stroke-linecap="round" fill="none"/>
+    <!-- the fork: stem splits into an upper and a lower curved arm (a wishbone) -->
+    <path id="mark-fork"
+          d="M120 160 C156 160 184 146 204 116 C222 88 238 62 254 52
+             M120 160 C156 160 184 174 204 204 C222 232 238 258 254 268"
+          stroke="url(#df-grad)" stroke-width="38" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- three signal bars, aligned left, each fed by a branch of the fork -->
+    <rect id="bar-1" x="276" y="73"  width="112" height="32" rx="16" fill="url(#df-grad)"/>
+    <rect id="bar-2" x="276" y="144" width="112" height="32" rx="16" fill="url(#df-grad)"/>
+    <rect id="bar-3" x="276" y="215" width="112" height="32" rx="16" fill="url(#df-grad)"/>
   </g>
 
   <g id="wordmark">
-    <text x="430" y="212" font-family="Inter, Arial, sans-serif" font-size="190"
-          font-weight="800" letter-spacing="2" fill="#ffffff">DIALFYNE</text>
+    <text x="448" y="214" font-family="Inter, Arial, sans-serif" font-size="178"
+          font-weight="800" letter-spacing="1" fill="#ffffff">DIALFYNE</text>
   </g>
 </svg>

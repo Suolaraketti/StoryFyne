@@ -13,7 +13,7 @@ Then say the word and I wire the engine to use them.
 | filename                | what it is                              |
 |-------------------------|-----------------------------------------|
 | dialfyne-lockup.svg     | mark + "DIALFYNE" wordmark (horizontal) |
-| dialfyne-mark.svg       | just the dial mark (dot + tube + bars)  |
+| dialfyne-mark.svg       | just the mark (stem + fork + 3 bars)    |
 | dialfyne-wordmark.svg   | just the "DIALFYNE" text                |
 | dialfyne-stacked.svg    | mark on top, wordmark below (optional)  |
 
@@ -21,13 +21,15 @@ A clean lockup SVG alone already lets me do a crisp, resolution-independent reve
 
 ## Bonus (only if it's easy) — element IDs unlock per-piece animation
 
-If the SVG has named groups/ids for the pieces, I can animate each one on its own —
-the dot pulsing in, the tube drawing on, the three bars firing out one at a time:
+If the SVG has named groups/ids for the pieces, I can animate each one on its own.
+The mark is a signal tree — a stem that forks and distributes into three bars — so
+the stem grows in, the fork springs out of it, then the three bars fire out one at
+a time:
 
   <g id="mark">
-    <circle id="mark-dot" .../>
-    <path   id="mark-tube" .../>
-    <rect   id="bar-1" .../>   <rect id="bar-2" .../>   <rect id="bar-3" .../>
+    <path id="mark-stem" .../>   <!-- the line flowing in from the left -->
+    <path id="mark-fork" .../>   <!-- the wishbone it splits into -->
+    <rect id="bar-1" .../>   <rect id="bar-2" .../>   <rect id="bar-3" .../>
   </g>
   <g id="wordmark"> ... </g>
 

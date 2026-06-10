@@ -713,7 +713,7 @@ _LOGOR_CSS = r"""
 .logo-img{display:block;height:auto;filter:drop-shadow(0 16px 46px rgba(40,110,230,.42))}
 .logosvgbox{position:relative}
 .logosvgbox svg{display:block;width:100%;height:auto;filter:drop-shadow(0 16px 46px rgba(40,110,230,.42))}
-.logosvgbox [id^=bar-],.logosvgbox #mark-dot,.logosvgbox #mark-tube{transform-box:fill-box}
+.logosvgbox [id^=bar-],.logosvgbox #mark-stem,.logosvgbox #mark-fork{transform-box:fill-box}
 .logosweep{position:absolute;top:-14%;left:0;width:20%;height:128%;pointer-events:none;opacity:0;mix-blend-mode:screen;
   transform:translateX(-230%) skewX(-12deg);
   background:linear-gradient(90deg,transparent,rgba(180,210,255,0) 22%,rgba(205,228,255,.9) 50%,rgba(180,210,255,0) 78%,transparent)}
@@ -755,21 +755,23 @@ def logoreveal(i, b, ctx, last):
     if svg:
         inner = ('<div class="logobloom"></div><div class="logosvgbox" style="width:%dpx">%s</div>'
                  '<div class="logosweep"></div>' % (iw, svg))
-        pieces = [p for p in ("mark-dot", "mark-tube", "bar-1", "bar-2", "bar-3", "wordmark") if ('id="%s"' % p) in svg]
+        pieces = [p for p in ("mark-stem", "mark-fork", "bar-1", "bar-2", "bar-3", "wordmark") if ('id="%s"' % p) in svg]
         if pieces:
-            # transformOrigin is a static set (never tweened), so it lives outside rev().
-            if "mark-dot" in pieces:
-                g.append("tl.set('%s #mark-dot',{transformOrigin:'50%% 50%%'},%.3f);" % (sid, t0))
-                g += rev("%s #mark-dot" % sid, {"opacity": "0", "scale": "0"}, t0 + 0.25, t0, "duration:0.4,ease:'back.out(2.2)'")
-            if "mark-tube" in pieces:
-                g.append("tl.set('%s #mark-tube',{transformOrigin:'50%% 50%%'},%.3f);" % (sid, t0))
-                g += rev("%s #mark-tube" % sid, {"opacity": "0", "scale": "0.5"}, t0 + 0.4, t0, "duration:0.5,ease:'back.out(1.7)'")
+            # The mark is a signal tree: stem flows in, fork springs out of it,
+            # bars fire one at a time. transformOrigin is a static set (never
+            # tweened) so it lives outside rev().
+            if "mark-stem" in pieces:
+                g.append("tl.set('%s #mark-stem',{transformOrigin:'0%% 50%%'},%.3f);" % (sid, t0))
+                g += rev("%s #mark-stem" % sid, {"opacity": "0", "scaleX": "0"}, t0 + 0.25, t0, "duration:0.4,ease:'power3.out'")
+            if "mark-fork" in pieces:
+                g.append("tl.set('%s #mark-fork',{transformOrigin:'0%% 50%%'},%.3f);" % (sid, t0))
+                g += rev("%s #mark-fork" % sid, {"opacity": "0", "scale": "0"}, t0 + 0.45, t0, "duration:0.55,ease:'back.out(1.8)'")
             for k in range(1, 4):
                 if ("bar-%d" % k) in pieces:
                     g.append("tl.set('%s #bar-%d',{transformOrigin:'0%% 50%%'},%.3f);" % (sid, k, t0))
-                    g += rev("%s #bar-%d" % (sid, k), {"opacity": "0", "scaleX": "0"}, t0 + 0.7 + (k - 1) * 0.13, t0, "duration:0.5,ease:'power3.out'")
+                    g += rev("%s #bar-%d" % (sid, k), {"opacity": "0", "scaleX": "0"}, t0 + 0.85 + (k - 1) * 0.13, t0, "duration:0.5,ease:'power3.out'")
             if "wordmark" in pieces:
-                g += rev("%s #wordmark" % sid, {"clipPath": "'inset(0% 100% 0% 0%)'"}, t0 + 1.2, t0, "duration:0.7,ease:'power2.out'")
+                g += rev("%s #wordmark" % sid, {"clipPath": "'inset(0% 100% 0% 0%)'"}, t0 + 1.35, t0, "duration:0.7,ease:'power2.out'")
         else:
             g += rev("%s .logosvgbox svg" % sid, {"clipPath": "'inset(0% 100% 0% 0%)'", "filter": "'blur(7px)'"}, t0 + 0.3, t0, "duration:1.25,ease:'power2.out'")
     else:

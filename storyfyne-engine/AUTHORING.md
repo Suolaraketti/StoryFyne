@@ -221,17 +221,20 @@ Reads `brand.logo`. Works two ways automatically:
   wipe → light sweep → bloom. One clean reveal of the whole lockup.
 - **SVG** (`brand.logo` ends in `.svg`): the SVG is **inlined** (resolution-
   independent), and if it carries the piece ids below, each one animates on its
-  own — the dot pops, the tube grows in, the **bars fire out one at a time**,
-  then the wordmark wipes on. With no ids, the whole SVG does the build-on wipe.
+  own — the stem grows in, the fork springs out of it, the **bars fire out one
+  at a time**, then the wordmark wipes on. With no ids, the whole SVG does the
+  build-on wipe.
 
 ```json
 { "type": "logoreveal", "start": 0.3, "end": 5.0,
   "tagline": "The revenue command center" }
 ```
-3D turn-in → dot pop → tube → bars fire (staggered) → sweep → bloom → wordmark wipe.
+3D turn-in → stem grows → fork springs → bars fire (staggered) → sweep → bloom → wordmark wipe.
 
-**To unlock per-piece animation**, give the SVG these ids (any subset works):
-`#mark-dot`, `#mark-tube`, `#bar-1`, `#bar-2`, `#bar-3`, `#wordmark`. Drop your
+**To unlock per-piece animation**, give the SVG these ids (any subset works).
+The Dialfyne mark is a *signal tree* — a stem that forks and distributes into
+three bars — so the ids name those parts:
+`#mark-stem`, `#mark-fork`, `#bar-1`, `#bar-2`, `#bar-3`, `#wordmark`. Drop your
 SVG in `brand-source/` and point `brand.logo` at it. See
 `brand-source/dialfyne-mark-example.svg` for the exact structure.
 
