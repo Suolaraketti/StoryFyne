@@ -42,7 +42,7 @@ def line(i, b, ctx, last):
 
 # ── typewriter ───────────────────────────────────────────────────────
 _TYPE_CSS = r"""
-.typed{font-size:80px;font-weight:800;letter-spacing:-.02em;font-family:ui-monospace,monospace;color:#fff;display:flex;align-items:center;gap:.3em}
+.typed{font-size:80px;font-weight:800;letter-spacing:-.02em;font-family:ui-monospace,monospace;color:__TEXT__;display:flex;align-items:center;gap:.3em}
 .typed .brak{color:__PRIMARY__;font-weight:700}
 """
 _TYPE_PCSS = "body.p .typed{font-size:48px}\n"
@@ -69,7 +69,7 @@ def typewriter(i, b, ctx, last):
 _STRIKE_CSS = r"""
 .strikewrap{display:flex;flex-direction:column;gap:16px;align-items:center}
 .srow{position:relative;display:inline-block}
-.srow span{font-size:82px;font-weight:800;letter-spacing:-.02em;color:#fff}
+.srow span{font-size:82px;font-weight:800;letter-spacing:-.02em;color:__TEXT__}
 .srow .strike{position:absolute;left:-6px;right:-6px;top:52%;height:7px;border-radius:4px;background:__RED__;transform-origin:left center;box-shadow:0 0 18px rgba(255,93,108,.7)}
 """
 _STRIKE_PCSS = "body.p .srow span{font-size:62px}\n"
@@ -419,6 +419,103 @@ def pillars(i, b, ctx, last):
     if b.get("cap"):
         g += rev("%s .pillcap .w" % sid, {"opacity": "0", "yPercent": "90"}, t0 + 1.4, t0,
                  "duration:0.4,ease:'power3.out',stagger:0.05")
+    if not last:
+        g += out(sid, t1 - 0.02, "blur")
+    return html, g
+
+
+# ── hero (glow statement type: stretch-echo entrance, gradient accents) ──
+_HERO_CSS = r"""
+.hero{font-size:118px;font-weight:850;letter-spacing:-.025em;line-height:1.06;max-width:94%}
+.hero.big{font-size:158px}
+.hero .w{display:inline-block;position:relative;margin:0 .13em;will-change:transform,opacity,filter}
+.hero .w .t{position:relative;display:inline-block;z-index:2;
+  text-shadow:0 0 16px rgba(120,170,255,.55),0 0 56px rgba(60,130,255,.30)}
+.hero .w.grad .t{background:linear-gradient(95deg,__PRIMARY__,#9b7bff 90%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+  filter:drop-shadow(0 0 20px rgba(110,120,255,.55))}
+.hero .w .e{position:absolute;left:0;top:0.06em;display:inline-block;z-index:1;color:transparent;
+  background:linear-gradient(180deg,rgba(130,160,255,.75),transparent 85%);-webkit-background-clip:text;background-clip:text;
+  transform-origin:top center;opacity:0;pointer-events:none}
+"""
+_HERO_PCSS = "body.p .hero{font-size:84px}body.p .hero.big{font-size:106px}\n"
+
+@beat("hero", css=_HERO_CSS, pcss=_HERO_PCSS, required=("t",))
+def hero(i, b, ctx, last):
+    t0, t1 = b["start"], b["end"]
+    sid = "#ev-%d" % i
+    aset = set((b.get("acc") or "").split())
+    words = []
+    for w in str(b["t"]).split(" "):
+        cls = "w grad" if w.strip(".,!?—") in aset else "w"
+        words.append('<span class="%s"><span class="t">%s</span><span class="e">%s</span></span>'
+                     % (cls, esc(w), esc(w)))
+    cls = "hero" + (" big" if b.get("size") == "big" else "")
+    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i, '<div class="%s">%s</div>' % (cls, "".join(words)))
+    # body lands, echo trail stretches out beneath then evaporates, glow tightens
+    g = rev("%s .w .t" % sid, {"opacity": "0", "yPercent": "55", "filter": "'blur(8px) brightness(1.9)'"},
+            t0, t0, "duration:0.5,ease:'power4.out',stagger:0.07")
+    g.append("tl.set('%s .w .e',{opacity:0.85,scaleY:2.6},%.3f);" % (sid, t0))
+    g.append("tl.to('%s .w .e',{opacity:0,scaleY:1,duration:0.55,ease:'power3.out',stagger:0.07},%.3f);" % (sid, t0 + 0.05))
+    g.append("tl.to('%s .w .t',{filter:'blur(0px) brightness(1)',duration:0.5,ease:'power2.out',stagger:0.07},%.3f);" % (sid, t0 + 0.4))
+    if not last:
+        g.append("tl.to('%s .w',{opacity:0,yPercent:-45,filter:'blur(7px)',stagger:0.02,duration:0.24,ease:'power3.in'},%.3f);" % (sid, t1 - 0.06))
+    return html, g
+
+
+# ── sting (logo moment: spark streaks in, bloom spike, logo + wordmark) ──
+_STING_CSS = r"""
+.stingwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.sting-core{display:flex;flex-direction:column;align-items:center;gap:26px}
+.spark{position:absolute;left:0;top:0;width:13px;height:13px;border-radius:50%;background:#fff;z-index:5;
+  box-shadow:0 0 18px 5px rgba(150,190,255,.95),0 0 70px 26px rgba(60,130,255,.5)}
+.bloom{position:absolute;width:380px;height:380px;border-radius:50%;z-index:1;opacity:0;
+  background:radial-gradient(circle,rgba(170,200,255,.9),rgba(60,130,255,.30) 45%,transparent 70%);filter:blur(8px)}
+.sting-logo{height:120px;filter:drop-shadow(0 0 28px rgba(80,140,255,.75));z-index:3}
+.sting-word{font-size:30px;font-weight:700;letter-spacing:.42em;text-transform:uppercase;color:__TEXT__;opacity:.92}
+.sting-tag{font-size:26px;font-weight:600;color:__MUTED__}
+.star4{position:absolute;width:24px;height:24px;background:#fff;z-index:4;opacity:0;
+  clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  filter:drop-shadow(0 0 12px rgba(190,210,255,.95))}
+"""
+_STING_PCSS = "body.p .sting-logo{height:96px}body.p .sting-word{font-size:24px}\n"
+
+@beat("sting", css=_STING_CSS, pcss=_STING_PCSS)
+def sting(i, b, ctx, last):
+    t0, t1 = b["start"], b["end"]
+    sid = "#ev-%d" % i
+    W, H = ctx["W"], ctx["H"]
+    word = ('<div class="sting-word">%s</div>' % esc(b["wordmark"])) if b.get("wordmark") else ""
+    tag = ('<div class="sting-tag">%s</div>' % esc(b["tagline"])) if b.get("tagline") else ""
+    html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
+                  '<div class="stingwrap"><div class="bloom"></div><div class="spark"></div>'
+                  '<div class="star4"></div><div class="sting-core">'
+                  '<img class="sting-logo" src="%s"/>%s%s</div></div>' % (ctx["logo"], word, tag))
+    cx, cy = W // 2, H // 2 - (40 if b.get("wordmark") else 0)
+    arrive = t0 + 0.75
+    g = []
+    # spark streaks in on a bent two-segment path and dies into the bloom
+    g.append("tl.set('%s .spark',{x:%d,y:%d,opacity:1},%.3f);" % (sid, -80, cy - 260, t0))
+    g.append("tl.to('%s .spark',{x:%d,y:%d,duration:0.45,ease:'power2.in'},%.3f);" % (sid, cx - 160, cy + 60, t0))
+    g.append("tl.to('%s .spark',{x:%d,y:%d,duration:0.3,ease:'power2.out'},%.3f);" % (sid, cx, cy, t0 + 0.45))
+    g.append("tl.to('%s .spark',{opacity:0,scale:0.4,duration:0.2},%.3f);" % (sid, arrive))
+    # bloom spikes at arrival then decays (B's climax-decay curve)
+    g.append("tl.set('%s .bloom',{left:%d,top:%d,xPercent:-50,yPercent:-50},%.3f);" % (sid, cx, cy, t0))
+    g.append("tl.to('%s .bloom',{opacity:1,scale:1.25,duration:0.22,ease:'power2.out'},%.3f);" % (sid, arrive - 0.08))
+    g.append("tl.to('%s .bloom',{opacity:0.22,scale:1.0,duration:0.9,ease:'power2.out'},%.3f);" % (sid, arrive + 0.18))
+    # logo + wordmark born out of the bloom
+    g += rev("%s .sting-logo" % sid, {"opacity": "0", "scale": "0.55", "filter": "'blur(12px) brightness(2)'"},
+             arrive, t0, "duration:0.6,ease:'back.out(1.5)'")
+    g.append("tl.to('%s .sting-logo',{filter:'blur(0px) brightness(1)',duration:0.6,ease:'power2.out'},%.3f);" % (sid, arrive + 0.35))
+    if b.get("wordmark"):
+        g += rev("%s .sting-word" % sid, {"opacity": "0", "y": "16", "filter": "'blur(6px)'"},
+                 arrive + 0.25, t0, "duration:0.5,ease:'power3.out'")
+        g.append("tl.fromTo('%s .sting-word',{letterSpacing:'0.62em'},{letterSpacing:'0.42em',duration:0.7,ease:'power2.out'},%.3f);" % (sid, arrive + 0.25))
+    if b.get("tagline"):
+        g += rev("%s .sting-tag" % sid, {"opacity": "0", "y": "12"}, arrive + 0.55, t0, "duration:0.4,ease:'power2.out'")
+    # companion star drifts off (continuity garnish)
+    g.append("tl.set('%s .star4',{x:%d,y:%d},%.3f);" % (sid, cx + 130, cy - 90, t0))
+    g.append("tl.to('%s .star4',{opacity:1,duration:0.2},%.3f);" % (sid, arrive + 0.1))
+    g.append("tl.to('%s .star4',{x:%d,y:%d,rotation:140,opacity:0,duration:1.4,ease:'power1.out'},%.3f);" % (sid, cx + 330, cy - 230, arrive + 0.3))
     if not last:
         g += out(sid, t1 - 0.02, "blur")
     return html, g

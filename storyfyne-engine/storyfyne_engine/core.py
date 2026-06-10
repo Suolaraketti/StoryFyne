@@ -10,7 +10,16 @@ import os
 
 from . import beats as beats_mod
 from .anim import esc
-from .theme import DEFAULT_THEME, fontface_css, resolve_color, BASE_CSS, BASE_PORTRAIT_CSS
+from .theme import (DEFAULT_THEME, LIGHT_OVERRIDES, LIGHT_CSS, fontface_css,
+                    resolve_color, BASE_CSS, BASE_PORTRAIT_CSS)
+
+_STAGE_EXTRA_CSS = r"""
+.chap{position:absolute;inset:0;pointer-events:none;opacity:0}
+.dustlayer{position:absolute;inset:0;pointer-events:none}
+.dust{position:absolute;border-radius:50%;background:rgba(255,255,255,.35);filter:blur(1px);animation:dustf linear infinite}
+body.light .dust{background:rgba(30,60,110,.25)}
+@keyframes dustf{0%{transform:translate(0,0);opacity:0}12%{opacity:.5}88%{opacity:.5}100%{transform:translate(46px,-110px);opacity:0}}
+"""
 
 DOC = r"""<!doctype html><html lang="en"><head><meta charset="UTF-8"/>
 <meta name="viewport" content="width=__W__, height=__H__"/>
@@ -90,7 +99,9 @@ def assemble(script, project_dir, portrait=True):
     """Build index.html content for the requested orientation."""
     warnings, dur = validate(script, project_dir)
     W, H = (1080, 1920) if portrait else (1920, 1080)
-    theme = dict(DEFAULT_THEME, **(script.get("theme") or {}))
+    tover = dict(script.get("theme") or {})
+    light = tover.pop("mode", "") == "light"
+    theme = dict(DEFAULT_THEME, **(LIGHT_OVERRIDES if light else {}), **tover)
     logo = (script.get("brand") or {}).get("logo", "assets/logos/dialfyne.png")
     ctx = {
         "W": W, "H": H, "PORTRAIT": portrait, "theme": theme, "logo": logo,
@@ -107,6 +118,27 @@ def assemble(script, project_dir, portrait=True):
                 '<div class="grid"></div><div class="orb a"></div><div class="orb b"></div>%s</div>'
                 % (dur, flt))
 
+    # Chapter hue-drift: full-screen tint layers crossfading at chapter times
+    # (the Chamelio trick — the room slowly changes color as the story turns).
+    for ci, ch in enumerate(script.get("chapters") or []):
+        tint = resolve_color(ch.get("tint"), theme)
+        body.append('<div id="chap-%d" class="chap clip" data-start="0" data-duration="%.1f" '
+                    'data-track-index="%d" style="background:radial-gradient(ellipse 75%% 60%% at 50%% 42%%,'
+                    '%s14,transparent 65%%)"></div>' % (ci, dur, 3 + ci, tint))
+        at = float(ch.get("at", 0))
+        gsap.append("tl.set('#chap-%d',{opacity:%d},0);" % (ci, 1 if at <= 0.01 else 0))
+        if at > 0.01:
+            gsap.append("tl.to('#chap-%d',{opacity:1,duration:2.0,ease:'sine.inOut'},%.2f);" % (ci, at))
+
+    # Dust: faint drifting particles for depth ("dust": true)
+    if script.get("dust"):
+        dots = "".join('<i class="dust" style="left:%d%%;top:%d%%;width:%dpx;height:%dpx;'
+                       'animation-duration:%ds;animation-delay:-%ds"></i>'
+                       % ((j * 37 + 11) % 97, (j * 53 + 7) % 93, 3 + j % 4, 3 + j % 4,
+                          14 + (j * 7) % 12, (j * 5) % 14) for j in range(18))
+        body.append('<div class="dustlayer clip" data-start="0" data-duration="%.1f" '
+                    'data-track-index="2">%s</div>' % (dur, dots))
+
     bts = script["beats"]
     for i, b in enumerate(bts):
         spec = beats_mod.REGISTRY[b["type"]]
@@ -119,7 +151,9 @@ def assemble(script, project_dir, portrait=True):
         body.append('<audio id="snd" preload="none" src="%s" data-start="0" data-duration="%.2f" '
                     'data-track-index="100"></audio>' % (script["soundtrack"], dur))
 
-    css = BASE_CSS + "".join(beats_mod.REGISTRY[k]["css"] for k in sorted(used))
+    css = BASE_CSS + _STAGE_EXTRA_CSS + "".join(beats_mod.REGISTRY[k]["css"] for k in sorted(used))
+    if light:
+        css += LIGHT_CSS
     if portrait:
         css += BASE_PORTRAIT_CSS + "".join(beats_mod.REGISTRY[k]["pcss"] for k in sorted(used))
     css = css.replace("__FONTFACE__", fontface_css())
@@ -127,13 +161,13 @@ def assemble(script, project_dir, portrait=True):
                      ("__ACCENT__", theme["accent"]), ("__SECONDARY__", theme["secondary"]),
                      ("__RED__", theme["red"]), ("__GREEN__", theme["green"]),
                      ("__AMBER__", theme["amber"]), ("__MUTED__", theme["muted"]),
-                     ("__FONT__", theme["font"]), ("__W__", str(W)), ("__H__", str(H))]:
+                     ("__FONT__", theme["font"]), ("__TEXT__", theme["text"]), ("__W__", str(W)), ("__H__", str(H))]:
         css = css.replace(key, val)
 
     # Beat HTML may carry theme tokens too (kw() emits __PRIMARY__ defaults).
     doc = (DOC.replace("__CSS__", css)
               .replace("__TITLE__", esc(script.get("title", "StoryFyne video")))
-              .replace("__BODYCLASS__", "p" if portrait else "")
+              .replace("__BODYCLASS__", ("p " if portrait else "") + ("light" if light else ""))
               .replace("__BODY__", "\n".join(body))
               .replace("__GSAP__", "\n".join(gsap))
               .replace("__DUR__", "%.2f" % dur)

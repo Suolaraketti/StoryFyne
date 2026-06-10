@@ -13,7 +13,14 @@ DEFAULT_THEME = {
     "green":     "#34d399",
     "amber":     "#ffb454",
     "muted":     "#9aa3b8",
+    "text":      "#ffffff",
     "font":      "Inter,-apple-system,sans-serif",
+}
+
+# "theme": {"mode": "light"} -> Chamelio-style airy stage (best with: line, hero,
+# grab, brand, cta, sting; dark glass beats like metric/ask keep their dark cards).
+LIGHT_OVERRIDES = {
+    "bg": "#f2f5f7", "text": "#0c1322", "muted": "#5b6678",
 }
 
 # Named colors usable in scripts ("col": "red") — resolved against the theme.
@@ -38,7 +45,7 @@ def fontface_css():
 BASE_CSS = r"""
 __FONTFACE__
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:__W__px;height:__H__px;overflow:hidden;background:__BG__;font-family:__FONT__;color:#fff;-webkit-font-smoothing:antialiased}
+html,body{width:__W__px;height:__H__px;overflow:hidden;background:__BG__;font-family:__FONT__;color:__TEXT__;-webkit-font-smoothing:antialiased}
 #main{position:relative;width:__W__px;height:__H__px;overflow:hidden}
 .bg{position:absolute;inset:0;background:radial-gradient(ellipse 62% 46% at 50% 42%,rgba(42,147,245,.11),transparent 62%),__BG__}
 .grid{position:absolute;inset:0;opacity:.045;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:60px 60px;-webkit-mask-image:radial-gradient(ellipse 78% 60% at 50% 48%,#000,transparent 80%)}
@@ -65,4 +72,15 @@ body.p .ev{padding:0 6%}
 body.p .line{font-size:84px}body.p .line.big{font-size:112px}body.p .line.sm{font-size:60px}
 body.p .k-title{font-size:60px}body.p .kicker{margin-bottom:30px}
 body.p .flt{font-size:20px}
+"""
+
+
+LIGHT_CSS = r"""
+body.light .bg{background:radial-gradient(ellipse 70% 55% at 50% 38%,rgba(42,147,245,.10),transparent 62%),linear-gradient(180deg,#f6f8fa,#eef2f5)}
+body.light .grid{opacity:.05;background-image:linear-gradient(rgba(10,20,40,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(10,20,40,.5) 1px,transparent 1px)}
+body.light .orb.a{background:radial-gradient(circle,rgba(42,147,245,.13),transparent 68%)}
+body.light .orb.b{background:radial-gradient(circle,rgba(52,211,153,.10),transparent 68%)}
+body.light .flt{color:rgba(40,60,90,.14)}
+body.light .crop{box-shadow:0 40px 100px rgba(20,40,80,.18),0 0 0 1px rgba(10,30,60,.06)}
+body.light .metcard,body.light .askpanel{box-shadow:0 40px 100px rgba(20,40,80,.22)}
 """

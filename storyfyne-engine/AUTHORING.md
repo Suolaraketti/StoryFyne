@@ -147,3 +147,38 @@ Chrome may render tofu.
 - [ ] No line over 5–6 words; cuts land on VO phrases / music bars
 - [ ] Screenshots appear only as proof beats; the story is carried by type + graphics
 - [ ] Last beat is a CTA/brand hold
+
+## Atmosphere & cinematic additions (v1.1)
+
+### hero — glow statement type (echo-trail entrance, gradient accent words)
+The premium "brand sting" typography: words land with a vertical light-trail
+that evaporates, glow tightens from bloom to clean. `acc` words get a gradient fill.
+```json
+{ "type": "hero", "start": 7.6, "end": 12.0, "t": "Work, evolved.",
+  "acc": "evolved.", "size": "big" }
+```
+
+### sting — the logo moment (spark streak → bloom spike → logo born from light)
+```json
+{ "type": "sting", "start": 2.6, "end": 7.6,
+  "tagline": "The revenue command center" }
+```
+Optional `wordmark` text under the logo — omit it if your logo image already
+contains the wordmark. Use a sting to open or close a video; pair with `hero`.
+
+### chapters — the room slowly changes color as the story turns
+```json
+"chapters": [ { "at": 0, "tint": "primary" }, { "at": 30, "tint": "#9b7bff" } ]
+```
+
+### dust — faint drifting particles for depth
+```json
+"dust": true
+```
+
+### light mode — airy enterprise look (white stage, soft pastel orbs)
+```json
+"theme": { "mode": "light" }
+```
+Best with: line, hero, grab, brand, cta, sting. The dark glass beats
+(metric, ask, dash) keep their dark cards — readable, but preview first.
