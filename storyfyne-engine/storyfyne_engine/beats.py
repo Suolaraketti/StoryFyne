@@ -701,91 +701,52 @@ def isogrid(i, b, ctx, last):
     return html, g
 
 
-# ── logoreveal — the Dialfyne mark rebuilt in SVG; fork draws, bars fire, 3D turn ──
+# ── logoreveal — animate the REAL Dialfyne lockup (perfect fidelity) ──
+# Horizontal lockup = mark(left) -> wordmark(right), so a left->right build-on wipe
+# reveals it in brand order: dot -> tube -> bars firing -> DIALFYNE typing on.
 _LOGOR_CSS = r"""
-.logostage{display:flex;flex-direction:column;align-items:center;gap:34px}
-.logo3dwrap{perspective:1200px}
-.logo3d{transform-style:preserve-3d;will-change:transform;position:relative;display:flex;align-items:center;justify-content:center}
-.logosvg{width:430px;height:auto;overflow:visible;filter:drop-shadow(0 0 26px rgba(70,140,255,.45))}
-.logobloom{position:absolute;left:50%;top:50%;width:420px;height:330px;transform:translate(-50%,-50%);
-  background:radial-gradient(ellipse,rgba(90,160,255,.55),transparent 66%);filter:blur(30px);opacity:0;z-index:-1;pointer-events:none}
-.lockup{display:flex;align-items:center;gap:14px}
-.lword{font-size:70px;font-weight:850;letter-spacing:.01em;color:__TEXT__}
-.lwbars{display:flex;flex-direction:column;gap:9px}
-.lwbar{height:15px;border-radius:8px;background:linear-gradient(90deg,__SECONDARY__,__PRIMARY__)}
-.lwbar.x0{width:54px}.lwbar.x1{width:54px}.lwbar.x2{width:42px}
-.ltag{font-size:30px;font-weight:600;color:__MUTED__;letter-spacing:.05em}
+.logostage{display:flex;flex-direction:column;align-items:center;gap:32px}
+.logo3dwrap{perspective:1300px}
+.logo3d{transform-style:preserve-3d;will-change:transform;position:relative;display:inline-block}
+.logo-img{display:block;height:auto;filter:drop-shadow(0 16px 46px rgba(40,110,230,.42))}
+.logosweep{position:absolute;top:-14%;left:0;width:20%;height:128%;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  transform:translateX(-230%) skewX(-12deg);
+  background:linear-gradient(90deg,transparent,rgba(180,210,255,0) 22%,rgba(205,228,255,.9) 50%,rgba(180,210,255,0) 78%,transparent)}
+.logobloom{position:absolute;left:50%;top:50%;width:74%;height:170%;transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse,rgba(80,150,255,.5),transparent 66%);filter:blur(36px);opacity:0;z-index:-1;pointer-events:none}
+.ltag{font-size:32px;font-weight:600;color:__MUTED__;letter-spacing:.06em}
 """
-_LOGOR_PCSS = "body.p .logosvg{width:340px}body.p .lword{font-size:52px}body.p .lwbar.x0,body.p .lwbar.x1{width:42px}body.p .lwbar.x2{width:32px}body.p .ltag{font-size:24px}\n"
-
-def _dialfyne_svg():
-    return (
-      '<svg class="logosvg" viewBox="0 0 380 260">'
-      '<defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">'
-      '<stop offset="0" stop-color="__SECONDARY__"/><stop offset="1" stop-color="__PRIMARY__"/></linearGradient>'
-      '<linearGradient id="sw" x1="0" y1="0" x2="1" y2="0">'
-      '<stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.9"/>'
-      '<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
-      '<clipPath id="mclip"><rect x="0" y="0" width="380" height="260"/></clipPath></defs>'
-      '<g fill="none" stroke="url(#lg)" stroke-width="26" stroke-linecap="round">'
-      '<path class="lf-left" d="M150,132 L96,132"/>'
-      '<path class="lf-top"  d="M150,132 Q158,98 188,80"/>'
-      '<path class="lf-bot"  d="M150,132 Q162,170 172,192"/></g>'
-      '<g fill="url(#lg)">'
-      '<circle class="lf-nl" cx="96"  cy="132" r="15"/>'
-      '<circle class="lf-nt" cx="188" cy="80"  r="15"/>'
-      '<circle class="lf-nb" cx="172" cy="192" r="15"/></g>'
-      '<g fill="url(#lg)">'
-      '<rect class="lf-b0" x="205" y="71"  width="150" height="30" rx="15"/>'
-      '<rect class="lf-b1" x="205" y="116" width="150" height="30" rx="15"/>'
-      '<rect class="lf-b2" x="230" y="161" width="125" height="30" rx="15"/></g>'
-      '<g clip-path="url(#mclip)"><g transform="skewX(-16)">'
-      '<rect class="lf-sweep" x="-180" y="-20" width="120" height="300" fill="url(#sw)" opacity="0"/></g></g>'
-      '</svg>')
+_LOGOR_PCSS = "body.p .ltag{font-size:25px}\n"
 
 @beat("logoreveal", css=_LOGOR_CSS, pcss=_LOGOR_PCSS)
 def logoreveal(i, b, ctx, last):
     t0, t1 = b["start"], b["end"]
     sid = "#ev-%d" % i
-    lock = ('<div class="lockup"><div class="lword">DIALFYN</div>'
-            '<div class="lwbars"><div class="lwbar x0"></div><div class="lwbar x1"></div><div class="lwbar x2"></div></div></div>') if b.get("wordmark", True) else ""
+    W = ctx["W"]
+    iw = round(W * (0.80 if ctx["PORTRAIT"] else 0.60))
     tag = ('<div class="ltag">%s</div>' % esc(b["tagline"])) if b.get("tagline") else ""
     html = _shell(i, t0, (t1 - t0) + 0.35, 10 + i,
                   '<div class="logostage"><div class="logo3dwrap"><div class="logo3d">'
-                  '<div class="logobloom"></div>%s</div></div>%s%s</div>' % (_dialfyne_svg(), lock, tag))
+                  '<div class="logobloom"></div><img class="logo-img" src="%s" style="width:%dpx"/>'
+                  '<div class="logosweep"></div></div></div>%s</div>' % (ctx["logo"], iw, tag))
     g = []
-    # 3D turn-in of the whole mark
-    g.append("tl.set('%s .logo3d',{rotationY:-34,scale:0.9,opacity:0},%.3f);" % (sid, t0))
+    # 3D tilt-in
+    g.append("tl.set('%s .logo3d',{rotationY:-26,scale:0.92,opacity:0},%.3f);" % (sid, t0))
     g.append("tl.to('%s .logo3d',{rotationY:0,scale:1,opacity:1,duration:0.9,ease:'power3.out'},%.3f);" % (sid, t0))
-    # fork strokes draw on
-    for k, cls in enumerate(["lf-left", "lf-top", "lf-bot"]):
-        st = t0 + 0.25 + k * 0.12
-        g.append("tl.set('%s .%s',{strokeDasharray:200,strokeDashoffset:200},%.3f);" % (sid, cls, t0))
-        g.append("tl.to('%s .%s',{strokeDashoffset:0,duration:0.5,ease:'power2.out'},%.3f);" % (sid, cls, st))
-    # nodes pop
-    for cls, ox, oy in [("lf-nl", 96, 132), ("lf-nt", 188, 80), ("lf-nb", 172, 192)]:
-        g.append("tl.set('%s .%s',{scale:0,svgOrigin:'%d %d'},%.3f);" % (sid, cls, ox, oy, t0))
-        g.append("tl.to('%s .%s',{scale:1,duration:0.4,ease:'back.out(2.2)'},%.3f);" % (sid, cls, t0 + 0.6))
-    # bars fire out to the right (scaleX from left edge) — the "signal" motion
-    for k, (cls, ox, oy) in enumerate([("lf-b0", 205, 86), ("lf-b1", 205, 131), ("lf-b2", 230, 176)]):
-        st = t0 + 0.8 + k * 0.13
-        g.append("tl.set('%s .%s',{scaleX:0,opacity:0,svgOrigin:'%d %d'},%.3f);" % (sid, cls, ox, oy, t0))
-        g.append("tl.to('%s .%s',{scaleX:1,opacity:1,duration:0.5,ease:'power3.out'},%.3f);" % (sid, cls, st))
-    # light sweep across the mark
-    g.append("tl.set('%s .lf-sweep',{attr:{x:-180},opacity:0},%.3f);" % (sid, t0))
-    g.append("tl.to('%s .lf-sweep',{opacity:0.9,duration:0.12},%.3f);" % (sid, t0 + 1.45))
-    g.append("tl.to('%s .lf-sweep',{attr:{x:430},opacity:0,duration:0.55,ease:'power2.in'},%.3f);" % (sid, t0 + 1.5))
-    # bloom pulse
+    # build-on wipe (left->right) + focus pull
+    g.append("tl.set('%s .logo-img',{clipPath:'inset(0%% 100%% 0%% 0%%)',filter:'blur(7px)'},%.3f);" % (sid, t0))
+    g.append("tl.to('%s .logo-img',{clipPath:'inset(0%% 0%% 0%% 0%%)',duration:1.25,ease:'power2.out'},%.3f);" % (sid, t0 + 0.3))
+    g.append("tl.to('%s .logo-img',{filter:'blur(0px)',duration:0.6,ease:'power2.out'},%.3f);" % (sid, t0 + 0.95))
+    # sweep rides across the reveal edge
+    g.append("tl.set('%s .logosweep',{xPercent:-230,opacity:0},%.3f);" % (sid, t0))
+    g.append("tl.to('%s .logosweep',{opacity:1,duration:0.15},%.3f);" % (sid, t0 + 0.4))
+    g.append("tl.to('%s .logosweep',{xPercent:520,opacity:0,duration:1.05,ease:'power1.inOut'},%.3f);" % (sid, t0 + 0.45))
+    # bloom
     g.append("tl.set('%s .logobloom',{opacity:0,scale:0.8},%.3f);" % (sid, t0))
-    g.append("tl.to('%s .logobloom',{opacity:1,scale:1.15,duration:0.25,ease:'power2.out'},%.3f);" % (sid, t0 + 1.45))
-    g.append("tl.to('%s .logobloom',{opacity:0.4,scale:1,duration:0.9,ease:'power2.out'},%.3f);" % (sid, t0 + 1.7))
-    # wordmark lockup reveal
-    if b.get("wordmark", True):
-        g += rev("%s .lword" % sid, {"opacity": "0", "y": "20", "filter": "'blur(6px)'"}, t0 + 1.9, t0, "duration:0.5,ease:'power3.out'")
-        for k in range(3):
-            g += rev("%s .lwbar.x%d" % (sid, k), {"opacity": "0", "scaleX": "0"}, t0 + 2.05 + k * 0.08, t0, "duration:0.4,ease:'power3.out'")
+    g.append("tl.to('%s .logobloom',{opacity:1,scale:1.12,duration:0.4,ease:'power2.out'},%.3f);" % (sid, t0 + 0.4))
+    g.append("tl.to('%s .logobloom',{opacity:0.42,scale:1,duration:1.0,ease:'power2.out'},%.3f);" % (sid, t0 + 0.95))
     if b.get("tagline"):
-        g += rev("%s .ltag" % sid, {"opacity": "0", "y": "12"}, t0 + 2.35, t0, "duration:0.4,ease:'power2.out'")
+        g += rev("%s .ltag" % sid, {"opacity": "0", "y": "14"}, t0 + 1.7, t0, "duration:0.5,ease:'power3.out'")
     if not last:
         g += out(sid, t1 - 0.02, "blur")
     return html, g

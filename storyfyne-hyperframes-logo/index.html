@@ -30,6 +30,10 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;font-fam
 @keyframes blink{50%{opacity:0}}
 
 .chap{position:absolute;inset:0;pointer-events:none;opacity:0}
+.sweepbar{position:absolute;top:-20%;left:0;width:34%;height:140%;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  transform:translateX(-160%) skewX(-14deg);
+  background:linear-gradient(90deg,transparent,rgba(150,190,255,.0) 20%,rgba(180,210,255,.55) 50%,rgba(150,190,255,.0) 80%,transparent)}
+body.light .sweepbar{mix-blend-mode:multiply;background:linear-gradient(90deg,transparent,rgba(42,147,245,.0) 20%,rgba(42,147,245,.25) 50%,rgba(42,147,245,.0) 80%,transparent)}
 .dustlayer{position:absolute;inset:0;pointer-events:none}
 .dust{position:absolute;border-radius:50%;background:rgba(255,255,255,.35);filter:blur(1px);animation:dustf linear infinite}
 body.light .dust{background:rgba(30,60,110,.25)}
@@ -54,64 +58,39 @@ body.light .dust{background:rgba(30,60,110,.25)}
   background:linear-gradient(180deg,rgba(130,160,255,.75),transparent 85%);-webkit-background-clip:text;background-clip:text;
   transform-origin:top center;opacity:0;pointer-events:none}
 
-.logostage{display:flex;flex-direction:column;align-items:center;gap:34px}
-.logo3dwrap{perspective:1200px}
-.logo3d{transform-style:preserve-3d;will-change:transform;position:relative;display:flex;align-items:center;justify-content:center}
-.logosvg{width:430px;height:auto;overflow:visible;filter:drop-shadow(0 0 26px rgba(70,140,255,.45))}
-.logobloom{position:absolute;left:50%;top:50%;width:420px;height:330px;transform:translate(-50%,-50%);
-  background:radial-gradient(ellipse,rgba(90,160,255,.55),transparent 66%);filter:blur(30px);opacity:0;z-index:-1;pointer-events:none}
-.lockup{display:flex;align-items:center;gap:14px}
-.lword{font-size:70px;font-weight:850;letter-spacing:.01em;color:#ffffff}
-.lwbars{display:flex;flex-direction:column;gap:9px}
-.lwbar{height:15px;border-radius:8px;background:linear-gradient(90deg,#6cbef9,#2a93f5)}
-.lwbar.x0{width:54px}.lwbar.x1{width:54px}.lwbar.x2{width:42px}
-.ltag{font-size:30px;font-weight:600;color:#9aa3b8;letter-spacing:.05em}
+.logostage{display:flex;flex-direction:column;align-items:center;gap:32px}
+.logo3dwrap{perspective:1300px}
+.logo3d{transform-style:preserve-3d;will-change:transform;position:relative;display:inline-block}
+.logo-img{display:block;height:auto;filter:drop-shadow(0 16px 46px rgba(40,110,230,.42))}
+.logosweep{position:absolute;top:-14%;left:0;width:20%;height:128%;pointer-events:none;opacity:0;mix-blend-mode:screen;
+  transform:translateX(-230%) skewX(-12deg);
+  background:linear-gradient(90deg,transparent,rgba(180,210,255,0) 22%,rgba(205,228,255,.9) 50%,rgba(180,210,255,0) 78%,transparent)}
+.logobloom{position:absolute;left:50%;top:50%;width:74%;height:170%;transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse,rgba(80,150,255,.5),transparent 66%);filter:blur(36px);opacity:0;z-index:-1;pointer-events:none}
+.ltag{font-size:32px;font-weight:600;color:#9aa3b8;letter-spacing:.06em}
 </style></head>
 <body class="">
 <div id="main" data-composition-id="main" data-width="1920" data-height="1080" data-start="0" data-duration="16.00">
 <div class="bg clip" data-start="0" data-duration="16.0" data-track-index="1"><div class="grid"></div><div class="orb a"></div><div class="orb b"></div></div>
 <div class="dustlayer clip" data-start="0" data-duration="16.0" data-track-index="2"><i class="dust" style="left:11%;top:7%;width:3px;height:3px;animation-duration:14s;animation-delay:-0s"></i><i class="dust" style="left:48%;top:60%;width:4px;height:4px;animation-duration:21s;animation-delay:-5s"></i><i class="dust" style="left:85%;top:20%;width:5px;height:5px;animation-duration:16s;animation-delay:-10s"></i><i class="dust" style="left:25%;top:73%;width:6px;height:6px;animation-duration:23s;animation-delay:-1s"></i><i class="dust" style="left:62%;top:33%;width:3px;height:3px;animation-duration:18s;animation-delay:-6s"></i><i class="dust" style="left:2%;top:86%;width:4px;height:4px;animation-duration:25s;animation-delay:-11s"></i><i class="dust" style="left:39%;top:46%;width:5px;height:5px;animation-duration:20s;animation-delay:-2s"></i><i class="dust" style="left:76%;top:6%;width:6px;height:6px;animation-duration:15s;animation-delay:-7s"></i><i class="dust" style="left:16%;top:59%;width:3px;height:3px;animation-duration:22s;animation-delay:-12s"></i><i class="dust" style="left:53%;top:19%;width:4px;height:4px;animation-duration:17s;animation-delay:-3s"></i><i class="dust" style="left:90%;top:72%;width:5px;height:5px;animation-duration:24s;animation-delay:-8s"></i><i class="dust" style="left:30%;top:32%;width:6px;height:6px;animation-duration:19s;animation-delay:-13s"></i><i class="dust" style="left:67%;top:85%;width:3px;height:3px;animation-duration:14s;animation-delay:-4s"></i><i class="dust" style="left:7%;top:45%;width:4px;height:4px;animation-duration:21s;animation-delay:-9s"></i><i class="dust" style="left:44%;top:5%;width:5px;height:5px;animation-duration:16s;animation-delay:-0s"></i><i class="dust" style="left:81%;top:58%;width:6px;height:6px;animation-duration:23s;animation-delay:-5s"></i><i class="dust" style="left:21%;top:18%;width:3px;height:3px;animation-duration:18s;animation-delay:-10s"></i><i class="dust" style="left:58%;top:71%;width:4px;height:4px;animation-duration:25s;animation-delay:-1s"></i></div>
-<div id="ev-0" class="ev clip" data-start="0.300" data-duration="5.250" data-track-index="10"><div class="logostage"><div class="logo3dwrap"><div class="logo3d"><div class="logobloom"></div><svg class="logosvg" viewBox="0 0 380 260"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="__SECONDARY__"/><stop offset="1" stop-color="#2a93f5"/></linearGradient><linearGradient id="sw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><clipPath id="mclip"><rect x="0" y="0" width="380" height="260"/></clipPath></defs><g fill="none" stroke="url(#lg)" stroke-width="26" stroke-linecap="round"><path class="lf-left" d="M150,132 L96,132"/><path class="lf-top"  d="M150,132 Q158,98 188,80"/><path class="lf-bot"  d="M150,132 Q162,170 172,192"/></g><g fill="url(#lg)"><circle class="lf-nl" cx="96"  cy="132" r="15"/><circle class="lf-nt" cx="188" cy="80"  r="15"/><circle class="lf-nb" cx="172" cy="192" r="15"/></g><g fill="url(#lg)"><rect class="lf-b0" x="205" y="71"  width="150" height="30" rx="15"/><rect class="lf-b1" x="205" y="116" width="150" height="30" rx="15"/><rect class="lf-b2" x="230" y="161" width="125" height="30" rx="15"/></g><g clip-path="url(#mclip)"><g transform="skewX(-16)"><rect class="lf-sweep" x="-180" y="-20" width="120" height="300" fill="url(#sw)" opacity="0"/></g></g></svg></div></div><div class="lockup"><div class="lword">DIALFYN</div><div class="lwbars"><div class="lwbar x0"></div><div class="lwbar x1"></div><div class="lwbar x2"></div></div></div><div class="ltag">The revenue command center</div></div></div>
+<div id="ev-0" class="ev clip" data-start="0.300" data-duration="5.250" data-track-index="10"><div class="logostage"><div class="logo3dwrap"><div class="logo3d"><div class="logobloom"></div><img class="logo-img" src="assets/logos/dialfyne.png" style="width:1152px"/><div class="logosweep"></div></div></div><div class="ltag">The revenue command center</div></div></div>
 <div id="ev-1" class="ev clip" data-start="5.200" data-duration="5.150" data-track-index="11"><div class="flywrap"><div class="flyworld"><div class="flycard fc0" style="width:400px;transform:translate3d(-620px,-180px,-240px) rotateY(20deg)"><img src="assets/shots/revenue-command-center.png"/></div><div class="flycard fc1" style="width:420px;transform:translate3d(600px,-150px,-180px) rotateY(-18deg)"><img src="assets/shots/connected-apps.png"/></div><div class="flycard fc2" style="width:380px;transform:translate3d(-680px,210px,-120px) rotateY(16deg)"><img src="assets/shots/metrics-row.png"/></div><div class="flycard fc3" style="width:360px;transform:translate3d(640px,230px,-300px) rotateY(-22deg)"><img src="assets/shots/roleplay-kit-card.png"/></div><div class="flycard fc4" style="width:340px;transform:translate3d(-230px,-320px,-440px) rotateY(10deg)"><img src="assets/shots/email-assist.png"/></div><div class="flycard fc5" style="width:340px;transform:translate3d(300px,320px,-380px) rotateY(-12deg)"><img src="assets/shots/command-center-card.png"/></div></div><div class="flytitle"><div class="kicker" style="margin:0"><div class="k-eyebrow">One platform</div><div class="k-title"><span class="w">The</span><span class="w">whole</span><span class="w">revenue</span><span class="w">stack.</span></div></div></div></div></div>
 <div id="ev-2" class="ev clip" data-start="10.000" data-duration="6.350" data-track-index="12"><div class="hero big"><span class="w"><span class="t">Run</span><span class="e">Run</span></span><span class="w"><span class="t">it</span><span class="e">it</span></span><span class="w"><span class="t">on</span><span class="e">on</span></span><span class="w"><span class="t">autopilot.</span><span class="e">autopilot.</span></span></div></div>
 <audio id="snd" preload="none" src="assets/music.mp3" data-start="0" data-duration="16.00" data-track-index="100"></audio>
 <script>window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});
-tl.set('#ev-0 .logo3d',{rotationY:-34,scale:0.9,opacity:0},0.300);
+tl.set('#ev-0 .logo3d',{rotationY:-26,scale:0.92,opacity:0},0.300);
 tl.to('#ev-0 .logo3d',{rotationY:0,scale:1,opacity:1,duration:0.9,ease:'power3.out'},0.300);
-tl.set('#ev-0 .lf-left',{strokeDasharray:200,strokeDashoffset:200},0.300);
-tl.to('#ev-0 .lf-left',{strokeDashoffset:0,duration:0.5,ease:'power2.out'},0.550);
-tl.set('#ev-0 .lf-top',{strokeDasharray:200,strokeDashoffset:200},0.300);
-tl.to('#ev-0 .lf-top',{strokeDashoffset:0,duration:0.5,ease:'power2.out'},0.670);
-tl.set('#ev-0 .lf-bot',{strokeDasharray:200,strokeDashoffset:200},0.300);
-tl.to('#ev-0 .lf-bot',{strokeDashoffset:0,duration:0.5,ease:'power2.out'},0.790);
-tl.set('#ev-0 .lf-nl',{scale:0,svgOrigin:'96 132'},0.300);
-tl.to('#ev-0 .lf-nl',{scale:1,duration:0.4,ease:'back.out(2.2)'},0.900);
-tl.set('#ev-0 .lf-nt',{scale:0,svgOrigin:'188 80'},0.300);
-tl.to('#ev-0 .lf-nt',{scale:1,duration:0.4,ease:'back.out(2.2)'},0.900);
-tl.set('#ev-0 .lf-nb',{scale:0,svgOrigin:'172 192'},0.300);
-tl.to('#ev-0 .lf-nb',{scale:1,duration:0.4,ease:'back.out(2.2)'},0.900);
-tl.set('#ev-0 .lf-b0',{scaleX:0,opacity:0,svgOrigin:'205 86'},0.300);
-tl.to('#ev-0 .lf-b0',{scaleX:1,opacity:1,duration:0.5,ease:'power3.out'},1.100);
-tl.set('#ev-0 .lf-b1',{scaleX:0,opacity:0,svgOrigin:'205 131'},0.300);
-tl.to('#ev-0 .lf-b1',{scaleX:1,opacity:1,duration:0.5,ease:'power3.out'},1.230);
-tl.set('#ev-0 .lf-b2',{scaleX:0,opacity:0,svgOrigin:'230 176'},0.300);
-tl.to('#ev-0 .lf-b2',{scaleX:1,opacity:1,duration:0.5,ease:'power3.out'},1.360);
-tl.set('#ev-0 .lf-sweep',{attr:{x:-180},opacity:0},0.300);
-tl.to('#ev-0 .lf-sweep',{opacity:0.9,duration:0.12},1.750);
-tl.to('#ev-0 .lf-sweep',{attr:{x:430},opacity:0,duration:0.55,ease:'power2.in'},1.800);
+tl.set('#ev-0 .logo-img',{clipPath:'inset(0% 100% 0% 0%)',filter:'blur(7px)'},0.300);
+tl.to('#ev-0 .logo-img',{clipPath:'inset(0% 0% 0% 0%)',duration:1.25,ease:'power2.out'},0.600);
+tl.to('#ev-0 .logo-img',{filter:'blur(0px)',duration:0.6,ease:'power2.out'},1.250);
+tl.set('#ev-0 .logosweep',{xPercent:-230,opacity:0},0.300);
+tl.to('#ev-0 .logosweep',{opacity:1,duration:0.15},0.700);
+tl.to('#ev-0 .logosweep',{xPercent:520,opacity:0,duration:1.05,ease:'power1.inOut'},0.750);
 tl.set('#ev-0 .logobloom',{opacity:0,scale:0.8},0.300);
-tl.to('#ev-0 .logobloom',{opacity:1,scale:1.15,duration:0.25,ease:'power2.out'},1.750);
-tl.to('#ev-0 .logobloom',{opacity:0.4,scale:1,duration:0.9,ease:'power2.out'},2.000);
-tl.set('#ev-0 .lword',{opacity:0,y:20,filter:'blur(6px)'},0.300);
-tl.to('#ev-0 .lword',{opacity:1,y:0,filter:'blur(0px)', duration:0.5,ease:'power3.out'},2.200);
-tl.set('#ev-0 .lwbar.x0',{opacity:0,scaleX:0},0.300);
-tl.to('#ev-0 .lwbar.x0',{opacity:1,scaleX:1, duration:0.4,ease:'power3.out'},2.350);
-tl.set('#ev-0 .lwbar.x1',{opacity:0,scaleX:0},0.300);
-tl.to('#ev-0 .lwbar.x1',{opacity:1,scaleX:1, duration:0.4,ease:'power3.out'},2.430);
-tl.set('#ev-0 .lwbar.x2',{opacity:0,scaleX:0},0.300);
-tl.to('#ev-0 .lwbar.x2',{opacity:1,scaleX:1, duration:0.4,ease:'power3.out'},2.510);
-tl.set('#ev-0 .ltag',{opacity:0,y:12},0.300);
-tl.to('#ev-0 .ltag',{opacity:1,y:0, duration:0.4,ease:'power2.out'},2.650);
+tl.to('#ev-0 .logobloom',{opacity:1,scale:1.12,duration:0.4,ease:'power2.out'},0.700);
+tl.to('#ev-0 .logobloom',{opacity:0.42,scale:1,duration:1.0,ease:'power2.out'},1.250);
+tl.set('#ev-0 .ltag',{opacity:0,y:14},0.300);
+tl.to('#ev-0 .ltag',{opacity:1,y:0, duration:0.5,ease:'power3.out'},2.000);
 tl.to('#ev-0',{opacity:0,scale:1.05,filter:'blur(9px)',duration:0.3,ease:'power3.in'},5.180);
 tl.fromTo('#ev-1 .flyworld',{rotationY:7,y:18},{rotationY:-7,y:-18,duration:5.10,ease:'sine.inOut'},5.200);
 tl.set('#ev-1 .fc0',{z:-560,opacity:0},5.200);
