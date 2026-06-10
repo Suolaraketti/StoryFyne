@@ -1,0 +1,67 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=1920, height=1080"/>
+<script src="assets/gsap.min.js"></script>
+<style>
+@font-face{font-family:'Inter';font-weight:400;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:600;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:700;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Inter';font-weight:800;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-800-normal.woff2') format('woff2')}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;font-family:Inter,-apple-system,sans-serif;color:#fff}
+#main{position:relative;width:1920px;height:1080px;overflow:hidden}
+.bg{position:absolute;inset:0;background:radial-gradient(ellipse 62% 52% at 50% 40%,rgba(42,147,245,.13),transparent 60%),
+  radial-gradient(circle at 84% 86%,rgba(108,190,249,.06),transparent 45%),#060912}
+.grid{position:absolute;inset:0;opacity:.05;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:60px 60px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 45%,#000,transparent 75%)}
+#cam{position:absolute;inset:0;transform-origin:0 0}#amb{position:absolute;inset:0;transform-origin:50% 50%}#world{position:absolute;inset:0}
+.win{position:absolute;left:522px;top:17px;width:875px;border-radius:16px;overflow:hidden;background:#11141b;
+  box-shadow:0 60px 150px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.06),0 0 90px rgba(42,147,245,.10)}
+.chrome{display:flex;align-items:center;gap:9px;height:46px;padding:0 16px;background:#1a1d26;border-bottom:1px solid rgba(255,255,255,.05)}
+.dot{width:11px;height:11px;border-radius:50%}.r{background:#ff5f56}.y{background:#ffbd2e}.g{background:#27c93f}
+.url{flex:1;max-width:60%;margin:0 auto;background:#0c0e14;border:1px solid rgba(255,255,255,.05);border-radius:7px;
+  padding:5px 14px;font-size:13px;color:#8a90a0;text-align:center}
+.win img{display:block;width:100%;height:auto}
+.hl{position:absolute;left:534px;top:266px;width:851px;height:88px;border-radius:12px;
+  border:2.5px solid #2a93f5;box-shadow:0 0 0 2000px rgba(6,9,18,.0),0 0 34px rgba(42,147,245,.6),inset 0 0 24px rgba(42,147,245,.25);
+  opacity:0;transform-origin:left center}
+.label{position:absolute;left:0;right:0;bottom:90px;text-align:center;opacity:0}
+.eyebrow{font-size:19px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2a93f5;margin-bottom:12px}
+.cap{font-size:46px;font-weight:800;letter-spacing:-.02em}
+.cap b{color:#2a93f5}
+.wm{position:absolute;top:44px;left:54px;height:30px;opacity:.0}
+</style></head><body>
+<div id="main" data-composition-id="main" data-width="1920" data-height="1080" data-start="0" data-duration="5.4">
+  <div class="bg clip" data-start="0" data-duration="5.4" data-track-index="1"><div class="grid"></div></div>
+  <div id="cam" class="clip" data-start="0" data-duration="5.4" data-track-index="2"><div id="amb"><div id="world">
+    <div class="win" id="win">
+      <div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="url">app.dialfyne.com/settings/integrations</span></div>
+      <img src="assets/shots/connected-apps.png"/>
+    </div>
+    <div class="hl" id="hl"></div>
+  </div></div></div>
+  <img class="wm" id="wm" src="assets/logos/dialfyne.png"/>
+  <div class="label" id="label"><div class="eyebrow">Connected to your stack</div>
+    <div class="cap">Pulled straight from <b>HubSpot</b>.</div></div>
+<script>
+window.__timelines = window.__timelines || {};
+const tl = gsap.timeline({ paused: true });
+gsap.set('#cam', { transformOrigin:'0 0', x:0.0, y:0.0, scale:1.0 });
+gsap.set('#hl', { scaleX:0, opacity:0 });
+// 1. window builds in
+tl.from('#win', { opacity:0, y:34, scale:0.97, filter:'blur(10px)', duration:0.8, ease:'power3.out' }, 0);
+tl.to('#amb', { scale:1.03, duration:5.4, ease:'sine.inOut' }, 0);
+tl.to('#wm', { opacity:0.85, duration:0.5 }, 0.4);
+// 2. camera push-in to the HubSpot row
+tl.to('#cam', { x:-528.0, y:62.6, scale:1.55, duration:1.2, ease:'power2.inOut', overwrite:'auto' }, 1.0);
+// 3. highlight sweeps over HubSpot — connected
+tl.to('#hl', { opacity:1, duration:0.2 }, 2.0);
+tl.fromTo('#hl', { scaleX:0 }, { scaleX:1, duration:0.45, ease:'power3.out' }, 2.0);
+// 4. label
+tl.to('#label', { opacity:1, y:0, duration:0.5, ease:'power2.out' }, 2.4);
+tl.from('#label', { y:18, duration:0.5 }, 2.4);
+// 5. slow continued drift
+tl.to('#cam', { scale:1.643, duration:2.4, ease:'sine.inOut', overwrite:'auto' }, 2.6);
+window.__timelines['main'] = tl;
+</script></div></body></html>
