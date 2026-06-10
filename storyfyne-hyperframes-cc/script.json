@@ -1,0 +1,43 @@
+{
+  "title": "Dialfyne — Command Center",
+  "duration": 80.6,
+  "soundtrack": "assets/soundtrack.mp3",
+  "brand": { "logo": "assets/logos/dialfyne.png" },
+  "beats": [
+    { "type": "line",   "start": 0.3,  "end": 2.5,  "t": "Every morning," },
+    { "type": "line",   "start": 2.5,  "end": 4.6,  "t": "your team plays detective.", "acc": "detective." },
+    { "type": "line",   "start": 4.6,  "end": 7.5,  "t": "Reconstructing yesterday." },
+    { "type": "dash",   "start": 7.6,  "end": 13.4, "items": ["CRM", "Calendar", "Reports", "Phone logs", "Inbox"],
+      "cap": "Five dashboards. Every morning.", "acc": "dashboards.", "col": "red" },
+    { "type": "line",   "start": 13.6, "end": 17.3, "t": "We killed that.", "size": "big" },
+    { "type": "line",   "start": 17.4, "end": 19.7, "t": "Your data," },
+    { "type": "line",   "start": 19.7, "end": 21.7, "t": "connected to your AI.", "acc": "AI." },
+    { "type": "line",   "start": 21.8, "end": 26.6, "t": "No more clicking through screens." },
+    { "type": "line",   "start": 26.6, "end": 28.4, "t": "You just ask.", "size": "big" },
+    { "type": "ask",    "start": 28.4, "end": 36.4, "boom": 34.9,
+      "qas": [
+        { "q": "How many leads did we miss this week?", "n": "12", "sub": "missed · 3 high-value", "color": "amber", "ask": 28.5, "answer": 30.7 },
+        { "q": "Which deals are stalling?",             "n": "4",  "sub": "deals idle 7+ days",    "color": "red",   "ask": 30.8, "answer": 32.5 },
+        { "q": "Who needs more sales practice?",        "n": "2",  "sub": "reps below benchmark",  "color": "primary", "ask": 32.6, "answer": 34.6 }
+      ] },
+    { "type": "grab",   "start": 36.5, "end": 41.0, "asset": "assets/shots/revenue-command-center.png",
+      "img": [1184, 1296], "crop": [0.02, 0.105, 0.96, 0.135],
+      "eyebrow": "Pulled from your live pipeline", "title": "Answers in seconds." },
+    { "type": "strike", "start": 41.2, "end": 45.4, "names": ["No exports", "No spreadsheets", "No guessing"] },
+    { "type": "line",   "start": 45.8, "end": 49.0, "t": "Just talk to your data.", "acc": "data." },
+    { "type": "line",   "start": 49.2, "end": 52.1, "t": "Stop wasting time." },
+    { "type": "line",   "start": 52.1, "end": 55.6, "t": "Start closing deals.", "acc": "closing", "size": "big" },
+    { "type": "brand",  "start": 55.8, "end": 58.1, "sub": "That's Dialfyne." },
+    { "type": "pillars","start": 58.1, "end": 62.9, "cap": "All of it.",
+      "items": [
+        { "label": "AI voice agents", "icon": "&#9742;" },
+        { "label": "Sales training",  "icon": "&#9678;" },
+        { "label": "Automations",     "icon": "&#9889;" }
+      ] },
+    { "type": "line",   "start": 63.1, "end": 66.5, "t": "No more five dashboards." },
+    { "type": "line",   "start": 66.5, "end": 68.4, "t": "Just ask." },
+    { "type": "line",   "start": 68.4, "end": 72.0, "t": "Get answers.", "acc": "answers.", "size": "big" },
+    { "type": "cta",    "start": 72.8, "end": 77.3, "url": "dialfyne.com", "sub": "See if it fits your team." },
+    { "type": "line",   "start": 77.4, "end": 80.5, "t": "Let's simplify how you run things.", "acc": "simplify" }
+  ]
+}

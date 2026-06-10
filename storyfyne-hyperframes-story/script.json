@@ -1,0 +1,30 @@
+{
+  "title": "Dialfyne — Why Dialfyne for Roleplay (story cut)",
+  "duration": 20.6,
+  "soundtrack": "assets/music.mp3",
+  "brand": { "logo": "assets/logos/dialfyne.png" },
+  "floats": ["Too expensive", "We already use one", "No budget", "Call me next quarter", "Not interested", "Send me an email"],
+  "beats": [
+    { "type": "line",       "start": 0.19,  "end": 1.478,  "t": "Every call is practice." },
+    { "type": "line",       "start": 1.478, "end": 2.766,  "t": "On a real customer.", "acc": "real customer.", "col": "red" },
+    { "type": "line",       "start": 2.766, "end": 3.41,   "t": "That's expensive.", "size": "big" },
+    { "type": "line",       "start": 3.41,  "end": 4.698,  "t": "So teams try AI roleplay." },
+    { "type": "strike",     "start": 4.698, "end": 6.63,   "names": ["Hyperbound", "Mindtickle", "Second Nature"],
+      "times": [4.698, 5.342, 5.986] },
+    { "type": "line",       "start": 6.63,  "end": 7.274,  "t": "Same generic scripts.", "size": "sm" },
+    { "type": "line",       "start": 7.274, "end": 7.918,  "t": "Fake buyers.", "acc": "Fake", "col": "red" },
+    { "type": "typewriter", "start": 7.918, "end": 9.85,   "t": "What if it knew YOUR deals?" },
+    { "type": "brand",      "start": 9.85,  "end": 11.138, "sub": "Meet Dialfyne." },
+    { "type": "grab",       "start": 11.138, "end": 13.714, "asset": "assets/shots/connected-apps.png",
+      "img": [1320, 1509], "crop": [0.015, 0.185, 0.97, 0.105], "vw": 1480,
+      "cursor": true, "pop": "✓ Synced",
+      "eyebrow": "Connected to your stack", "title": "Pulled from your CRM." },
+    { "type": "metric",     "start": 13.714, "end": 16.29, "value": 9.0, "suffix": "/10",
+      "label": "Team avg score", "delta": "+29%",
+      "eyebrow": "The outcome", "title": "Reps get sharper." },
+    { "type": "born",       "start": 16.29, "end": 18.222,
+      "eyebrow": "Built from your reality", "title": "An AI buyer that knows the deal.", "acc": "deal." },
+    { "type": "cta",        "start": 18.222, "end": 20.154,
+      "headline": "Build yours — free.", "acc": "free.", "url": "dialfyne.com/roleplay" }
+  ]
+}
