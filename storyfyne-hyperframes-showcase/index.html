@@ -1,8 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="UTF-8"/>
-<meta name="viewport" content="width=1920, height=1080"/>
-<title>Dialfyne — Product Showcase</title>
-<script src="assets/gsap.min.js"></script>
-<style>
+<meta name="viewport" content="width=1920, height=1080"/><title>Dialfyne — Showcase</title>
+<script src="assets/gsap.min.js"></script><style>
 @font-face{font-family:'Inter';font-weight:400;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-400-normal.woff2') format('woff2')}
 @font-face{font-family:'Inter';font-weight:500;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2')}
 @font-face{font-family:'Inter';font-weight:600;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2')}
@@ -17,11 +15,10 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;font-fam
   linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:62px 62px;
   -webkit-mask-image:radial-gradient(ellipse 72% 62% at 50% 45%,#000,transparent 75%)}
 .orb{position:absolute;border-radius:50%;opacity:.5}
-.orb.a{width:1100px;height:1100px;left:-300px;top:-340px;background:radial-gradient(circle,rgba(42,147,245,.18),transparent 68%);animation:d1 26s ease-in-out infinite}
-.orb.b{width:980px;height:980px;right:-280px;bottom:-340px;background:radial-gradient(circle,rgba(108,190,249,.13),transparent 68%);animation:d2 30s ease-in-out infinite}
+.orb.a{width:1100px;height:1100px;left:-300px;top:-340px;background:radial-gradient(circle,rgba(42,147,245,.18),transparent 68%);animation:d1 24s ease-in-out infinite}
+.orb.b{width:980px;height:980px;right:-280px;bottom:-340px;background:radial-gradient(circle,rgba(108,190,249,.13),transparent 68%);animation:d2 28s ease-in-out infinite}
 @keyframes d1{0%,100%{transform:translate(0,0)}50%{transform:translate(70px,50px)}}
 @keyframes d2{0%,100%{transform:translate(0,0)}50%{transform:translate(-60px,-44px)}}
-
 .shot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;will-change:transform,opacity,filter}
 .frame{position:relative;border-radius:16px;overflow:hidden;will-change:transform;
   box-shadow:0 60px 150px rgba(0,0,0,.72),0 0 0 1px rgba(255,255,255,.06),0 0 100px rgba(42,147,245,.10)}
@@ -32,85 +29,129 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;font-fam
 .dot{width:11px;height:11px;border-radius:50%}.r{background:#ff5f56}.y{background:#ffbd2e}.g{background:#27c93f}
 .url{flex:1;max-width:58%;margin:0 auto;background:#0c0e14;border:1px solid rgba(255,255,255,.05);border-radius:7px;padding:5px 14px;font-size:13px;color:#8a90a0;text-align:center}
 .hl{position:absolute;border-radius:11px;border:2.5px solid #2a93f5;box-shadow:0 0 30px rgba(42,147,245,.6),inset 0 0 22px rgba(42,147,245,.22);z-index:3}
-
 .brand{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .b-logo{height:150px;filter:drop-shadow(0 18px 50px rgba(42,147,245,.35));margin-bottom:14px}
-.b-logo.sm{height:60px;margin-top:30px;margin-bottom:0}
-.b-eyebrow{font-size:21px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2a93f5;margin-bottom:18px}
-.b-title{font-size:72px;font-weight:850;letter-spacing:-.03em}.b-title.big{font-size:150px}
-
-.lbl{position:absolute;left:0;right:0;bottom:84px;text-align:center;padding-top:80px;
-  background:linear-gradient(180deg,transparent,rgba(6,9,18,.0) 30%,rgba(6,9,18,.66))}
+.b-logo.sm{height:58px;margin-top:28px}
+.b-eyebrow{font-size:21px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2a93f5;margin-bottom:16px}
+.b-title{font-size:74px;font-weight:850;letter-spacing:-.03em}.b-title.big{font-size:150px}
+.b-title .w{display:inline-block;margin:0 .12em}
+.lbl{position:absolute;left:0;right:0;bottom:84px;text-align:center;padding-top:90px;
+  background:linear-gradient(180deg,transparent,rgba(6,9,18,.0) 28%,rgba(6,9,18,.72))}
 .l-eyebrow{font-size:18px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2a93f5;margin-bottom:12px}
-.l-title{font-size:50px;font-weight:850;letter-spacing:-.025em}
+.l-title{font-size:52px;font-weight:850;letter-spacing:-.025em}
+.l-title .w{display:inline-block;margin:0 .14em}
 </style></head><body>
-<div id="main" data-composition-id="main" data-width="1920" data-height="1080" data-start="0" data-duration="35.0">
-<div class="bg clip" data-start="0" data-duration="35.0" data-track-index="1"><div class="grid"></div><div class="orb a"></div><div class="orb b"></div></div>
-<div id="shot-0" class="shot clip" data-start="0.00" data-duration="3.95" data-track-index="10"><div class="brand"><img class="b-logo" src="assets/logos/dialfyne.png"/><div class="b-eyebrow">The revenue command center</div><div class="b-title big">Dialfyne</div></div></div>
-<div id="shot-1" class="shot clip" data-start="3.40" data-duration="6.15" data-track-index="11"><div class="frame browser" style="width:789px" data-org="12.0% 17.0%"><div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">app.dialfyne.com</span></div><img src="assets/shots/revenue-command-center.png"/><div class="hl" style="left:4px;top:135px;width:316px;height:104px"></div></div></div>
-<div id="shot-2" class="shot clip" data-start="9.00" data-duration="5.55" data-track-index="12"><div class="frame browser" style="width:756px" data-org="50.0% 24.5%"><div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">app.dialfyne.com/settings/integrations</span></div><img src="assets/shots/connected-apps.png"/><div class="hl" style="left:15px;top:219px;width:726px;height:73px"></div></div></div>
-<div id="shot-3" class="shot clip" data-start="14.00" data-duration="5.95" data-track-index="13"><div class="frame browser" style="width:791px" data-org="50.0% 72.0%"><div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">app.dialfyne.com/roleplay</span></div><img src="assets/shots/roleplay-kit-card.png"/><div class="hl" style="left:24px;top:554px;width:744px;height:225px"></div></div></div>
-<div id="shot-4" class="shot clip" data-start="19.40" data-duration="5.15" data-track-index="14"><div class="frame bare" style="width:1190px" data-org="87.5% 50.0%"><img src="assets/shots/metrics-row.png"/><div class="hl" style="left:916px;top:8px;width:250px;height:179px"></div></div></div>
-<div id="shot-5" class="shot clip" data-start="24.00" data-duration="4.75" data-track-index="15"><div class="frame browser" style="width:914px" data-org="50.0% 42.0%"><div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">app.dialfyne.com</span></div><img src="assets/shots/email-assist.png"/><div class="hl" style="left:46px;top:191px;width:823px;height:432px"></div></div></div>
-<div id="shot-6" class="shot clip" data-start="28.20" data-duration="5.15" data-track-index="16"><div class="frame dark" style="width:421px" data-org="50.0% 88.0%"><img src="assets/shots/free-custom-demo.png"/><div class="hl" style="left:17px;top:741px;width:387px;height:73px"></div></div></div>
-<div id="shot-7" class="shot clip" data-start="32.80" data-duration="2.40" data-track-index="17"><div class="brand"><div class="b-eyebrow">dialfyne.com/roleplay</div><div class="b-title ">Turn your team into closers.</div><img class="b-logo sm" src="assets/logos/dialfyne.png"/></div></div>
-<audio id="music" preload="none" src="assets/music.mp3" data-start="0" data-duration="35.0" data-track-index="100"></audio>
-<div id="lbl-1" class="lbl clip" data-start="5.19" data-duration="4.11" data-track-index="60"><div class="l-eyebrow">See what's at risk</div><div class="l-title">Revenue, in one command center.</div></div>
-<div id="lbl-2" class="lbl clip" data-start="10.60" data-duration="3.70" data-track-index="60"><div class="l-eyebrow">Connected to your stack</div><div class="l-title">Pulled straight from HubSpot.</div></div>
-<div id="lbl-3" class="lbl clip" data-start="15.73" data-duration="3.97" data-track-index="60"><div class="l-eyebrow">AI buyers, built from your CRM</div><div class="l-title">They know the exact deal.</div></div>
-<div id="lbl-4" class="lbl clip" data-start="20.87" data-duration="3.43" data-track-index="60"><div class="l-eyebrow">The outcome</div><div class="l-title">Reps get better, faster.</div></div>
-<div id="lbl-5" class="lbl clip" data-start="25.34" data-duration="3.16" data-track-index="60"><div class="l-eyebrow">It writes the follow-up</div><div class="l-title">Every lead, answered.</div></div>
-<div id="lbl-6" class="lbl clip" data-start="29.67" data-duration="3.43" data-track-index="60"><div class="l-eyebrow">Free custom demo</div><div class="l-title">Build your own AI buyer.</div></div>
-<script>
-window.__timelines = window.__timelines || {};
-const tl = gsap.timeline({ paused: true });
-tl.fromTo('#shot-0',{opacity:0,scale:0.9},{opacity:1,scale:1,duration:0.7,ease:'power3.out'},0.00);
-tl.from('#shot-0 .b-eyebrow,#shot-0 .b-title,#shot-0 .b-logo',{opacity:0,y:24,stagger:0.12,duration:0.6,ease:'power3.out'},0.15);
-tl.to('#shot-0',{opacity:0,scale:1.06,filter:'blur(8px)',duration:0.5,ease:'power2.in'},3.40);
-tl.set('#shot-1 .frame',{transformOrigin:'12.0% 17.0%'},3.30);
-tl.fromTo('#shot-1',{opacity:0,x:120,scale:0.96,filter:'blur(8px)'},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.7,ease:'power3.out'},3.40);
-tl.fromTo('#shot-1 .frame',{scale:1.04,x:0,y:0},{scale:1.34,x:299.8,y:299.6,duration:5.90,ease:'sine.inOut'},3.45);
-tl.fromTo('#shot-1 .hl',{opacity:0,scale:0.96},{opacity:1,scale:1,duration:0.4,ease:'power3.out'},5.75);
-tl.to('#shot-1',{opacity:0,x:-120,scale:1.04,filter:'blur(8px)',duration:0.5,ease:'power2.in'},9.00);
-tl.from('#lbl-1 .l-eyebrow,#lbl-1 .l-title',{opacity:0,y:22,stagger:0.1,duration:0.5,ease:'power3.out'},5.19);
-tl.to('#lbl-1',{opacity:0,duration:0.35,ease:'power1.in'},8.90);
-tl.set('#shot-2 .frame',{transformOrigin:'50.0% 24.5%'},8.90);
-tl.fromTo('#shot-2',{opacity:0,scale:0.86,filter:'blur(12px)'},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.7,ease:'power3.out'},9.00);
-tl.fromTo('#shot-2 .frame',{scale:1.02,x:0,y:0},{scale:1.5,x:-0.0,y:231.5,duration:5.30,ease:'sine.inOut'},9.05);
-tl.fromTo('#shot-2 .hl',{opacity:0,scale:0.96},{opacity:1,scale:1,duration:0.4,ease:'power3.out'},11.10);
-tl.to('#shot-2',{opacity:0,scale:1.12,filter:'blur(12px)',duration:0.5,ease:'power2.in'},14.00);
-tl.from('#lbl-2 .l-eyebrow,#lbl-2 .l-title',{opacity:0,y:22,stagger:0.1,duration:0.5,ease:'power3.out'},10.60);
-tl.to('#lbl-2',{opacity:0,duration:0.35,ease:'power1.in'},13.90);
-tl.set('#shot-3 .frame',{transformOrigin:'50.0% 72.0%'},13.90);
-tl.fromTo('#shot-3',{opacity:0,x:-120,scale:0.96,filter:'blur(8px)'},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.7,ease:'power3.out'},14.00);
-tl.fromTo('#shot-3 .frame',{scale:1.03,x:0,y:0},{scale:1.42,x:-0.0,y:-199.8,duration:5.70,ease:'sine.inOut'},14.05);
-tl.fromTo('#shot-3 .hl',{opacity:0,scale:0.96},{opacity:1,scale:1,duration:0.4,ease:'power3.out'},16.27);
-tl.to('#shot-3',{opacity:0,x:120,scale:1.04,filter:'blur(8px)',duration:0.5,ease:'power2.in'},19.40);
-tl.from('#lbl-3 .l-eyebrow,#lbl-3 .l-title',{opacity:0,y:22,stagger:0.1,duration:0.5,ease:'power3.out'},15.73);
-tl.to('#lbl-3',{opacity:0,duration:0.35,ease:'power1.in'},19.30);
-tl.set('#shot-4 .frame',{transformOrigin:'87.5% 50.0%'},19.30);
-tl.fromTo('#shot-4',{opacity:0,y:60,scale:0.95,filter:'blur(10px)'},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.7,ease:'power3.out'},19.40);
-tl.fromTo('#shot-4 .frame',{scale:1.05,x:0,y:0},{scale:1.55,x:-446.2,y:-0.0,duration:4.90,ease:'sine.inOut'},19.45);
-tl.fromTo('#shot-4 .hl',{opacity:0,scale:0.96},{opacity:1,scale:1,duration:0.4,ease:'power3.out'},21.33);
-tl.to('#shot-4',{opacity:0,y:-50,scale:1.05,filter:'blur(10px)',duration:0.5,ease:'power2.in'},24.00);
-tl.from('#lbl-4 .l-eyebrow,#lbl-4 .l-title',{opacity:0,y:22,stagger:0.1,duration:0.5,ease:'power3.out'},20.87);
-tl.to('#lbl-4',{opacity:0,duration:0.35,ease:'power1.in'},23.90);
-tl.set('#shot-5 .frame',{transformOrigin:'50.0% 42.0%'},23.90);
-tl.fromTo('#shot-5',{opacity:0,x:120,scale:0.96,filter:'blur(8px)'},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.7,ease:'power3.out'},24.00);
-tl.fromTo('#shot-5 .frame',{scale:1.04,x:0,y:0},{scale:1.32,x:-0.0,y:72.6,duration:4.50,ease:'sine.inOut'},24.05);
-tl.fromTo('#shot-5 .hl',{opacity:0,scale:0.96},{opacity:1,scale:1,duration:0.4,ease:'power3.out'},25.76);
-tl.to('#shot-5',{opacity:0,x:-120,scale:1.04,filter:'blur(8px)',duration:0.5,ease:'power2.in'},28.20);
-tl.from('#lbl-5 .l-eyebrow,#lbl-5 .l-title',{opacity:0,y:22,stagger:0.1,duration:0.5,ease:'power3.out'},25.34);
-tl.to('#lbl-5',{opacity:0,duration:0.35,ease:'power1.in'},28.10);
-tl.set('#shot-6 .frame',{transformOrigin:'50.0% 88.0%'},28.10);
-tl.fromTo('#shot-6',{opacity:0,scale:0.86,filter:'blur(12px)'},{opacity:1,x:0,y:0,scale:1,filter:'blur(0px)',duration:0.7,ease:'power3.out'},28.20);
-tl.fromTo('#shot-6 .frame',{scale:1.0,x:0,y:0},{scale:1.18,x:-0.0,y:-328.3,duration:4.90,ease:'sine.inOut'},28.25);
-tl.fromTo('#shot-6 .hl',{opacity:0,scale:0.96},{opacity:1,scale:1,duration:0.4,ease:'power3.out'},30.13);
-tl.to('#shot-6',{opacity:0,scale:1.12,filter:'blur(12px)',duration:0.5,ease:'power2.in'},32.80);
-tl.from('#lbl-6 .l-eyebrow,#lbl-6 .l-title',{opacity:0,y:22,stagger:0.1,duration:0.5,ease:'power3.out'},29.67);
-tl.to('#lbl-6',{opacity:0,duration:0.35,ease:'power1.in'},32.70);
-tl.fromTo('#shot-7',{opacity:0,scale:1.04},{opacity:1,scale:1,duration:0.7,ease:'power3.out'},32.80);
-tl.from('#shot-7 .b-eyebrow,#shot-7 .b-title,#shot-7 .b-logo',{opacity:0,y:24,stagger:0.12,duration:0.6,ease:'power3.out'},32.95);
-window.__timelines['main'] = tl;
-</script>
-</div></body></html>
+<div id="main" data-composition-id="main" data-width="1920" data-height="1080" data-start="0" data-duration="25.5">
+<div class="bg clip" data-start="0" data-duration="25.5" data-track-index="1"><div class="grid"></div><div class="orb a"></div><div class="orb b"></div></div>
+<div id="shot-0" class="shot clip" data-start="0.00" data-duration="3.22" data-track-index="10"><div class="brand"><img class="b-logo" src="assets/logos/dialfyne.png"/><div class="b-eyebrow">The revenue command center</div><div class="b-title big"><span class="w">Dialfyne</span></div></div></div>
+<div id="shot-1" class="shot clip" data-start="2.77" data-duration="5.60" data-track-index="11"><div class="frame browser" style="width:770px"><div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">app.dialfyne.com</span></div><img src="assets/shots/revenue-command-center.png"/><div class="hl" style="left:4px;top:132px;width:308px;height:101px"></div></div></div>
+<div id="shot-2" class="shot clip" data-start="7.92" data-duration="3.03" data-track-index="12"><div class="frame browser" style="width:737px"><div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">app.dialfyne.com/integrations</span></div><img src="assets/shots/connected-apps.png"/><div class="hl" style="left:15px;top:215px;width:708px;height:72px"></div></div></div>
+<div id="shot-3" class="shot clip" data-start="10.49" data-duration="3.03" data-track-index="13"><div class="frame browser" style="width:771px"><div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">app.dialfyne.com/roleplay</span></div><img src="assets/shots/roleplay-kit-card.png"/><div class="hl" style="left:23px;top:541px;width:725px;height:219px"></div></div></div>
+<div id="shot-4" class="shot clip" data-start="13.07" data-duration="3.03" data-track-index="14"><div class="frame bare" style="width:1152px"><img src="assets/shots/metrics-row.png"/><div class="hl" style="left:887px;top:8px;width:242px;height:173px"></div></div></div>
+<div id="shot-5" class="shot clip" data-start="15.65" data-duration="3.03" data-track-index="15"><div class="frame browser" style="width:891px"><div class="chrome"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">app.dialfyne.com</span></div><img src="assets/shots/email-assist.png"/><div class="hl" style="left:45px;top:187px;width:802px;height:421px"></div></div></div>
+<div id="shot-6" class="shot clip" data-start="18.22" data-duration="5.60" data-track-index="16"><div class="frame dark" style="width:410px"><img src="assets/shots/free-custom-demo.png"/><div class="hl" style="left:16px;top:722px;width:377px;height:72px"></div></div></div>
+<div id="shot-7" class="shot clip" data-start="23.37" data-duration="2.33" data-track-index="17"><div class="brand"><div class="b-eyebrow">dialfyne.com/roleplay</div><div class="b-title "><span class="w">Turn</span><span class="w">your</span><span class="w">team</span><span class="w">into</span><span class="w">closers.</span></div><img class="b-logo sm" src="assets/logos/dialfyne.png"/></div></div>
+<audio id="music" preload="none" src="assets/music.mp3" data-start="0" data-duration="25.5" data-track-index="100"></audio>
+<div id="lbl-1" class="lbl clip" data-start="3.05" data-duration="5.22" data-track-index="61"><div class="l-eyebrow">See what's at risk</div><div class="l-title"><span class="w">Revenue,</span><span class="w">in</span><span class="w">one</span><span class="w">place.</span></div></div>
+<div id="lbl-2" class="lbl clip" data-start="8.20" data-duration="2.65" data-track-index="60"><div class="l-eyebrow">Connected to your stack</div><div class="l-title"><span class="w">Straight</span><span class="w">from</span><span class="w">HubSpot.</span></div></div>
+<div id="lbl-3" class="lbl clip" data-start="10.77" data-duration="2.65" data-track-index="61"><div class="l-eyebrow">AI buyers from your CRM</div><div class="l-title"><span class="w">They</span><span class="w">know</span><span class="w">the</span><span class="w">deal.</span></div></div>
+<div id="lbl-4" class="lbl clip" data-start="13.35" data-duration="2.65" data-track-index="60"><div class="l-eyebrow">The outcome</div><div class="l-title"><span class="w">Reps</span><span class="w">get</span><span class="w">better.</span></div></div>
+<div id="lbl-5" class="lbl clip" data-start="15.93" data-duration="2.65" data-track-index="61"><div class="l-eyebrow">It writes the follow-up</div><div class="l-title"><span class="w">Every</span><span class="w">lead,</span><span class="w">answered.</span></div></div>
+<div id="lbl-6" class="lbl clip" data-start="18.50" data-duration="5.22" data-track-index="60"><div class="l-eyebrow">Free custom demo</div><div class="l-title"><span class="w">Build</span><span class="w">your</span><span class="w">own</span><span class="w">AI</span><span class="w">buyer.</span></div></div>
+<script>window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});
+tl.fromTo('#shot-0',{opacity:0,scale:0.85},{opacity:1,scale:1,duration:0.5,ease:'back.out(1.4)'},0.00);
+tl.from('#shot-0 .b-logo',{opacity:0,scale:0.7,filter:'blur(8px)',duration:0.5,ease:'back.out(1.6)'},0.00);
+tl.from('#shot-0 .b-eyebrow',{opacity:0,y:18,duration:0.4,ease:'power3.out'},0.18);
+tl.from('#shot-0 .b-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.06,duration:0.5,ease:'power3.out'},0.28);
+tl.to('#shot-0',{opacity:0,scale:1.08,filter:'blur(9px)',duration:0.3,ease:'power3.in'},2.77);
+tl.set('#shot-1 .frame',{transformOrigin:'12.0% 17.0%'},2.67);
+tl.fromTo('#shot-1',{opacity:0,x:-120,scale:0.92,filter:'blur(8px)'},{opacity:1,x:0,scale:1,filter:'blur(0px)',duration:0.42,ease:'back.out(1.3)'},2.77);
+tl.fromTo('#shot-1 .frame',{clipPath:'inset(0 0% 0 100%)'},{clipPath:'inset(0 0% 0 0%)',duration:0.5,ease:'power3.out'},2.82);
+tl.fromTo('#shot-1 .frame',{scale:1.06,x:0,y:0},{scale:1.36,x:292.6,y:292.4,duration:5.45,ease:'power2.out'},2.89);
+tl.to('#shot-1',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},3.410);
+tl.to('#shot-1',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},4.054);
+tl.to('#shot-1',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},4.698);
+tl.to('#shot-1',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},5.342);
+tl.to('#shot-1',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},5.986);
+tl.to('#shot-1',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},6.630);
+tl.to('#shot-1',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},7.274);
+tl.fromTo('#shot-1 .hl',{opacity:0,scale:1.18},{opacity:1,scale:1,duration:0.22,ease:'back.out(2.2)'},5.342);
+tl.fromTo('#shot-1 .hl',{boxShadow:'0 0 70px rgba(42,147,245,1),inset 0 0 40px rgba(42,147,245,.5)'},{boxShadow:'0 0 30px rgba(42,147,245,.6),inset 0 0 22px rgba(42,147,245,.22)',duration:0.5,ease:'power2.out'},5.342);
+tl.to('#shot-1',{opacity:0,x:150,scale:1.05,filter:'blur(9px)',duration:0.32,ease:'power3.in'},7.92);
+tl.from('#lbl-1 .l-eyebrow',{opacity:0,y:16,duration:0.32,ease:'power3.out'},3.05);
+tl.from('#lbl-1 .l-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.42,ease:'power3.out'},3.13);
+tl.to('#lbl-1',{opacity:0,duration:0.25,ease:'power1.in'},7.87);
+tl.set('#shot-2 .frame',{transformOrigin:'50.0% 24.5%'},7.82);
+tl.fromTo('#shot-2',{opacity:0,x:120,scale:0.92,filter:'blur(8px)'},{opacity:1,x:0,scale:1,filter:'blur(0px)',duration:0.42,ease:'back.out(1.3)'},7.92);
+tl.fromTo('#shot-2 .frame',{clipPath:'inset(0 100% 0 0%)'},{clipPath:'inset(0 0% 0 0%)',duration:0.5,ease:'power3.out'},7.97);
+tl.fromTo('#shot-2 .frame',{scale:1.05,x:0,y:0},{scale:1.55,x:-0.0,y:225.9,duration:2.88,ease:'power2.out'},8.04);
+tl.to('#shot-2',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},8.562);
+tl.to('#shot-2',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},9.206);
+tl.to('#shot-2',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},9.850);
+tl.fromTo('#shot-2 .hl',{opacity:0,scale:1.18},{opacity:1,scale:1,duration:0.22,ease:'back.out(2.2)'},9.206);
+tl.fromTo('#shot-2 .hl',{boxShadow:'0 0 70px rgba(42,147,245,1),inset 0 0 40px rgba(42,147,245,.5)'},{boxShadow:'0 0 30px rgba(42,147,245,.6),inset 0 0 22px rgba(42,147,245,.22)',duration:0.5,ease:'power2.out'},9.206);
+tl.to('#shot-2',{opacity:0,x:-150,scale:1.05,filter:'blur(9px)',duration:0.32,ease:'power3.in'},10.49);
+tl.from('#lbl-2 .l-eyebrow',{opacity:0,y:16,duration:0.32,ease:'power3.out'},8.20);
+tl.from('#lbl-2 .l-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.42,ease:'power3.out'},8.28);
+tl.to('#lbl-2',{opacity:0,duration:0.25,ease:'power1.in'},10.44);
+tl.set('#shot-3 .frame',{transformOrigin:'50.0% 72.0%'},10.39);
+tl.fromTo('#shot-3',{opacity:0,x:-120,scale:0.92,filter:'blur(8px)'},{opacity:1,x:0,scale:1,filter:'blur(0px)',duration:0.42,ease:'back.out(1.3)'},10.49);
+tl.fromTo('#shot-3 .frame',{clipPath:'inset(0 0% 0 100%)'},{clipPath:'inset(0 0% 0 0%)',duration:0.5,ease:'power3.out'},10.54);
+tl.fromTo('#shot-3 .frame',{scale:1.06,x:0,y:0},{scale:1.46,x:-0.0,y:-194.9,duration:2.88,ease:'power2.out'},10.61);
+tl.to('#shot-3',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},11.138);
+tl.to('#shot-3',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},11.782);
+tl.to('#shot-3',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},12.426);
+tl.fromTo('#shot-3 .hl',{opacity:0,scale:1.18},{opacity:1,scale:1,duration:0.22,ease:'back.out(2.2)'},11.782);
+tl.fromTo('#shot-3 .hl',{boxShadow:'0 0 70px rgba(42,147,245,1),inset 0 0 40px rgba(42,147,245,.5)'},{boxShadow:'0 0 30px rgba(42,147,245,.6),inset 0 0 22px rgba(42,147,245,.22)',duration:0.5,ease:'power2.out'},11.782);
+tl.to('#shot-3',{opacity:0,x:150,scale:1.05,filter:'blur(9px)',duration:0.32,ease:'power3.in'},13.07);
+tl.from('#lbl-3 .l-eyebrow',{opacity:0,y:16,duration:0.32,ease:'power3.out'},10.77);
+tl.from('#lbl-3 .l-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.42,ease:'power3.out'},10.85);
+tl.to('#lbl-3',{opacity:0,duration:0.25,ease:'power1.in'},13.02);
+tl.set('#shot-4 .frame',{transformOrigin:'87.5% 50.0%'},12.97);
+tl.fromTo('#shot-4',{opacity:0,x:120,scale:0.92,filter:'blur(8px)'},{opacity:1,x:0,scale:1,filter:'blur(0px)',duration:0.42,ease:'back.out(1.3)'},13.07);
+tl.fromTo('#shot-4 .frame',{clipPath:'inset(0 100% 0 0%)'},{clipPath:'inset(0 0% 0 0%)',duration:0.5,ease:'power3.out'},13.12);
+tl.fromTo('#shot-4 .frame',{scale:1.08,x:0,y:0},{scale:1.6,x:-432.0,y:-0.0,duration:2.88,ease:'power2.out'},13.19);
+tl.to('#shot-4',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},13.714);
+tl.to('#shot-4',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},14.358);
+tl.to('#shot-4',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},15.002);
+tl.fromTo('#shot-4 .hl',{opacity:0,scale:1.18},{opacity:1,scale:1,duration:0.22,ease:'back.out(2.2)'},14.358);
+tl.fromTo('#shot-4 .hl',{boxShadow:'0 0 70px rgba(42,147,245,1),inset 0 0 40px rgba(42,147,245,.5)'},{boxShadow:'0 0 30px rgba(42,147,245,.6),inset 0 0 22px rgba(42,147,245,.22)',duration:0.5,ease:'power2.out'},14.358);
+tl.to('#shot-4',{opacity:0,x:-150,scale:1.05,filter:'blur(9px)',duration:0.32,ease:'power3.in'},15.65);
+tl.from('#lbl-4 .l-eyebrow',{opacity:0,y:16,duration:0.32,ease:'power3.out'},13.35);
+tl.from('#lbl-4 .l-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.42,ease:'power3.out'},13.43);
+tl.to('#lbl-4',{opacity:0,duration:0.25,ease:'power1.in'},15.60);
+tl.set('#shot-5 .frame',{transformOrigin:'50.0% 40.0%'},15.55);
+tl.fromTo('#shot-5',{opacity:0,x:-120,scale:0.92,filter:'blur(8px)'},{opacity:1,x:0,scale:1,filter:'blur(0px)',duration:0.42,ease:'back.out(1.3)'},15.65);
+tl.fromTo('#shot-5 .frame',{clipPath:'inset(0 0% 0 100%)'},{clipPath:'inset(0 0% 0 0%)',duration:0.5,ease:'power3.out'},15.70);
+tl.fromTo('#shot-5 .frame',{scale:1.06,x:0,y:0},{scale:1.34,x:-0.0,y:88.6,duration:2.88,ease:'power2.out'},15.77);
+tl.to('#shot-5',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},16.290);
+tl.to('#shot-5',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},16.934);
+tl.to('#shot-5',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},17.578);
+tl.fromTo('#shot-5 .hl',{opacity:0,scale:1.18},{opacity:1,scale:1,duration:0.22,ease:'back.out(2.2)'},16.934);
+tl.fromTo('#shot-5 .hl',{boxShadow:'0 0 70px rgba(42,147,245,1),inset 0 0 40px rgba(42,147,245,.5)'},{boxShadow:'0 0 30px rgba(42,147,245,.6),inset 0 0 22px rgba(42,147,245,.22)',duration:0.5,ease:'power2.out'},16.934);
+tl.to('#shot-5',{opacity:0,x:150,scale:1.05,filter:'blur(9px)',duration:0.32,ease:'power3.in'},18.22);
+tl.from('#lbl-5 .l-eyebrow',{opacity:0,y:16,duration:0.32,ease:'power3.out'},15.93);
+tl.from('#lbl-5 .l-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.42,ease:'power3.out'},16.01);
+tl.to('#lbl-5',{opacity:0,duration:0.25,ease:'power1.in'},18.17);
+tl.set('#shot-6 .frame',{transformOrigin:'50.0% 86.0%'},18.12);
+tl.fromTo('#shot-6',{opacity:0,x:120,scale:0.92,filter:'blur(8px)'},{opacity:1,x:0,scale:1,filter:'blur(0px)',duration:0.42,ease:'back.out(1.3)'},18.22);
+tl.fromTo('#shot-6 .frame',{clipPath:'inset(0 100% 0 0%)'},{clipPath:'inset(0 0% 0 0%)',duration:0.5,ease:'power3.out'},18.27);
+tl.fromTo('#shot-6 .frame',{scale:1.0,x:0,y:0},{scale:1.2,x:-0.0,y:-303.1,duration:5.45,ease:'power2.out'},18.34);
+tl.to('#shot-6',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},18.866);
+tl.to('#shot-6',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},19.510);
+tl.to('#shot-6',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},20.154);
+tl.to('#shot-6',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},20.798);
+tl.to('#shot-6',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},21.442);
+tl.to('#shot-6',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},22.086);
+tl.to('#shot-6',{scale:1.014,duration:0.09,yoyo:true,repeat:1,ease:'power2.out'},22.730);
+tl.fromTo('#shot-6 .hl',{opacity:0,scale:1.18},{opacity:1,scale:1,duration:0.22,ease:'back.out(2.2)'},20.798);
+tl.fromTo('#shot-6 .hl',{boxShadow:'0 0 70px rgba(42,147,245,1),inset 0 0 40px rgba(42,147,245,.5)'},{boxShadow:'0 0 30px rgba(42,147,245,.6),inset 0 0 22px rgba(42,147,245,.22)',duration:0.5,ease:'power2.out'},20.798);
+tl.to('#shot-6',{opacity:0,x:-150,scale:1.05,filter:'blur(9px)',duration:0.32,ease:'power3.in'},23.37);
+tl.from('#lbl-6 .l-eyebrow',{opacity:0,y:16,duration:0.32,ease:'power3.out'},18.50);
+tl.from('#lbl-6 .l-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.05,duration:0.42,ease:'power3.out'},18.58);
+tl.to('#lbl-6',{opacity:0,duration:0.25,ease:'power1.in'},23.32);
+tl.fromTo('#shot-7',{opacity:0,scale:1.05},{opacity:1,scale:1,duration:0.5,ease:'back.out(1.4)'},23.37);
+tl.from('#shot-7 .b-logo',{opacity:0,scale:0.7,filter:'blur(8px)',duration:0.5,ease:'back.out(1.6)'},23.37);
+tl.from('#shot-7 .b-eyebrow',{opacity:0,y:18,duration:0.4,ease:'power3.out'},23.55);
+tl.from('#shot-7 .b-title .w',{opacity:0,yPercent:90,filter:'blur(6px)',stagger:0.06,duration:0.5,ease:'power3.out'},23.65);
+window.__timelines['main']=tl;</script></div></body></html>
