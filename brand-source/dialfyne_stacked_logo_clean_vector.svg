@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1316" viewBox="0 0 2048 1316" fill="none" role="img" aria-label="Dialfyne stacked logo">
+  <defs>
+    <linearGradient id="blue" x1="395" y1="204" x2="1653" y2="1054" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8FD2F7"/>
+      <stop offset="52%" stop-color="#5CCBFF"/>
+      <stop offset="100%" stop-color="#1295FF"/>
+    </linearGradient>
+  </defs>
+  <g stroke="url(#blue)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M760 470 H920" stroke-width="75"/>
+    <path d="M1095 245 C1025 282 1006 333 1006 395 C1006 436 985 463 954 470 C985 482 1006 524 1006 578 C1006 641 1031 690 1095 728" stroke-width="75"/>
+    <path d="M1114 335 H1310" stroke-width="55"/>
+    <path d="M1114 470 H1310" stroke-width="55"/>
+    <path d="M1114 604 H1270" stroke-width="55"/>
+    <path d="M1508 880 H1638" stroke-width="38"/>
+    <path d="M1508 953 H1638" stroke-width="38"/>
+    <path d="M1508 1026 H1638" stroke-width="38"/>
+  </g>
+  <g>
+    <path d="M662 0C1121 0 1416 292 1416 744C1416 1197 1116 1490 656 1490H80V0ZM496 344V1146H630C881 1146 996 1017 996 744C996 473 885 344 642 344Z" fill="#FFFFFF" transform="translate(395.000 1040.000) scale(0.1181641 -0.1181641)"/>
+    <path d="M496 1490H80V0H496Z" fill="#FFFFFF" transform="translate(572.047 1040.000) scale(0.1181641 -0.1181641)"/>
+    <path d="M0 0H455L528 245H1026L1097 0H1565L1060 1490H500ZM624 565 628 578C682 758 732 932 781 1113C829 932 878 758 930 578L934 565Z" fill="#FFFFFF" transform="translate(645.109 1040.000) scale(0.1181641 -0.1181641)"/>
+    <path d="M80 0H1138V352H496V1490H80Z" fill="#FFFFFF" transform="translate(835.036 1040.000) scale(0.1181641 -0.1181641)"/>
+    <path d="M80 0H496V536H1159V874H496V1138H1199V1490H80Z" fill="#FFFFFF" transform="translate(979.233 1040.000) scale(0.1181641 -0.1181641)"/>
+    <path d="M555 0H957V508L1496 1490H1023L822 1072C800 1025 778 978 758 930C736 978 714 1025 690 1072L476 1490H0L555 508Z" fill="#FFFFFF" transform="translate(1130.639 1040.000) scale(0.1181641 -0.1181641)"/>
+    <path d="M80 0H496V544C496 604 496 721 491 855C561 726 627 611 669 544L1008 0H1432V1490H1016V944C1016 873 1017 752 1021 631C963 738 902 849 867 905L504 1490H80Z" fill="#FFFFFF" transform="translate(1312.412 1040.000) scale(0.1181641 -0.1181641)"/>
+  </g>
+</svg>
