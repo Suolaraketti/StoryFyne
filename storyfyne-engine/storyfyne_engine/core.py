@@ -90,9 +90,11 @@ def validate(script, project_dir):
     snd = script.get("soundtrack")
     if snd and not os.path.exists(os.path.join(project_dir, snd)):
         errors.append("soundtrack not found: %s" % snd)
-    logo = (script.get("brand") or {}).get("logo", "assets/logos/dialfyne.png")
-    if not os.path.exists(os.path.join(project_dir, logo)):
-        warnings.append("brand logo not found at %s — brand/cta beats will show a broken image" % logo)
+    brand = script.get("brand") or {}
+    for key, lg in [("logo", brand.get("logo", "assets/logos/dialfyne.png")),
+                    ("logo_portrait", brand.get("logo_portrait"))]:
+        if lg and not os.path.exists(os.path.join(project_dir, lg)):
+            warnings.append("brand %s not found at %s — that lockup will show a broken image" % (key, lg))
 
     if errors:
         raise ScriptError("Script has %d error(s):\n  - %s" % (len(errors), "\n  - ".join(errors)))
@@ -106,9 +108,13 @@ def assemble(script, project_dir, portrait=True):
     tover = dict(script.get("theme") or {})
     light = tover.pop("mode", "") == "light"
     theme = dict(DEFAULT_THEME, **(LIGHT_OVERRIDES if light else {}), **tover)
-    logo = (script.get("brand") or {}).get("logo", "assets/logos/dialfyne.png")
+    brand = script.get("brand") or {}
+    logo = brand.get("logo", "assets/logos/dialfyne.png")
+    # Portrait can use a stacked lockup that fills the 9:16 frame; falls back to logo.
+    logo_p = brand.get("logo_portrait", logo)
     ctx = {
-        "W": W, "H": H, "PORTRAIT": portrait, "theme": theme, "logo": logo,
+        "W": W, "H": H, "PORTRAIT": portrait, "theme": theme,
+        "logo": logo_p if portrait else logo,
         "project_dir": project_dir,
         "color": lambda name: resolve_color(name, theme),
     }

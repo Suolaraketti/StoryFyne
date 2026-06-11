@@ -2,6 +2,7 @@
   "title": "Dialfyne — logo reveal + 3D",
   "duration": 16.0,
   "soundtrack": "assets/music.mp3",
+  "brand": { "logo": "assets/logos/dialfyne.svg", "logo_portrait": "assets/logos/dialfyne-stacked.svg" },
   "dust": true,
   "beats": [
     { "type": "logoreveal", "start": 0.3, "end": 5.2, "tagline": "The revenue command center" },

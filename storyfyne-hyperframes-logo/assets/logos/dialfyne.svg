@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="478" viewBox="0 0 2048 478" fill="none" role="img" aria-label="Dialfyne horizontal logo">
+  <defs>
+    <linearGradient id="blue" x1="60" y1="54" x2="1518" y2="424" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#73D8FF"/>
+      <stop offset="48%" stop-color="#23B2FF"/>
+      <stop offset="100%" stop-color="#1294FF"/>
+    </linearGradient>
+  </defs>
+  <g id="mark" stroke="url(#blue)" stroke-linecap="round" stroke-linejoin="round">
+    <path id="mark-stem" d="M86 239 H222" stroke-width="66"/>
+    <path id="mark-fork" d="M308 80 C260 106 253 135 253 177 C253 207 241 229 222 239 C242 252 253 280 253 314 C253 352 273 379 308 398" stroke-width="66"/>
+    <path id="bar-1" d="M343 143 H453" stroke-width="50"/>
+    <path id="bar-2" d="M343 240 H453" stroke-width="50"/>
+    <path id="bar-3" d="M343 337 H427" stroke-width="50"/>
+  </g>
+  <g id="wordmark">
+    <g stroke="url(#blue)" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1406 186 H1517" stroke-width="37"/>
+      <path d="M1406 240 H1517" stroke-width="37"/>
+      <path d="M1406 294 H1517" stroke-width="37"/>
+    </g>
+    <g>
+      <path d="M662 0C1121 0 1416 292 1416 744C1416 1197 1116 1490 656 1490H80V0ZM496 344V1146H630C881 1146 996 1017 996 744C996 473 885 344 642 344Z" fill="#FFFFFF" transform="translate(535.000 308.000) scale(0.0878906 -0.0878906)"/>
+      <path d="M496 1490H80V0H496Z" fill="#FFFFFF" transform="translate(667.969 308.000) scale(0.0878906 -0.0878906)"/>
+      <path d="M0 0H455L528 245H1026L1097 0H1565L1060 1490H500ZM624 565 628 578C682 758 732 932 781 1113C829 932 878 758 930 578L934 565Z" fill="#FFFFFF" transform="translate(723.594 308.000) scale(0.0878906 -0.0878906)"/>
+      <path d="M80 0H1138V352H496V1490H80Z" fill="#FFFFFF" transform="translate(866.143 308.000) scale(0.0878906 -0.0878906)"/>
+      <path d="M80 0H496V536H1159V874H496V1138H1199V1490H80Z" fill="#FFFFFF" transform="translate(974.678 308.000) scale(0.0878906 -0.0878906)"/>
+      <path d="M555 0H957V508L1496 1490H1023L822 1072C800 1025 778 978 758 930C736 978 714 1025 690 1072L476 1490H0L555 508Z" fill="#FFFFFF" transform="translate(1088.574 308.000) scale(0.0878906 -0.0878906)"/>
+      <path d="M80 0H496V544C496 604 496 721 491 855C561 726 627 611 669 544L1008 0H1432V1490H1016V944C1016 873 1017 752 1021 631C963 738 902 849 867 905L504 1490H80Z" fill="#FFFFFF" transform="translate(1225.059 308.000) scale(0.0878906 -0.0878906)"/>
+    </g>
+  </g>
+</svg>

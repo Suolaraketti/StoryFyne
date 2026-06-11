@@ -48,7 +48,8 @@ shots/, soundtrack.mp3). Copy `assets/` from an existing project to start.
   "title": "Name",
   "duration": 80.6,                      // optional; defaults to last end + 0.4
   "soundtrack": "assets/soundtrack.mp3", // optional
-  "brand":  { "logo": "assets/logos/dialfyne.png" },
+  "brand":  { "logo": "assets/logos/dialfyne.svg",
+              "logo_portrait": "assets/logos/dialfyne-stacked.svg" },  // optional; stacked lockup for 9:16
   "theme":  { "primary": "#2a93f5" },    // optional color overrides
   "floats": ["ambient", "background", "phrases"],  // optional, max 6
   "beats":  [ ... ]
@@ -237,6 +238,11 @@ three bars — so the ids name those parts:
 `#mark-stem`, `#mark-fork`, `#bar-1`, `#bar-2`, `#bar-3`, `#wordmark`. Drop your
 SVG in `brand-source/` and point `brand.logo` at it. See
 `brand-source/dialfyne-mark-example.svg` for the exact structure.
+
+The wired, id-tagged Dialfyne lockups live in
+`storyfyne-hyperframes-logo/assets/logos/` (`dialfyne.svg` horizontal,
+`dialfyne-stacked.svg` for portrait) — copy them into any project's
+`assets/logos/` and point `brand.logo` / `brand.logo_portrait` at them.
 
 ### flythrough — real product screenshots suspended in 3D space, parallax drift
 ```json

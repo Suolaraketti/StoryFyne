@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="UTF-8"/>
-<meta name="viewport" content="width=1920, height=1080"/>
+<meta name="viewport" content="width=1080, height=1920"/>
 <title>Dialfyne — logo reveal + 3D</title><script src="assets/gsap.min.js"></script><style>
 @font-face{font-family:'Inter';font-weight:400;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-400-normal.woff2') format('woff2')}
 @font-face{font-family:'Inter';font-weight:500;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2')}
@@ -8,8 +8,8 @@
 @font-face{font-family:'Inter';font-weight:800;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-800-normal.woff2') format('woff2')}
 @font-face{font-family:'Inter';font-weight:900;font-style:normal;font-display:block;src:url('assets/fonts/inter-latin-900-normal.woff2') format('woff2')}
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:1920px;height:1080px;overflow:hidden;background:#060912;font-family:Inter,-apple-system,sans-serif;color:#ffffff;-webkit-font-smoothing:antialiased}
-#main{position:relative;width:1920px;height:1080px;overflow:hidden}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#060912;font-family:Inter,-apple-system,sans-serif;color:#ffffff;-webkit-font-smoothing:antialiased}
+#main{position:relative;width:1080px;height:1920px;overflow:hidden}
 .bg{position:absolute;inset:0;background:radial-gradient(ellipse 62% 46% at 50% 42%,rgba(42,147,245,.11),transparent 62%),#060912}
 .grid{position:absolute;inset:0;opacity:.045;background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);background-size:60px 60px;-webkit-mask-image:radial-gradient(ellipse 78% 60% at 50% 48%,#000,transparent 80%)}
 .orb{position:absolute;border-radius:50%;opacity:.5}
@@ -62,33 +62,90 @@ body.light .dust{background:rgba(30,60,110,.25)}
 .logo3dwrap{perspective:1300px}
 .logo3d{transform-style:preserve-3d;will-change:transform;position:relative;display:inline-block}
 .logo-img{display:block;height:auto;filter:drop-shadow(0 16px 46px rgba(40,110,230,.42))}
+.logosvgbox{position:relative}
+.logosvgbox svg{display:block;width:100%;height:auto;filter:drop-shadow(0 16px 46px rgba(40,110,230,.42))}
+.logosvgbox [id^=bar-],.logosvgbox #mark-stem,.logosvgbox #mark-fork{transform-box:fill-box}
 .logosweep{position:absolute;top:-14%;left:0;width:20%;height:128%;pointer-events:none;opacity:0;mix-blend-mode:screen;
   transform:translateX(-230%) skewX(-12deg);
   background:linear-gradient(90deg,transparent,rgba(180,210,255,0) 22%,rgba(205,228,255,.9) 50%,rgba(180,210,255,0) 78%,transparent)}
 .logobloom{position:absolute;left:50%;top:50%;width:74%;height:170%;transform:translate(-50%,-50%);
   background:radial-gradient(ellipse,rgba(80,150,255,.5),transparent 66%);filter:blur(36px);opacity:0;z-index:-1;pointer-events:none}
 .ltag{font-size:32px;font-weight:600;color:#9aa3b8;letter-spacing:.06em}
+
+body.p .ev{padding:0 6%}
+body.p .line{font-size:84px}body.p .line.big{font-size:112px}body.p .line.sm{font-size:60px}
+body.p .k-title{font-size:60px}body.p .kicker{margin-bottom:30px}
+body.p .flt{font-size:20px}
+body.p .flytitle{width:94%}
+body.p .hero{font-size:84px}body.p .hero.big{font-size:106px}
+body.p .ltag{font-size:25px}
 </style></head>
-<body class="">
-<div id="main" data-composition-id="main" data-width="1920" data-height="1080" data-start="0" data-duration="16.00">
+<body class="p ">
+<div id="main" data-composition-id="main" data-width="1080" data-height="1920" data-start="0" data-duration="16.00">
 <div class="bg clip" data-start="0" data-duration="16.0" data-track-index="1"><div class="grid"></div><div class="orb a"></div><div class="orb b"></div></div>
 <div class="dustlayer clip" data-start="0" data-duration="16.0" data-track-index="2"><i class="dust" style="left:11%;top:7%;width:3px;height:3px;animation-duration:14s;animation-delay:-0s"></i><i class="dust" style="left:48%;top:60%;width:4px;height:4px;animation-duration:21s;animation-delay:-5s"></i><i class="dust" style="left:85%;top:20%;width:5px;height:5px;animation-duration:16s;animation-delay:-10s"></i><i class="dust" style="left:25%;top:73%;width:6px;height:6px;animation-duration:23s;animation-delay:-1s"></i><i class="dust" style="left:62%;top:33%;width:3px;height:3px;animation-duration:18s;animation-delay:-6s"></i><i class="dust" style="left:2%;top:86%;width:4px;height:4px;animation-duration:25s;animation-delay:-11s"></i><i class="dust" style="left:39%;top:46%;width:5px;height:5px;animation-duration:20s;animation-delay:-2s"></i><i class="dust" style="left:76%;top:6%;width:6px;height:6px;animation-duration:15s;animation-delay:-7s"></i><i class="dust" style="left:16%;top:59%;width:3px;height:3px;animation-duration:22s;animation-delay:-12s"></i><i class="dust" style="left:53%;top:19%;width:4px;height:4px;animation-duration:17s;animation-delay:-3s"></i><i class="dust" style="left:90%;top:72%;width:5px;height:5px;animation-duration:24s;animation-delay:-8s"></i><i class="dust" style="left:30%;top:32%;width:6px;height:6px;animation-duration:19s;animation-delay:-13s"></i><i class="dust" style="left:67%;top:85%;width:3px;height:3px;animation-duration:14s;animation-delay:-4s"></i><i class="dust" style="left:7%;top:45%;width:4px;height:4px;animation-duration:21s;animation-delay:-9s"></i><i class="dust" style="left:44%;top:5%;width:5px;height:5px;animation-duration:16s;animation-delay:-0s"></i><i class="dust" style="left:81%;top:58%;width:6px;height:6px;animation-duration:23s;animation-delay:-5s"></i><i class="dust" style="left:21%;top:18%;width:3px;height:3px;animation-duration:18s;animation-delay:-10s"></i><i class="dust" style="left:58%;top:71%;width:4px;height:4px;animation-duration:25s;animation-delay:-1s"></i></div>
-<div id="ev-0" class="ev clip" data-start="0.300" data-duration="5.250" data-track-index="10"><div class="logostage"><div class="logo3dwrap"><div class="logo3d"><div class="logobloom"></div><img class="logo-img" src="assets/logos/dialfyne.png" style="width:1152px"/><div class="logosweep"></div></div></div><div class="ltag">The revenue command center</div></div></div>
-<div id="ev-1" class="ev clip" data-start="5.200" data-duration="5.150" data-track-index="11"><div class="flywrap"><div class="flyworld"><div class="flycard fc0" style="width:400px;transform:translate3d(-620px,-180px,-240px) rotateY(20deg)"><img src="assets/shots/revenue-command-center.png"/></div><div class="flycard fc1" style="width:420px;transform:translate3d(600px,-150px,-180px) rotateY(-18deg)"><img src="assets/shots/connected-apps.png"/></div><div class="flycard fc2" style="width:380px;transform:translate3d(-680px,210px,-120px) rotateY(16deg)"><img src="assets/shots/metrics-row.png"/></div><div class="flycard fc3" style="width:360px;transform:translate3d(640px,230px,-300px) rotateY(-22deg)"><img src="assets/shots/roleplay-kit-card.png"/></div><div class="flycard fc4" style="width:340px;transform:translate3d(-230px,-320px,-440px) rotateY(10deg)"><img src="assets/shots/email-assist.png"/></div><div class="flycard fc5" style="width:340px;transform:translate3d(300px,320px,-380px) rotateY(-12deg)"><img src="assets/shots/command-center-card.png"/></div></div><div class="flytitle"><div class="kicker" style="margin:0"><div class="k-eyebrow">One platform</div><div class="k-title"><span class="w">The</span><span class="w">whole</span><span class="w">revenue</span><span class="w">stack.</span></div></div></div></div></div>
+<div id="ev-0" class="ev clip" data-start="0.300" data-duration="5.250" data-track-index="10"><div class="logostage"><div class="logo3dwrap"><div class="logo3d"><div class="logobloom"></div><div class="logosvgbox" style="width:864px"><svg xmlns="http://www.w3.org/2000/svg" width="2048" height="1316" viewBox="0 0 2048 1316" fill="none" role="img" aria-label="Dialfyne stacked logo">
+  <defs>
+    <linearGradient id="blue" x1="395" y1="204" x2="1653" y2="1054" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8FD2F7"/>
+      <stop offset="52%" stop-color="#5CCBFF"/>
+      <stop offset="100%" stop-color="#1295FF"/>
+    </linearGradient>
+  </defs>
+  <g id="mark" stroke="url(#blue)" stroke-linecap="round" stroke-linejoin="round">
+    <path id="mark-stem" d="M760 470 H920" stroke-width="75"/>
+    <path id="mark-fork" d="M1095 245 C1025 282 1006 333 1006 395 C1006 436 985 463 954 470 C985 482 1006 524 1006 578 C1006 641 1031 690 1095 728" stroke-width="75"/>
+    <path id="bar-1" d="M1114 335 H1310" stroke-width="55"/>
+    <path id="bar-2" d="M1114 470 H1310" stroke-width="55"/>
+    <path id="bar-3" d="M1114 604 H1270" stroke-width="55"/>
+  </g>
+  <g id="wordmark">
+    <g stroke="url(#blue)" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1508 880 H1638" stroke-width="38"/>
+      <path d="M1508 953 H1638" stroke-width="38"/>
+      <path d="M1508 1026 H1638" stroke-width="38"/>
+    </g>
+    <g>
+      <path d="M662 0C1121 0 1416 292 1416 744C1416 1197 1116 1490 656 1490H80V0ZM496 344V1146H630C881 1146 996 1017 996 744C996 473 885 344 642 344Z" fill="#FFFFFF" transform="translate(395.000 1040.000) scale(0.1181641 -0.1181641)"/>
+      <path d="M496 1490H80V0H496Z" fill="#FFFFFF" transform="translate(572.047 1040.000) scale(0.1181641 -0.1181641)"/>
+      <path d="M0 0H455L528 245H1026L1097 0H1565L1060 1490H500ZM624 565 628 578C682 758 732 932 781 1113C829 932 878 758 930 578L934 565Z" fill="#FFFFFF" transform="translate(645.109 1040.000) scale(0.1181641 -0.1181641)"/>
+      <path d="M80 0H1138V352H496V1490H80Z" fill="#FFFFFF" transform="translate(835.036 1040.000) scale(0.1181641 -0.1181641)"/>
+      <path d="M80 0H496V536H1159V874H496V1138H1199V1490H80Z" fill="#FFFFFF" transform="translate(979.233 1040.000) scale(0.1181641 -0.1181641)"/>
+      <path d="M555 0H957V508L1496 1490H1023L822 1072C800 1025 778 978 758 930C736 978 714 1025 690 1072L476 1490H0L555 508Z" fill="#FFFFFF" transform="translate(1130.639 1040.000) scale(0.1181641 -0.1181641)"/>
+      <path d="M80 0H496V544C496 604 496 721 491 855C561 726 627 611 669 544L1008 0H1432V1490H1016V944C1016 873 1017 752 1021 631C963 738 902 849 867 905L504 1490H80Z" fill="#FFFFFF" transform="translate(1312.412 1040.000) scale(0.1181641 -0.1181641)"/>
+    </g>
+  </g>
+</svg>
+</div><div class="logosweep"></div></div></div><div class="ltag">The revenue command center</div></div></div>
+<div id="ev-1" class="ev clip" data-start="5.200" data-duration="5.150" data-track-index="11"><div class="flywrap"><div class="flyworld"><div class="flycard fc0" style="width:340px;transform:translate3d(-300px,-560px,-260px) rotateY(16deg)"><img src="assets/shots/revenue-command-center.png"/></div><div class="flycard fc1" style="width:360px;transform:translate3d(320px,-300px,-180px) rotateY(-16deg)"><img src="assets/shots/connected-apps.png"/></div><div class="flycard fc2" style="width:340px;transform:translate3d(-340px,120px,-120px) rotateY(14deg)"><img src="assets/shots/metrics-row.png"/></div><div class="flycard fc3" style="width:320px;transform:translate3d(330px,360px,-300px) rotateY(-18deg)"><img src="assets/shots/roleplay-kit-card.png"/></div><div class="flycard fc4" style="width:320px;transform:translate3d(-150px,560px,-420px) rotateY(8deg)"><img src="assets/shots/email-assist.png"/></div><div class="flycard fc5" style="width:300px;transform:translate3d(200px,-560px,-360px) rotateY(-10deg)"><img src="assets/shots/command-center-card.png"/></div></div><div class="flytitle"><div class="kicker" style="margin:0"><div class="k-eyebrow">One platform</div><div class="k-title"><span class="w">The</span><span class="w">whole</span><span class="w">revenue</span><span class="w">stack.</span></div></div></div></div></div>
 <div id="ev-2" class="ev clip" data-start="10.000" data-duration="6.350" data-track-index="12"><div class="hero big"><span class="w"><span class="t">Run</span><span class="e">Run</span></span><span class="w"><span class="t">it</span><span class="e">it</span></span><span class="w"><span class="t">on</span><span class="e">on</span></span><span class="w"><span class="t">autopilot.</span><span class="e">autopilot.</span></span></div></div>
 <audio id="snd" preload="none" src="assets/music.mp3" data-start="0" data-duration="16.00" data-track-index="100"></audio>
 <script>window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});
 tl.set('#ev-0 .logo3d',{rotationY:-26,scale:0.92,opacity:0},0.300);
 tl.to('#ev-0 .logo3d',{rotationY:0,scale:1,opacity:1,duration:0.9,ease:'power3.out'},0.300);
-tl.set('#ev-0 .logo-img',{clipPath:'inset(0% 100% 0% 0%)',filter:'blur(7px)'},0.300);
-tl.to('#ev-0 .logo-img',{clipPath:'inset(0% 0% 0% 0%)',duration:1.25,ease:'power2.out'},0.600);
-tl.to('#ev-0 .logo-img',{filter:'blur(0px)',duration:0.6,ease:'power2.out'},1.250);
 tl.set('#ev-0 .logosweep',{xPercent:-230,opacity:0},0.300);
 tl.to('#ev-0 .logosweep',{opacity:1,duration:0.15},0.700);
 tl.to('#ev-0 .logosweep',{xPercent:520,opacity:0,duration:1.05,ease:'power1.inOut'},0.750);
 tl.set('#ev-0 .logobloom',{opacity:0,scale:0.8},0.300);
 tl.to('#ev-0 .logobloom',{opacity:1,scale:1.12,duration:0.4,ease:'power2.out'},0.700);
 tl.to('#ev-0 .logobloom',{opacity:0.42,scale:1,duration:1.0,ease:'power2.out'},1.250);
+tl.set('#ev-0 #mark-stem',{transformOrigin:'0% 50%'},0.300);
+tl.set('#ev-0 #mark-stem',{opacity:0,scaleX:0},0.300);
+tl.to('#ev-0 #mark-stem',{opacity:1,scaleX:1, duration:0.4,ease:'power3.out'},0.550);
+tl.set('#ev-0 #mark-fork',{transformOrigin:'0% 50%'},0.300);
+tl.set('#ev-0 #mark-fork',{opacity:0,scale:0},0.300);
+tl.to('#ev-0 #mark-fork',{opacity:1,scale:1, duration:0.55,ease:'back.out(1.8)'},0.750);
+tl.set('#ev-0 #bar-1',{transformOrigin:'0% 50%'},0.300);
+tl.set('#ev-0 #bar-1',{opacity:0,scaleX:0},0.300);
+tl.to('#ev-0 #bar-1',{opacity:1,scaleX:1, duration:0.5,ease:'power3.out'},1.150);
+tl.set('#ev-0 #bar-2',{transformOrigin:'0% 50%'},0.300);
+tl.set('#ev-0 #bar-2',{opacity:0,scaleX:0},0.300);
+tl.to('#ev-0 #bar-2',{opacity:1,scaleX:1, duration:0.5,ease:'power3.out'},1.280);
+tl.set('#ev-0 #bar-3',{transformOrigin:'0% 50%'},0.300);
+tl.set('#ev-0 #bar-3',{opacity:0,scaleX:0},0.300);
+tl.to('#ev-0 #bar-3',{opacity:1,scaleX:1, duration:0.5,ease:'power3.out'},1.410);
+tl.set('#ev-0 #wordmark',{clipPath:'inset(0% 100% 0% 0%)'},0.300);
+tl.to('#ev-0 #wordmark',{clipPath:'inset(0 0% 0 0)', duration:0.7,ease:'power2.out'},1.650);
 tl.set('#ev-0 .ltag',{opacity:0,y:14},0.300);
 tl.to('#ev-0 .ltag',{opacity:1,y:0, duration:0.5,ease:'power3.out'},2.000);
 tl.to('#ev-0',{opacity:0,scale:1.05,filter:'blur(9px)',duration:0.3,ease:'power3.in'},5.180);
