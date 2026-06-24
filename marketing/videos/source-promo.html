@@ -168,6 +168,9 @@ h1.head{font-weight:800;font-size:var(--fHead);line-height:1.04;letter-spacing:-
 .watermark b{font-size:18px;font-weight:800;color:var(--ink)}
 
 /* live elements (JS-driven, deterministic) */
+.window{position:relative}
+.sheen{position:absolute;top:0;bottom:0;left:0;width:48%;pointer-events:none;z-index:6;opacity:0;
+  background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.45) 50%,transparent 100%);transform:skewX(-14deg) translateX(-80%);mix-blend-mode:overlay}
 .simbox{position:relative}
 .recbar{position:absolute;top:14px;left:18px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:.08em;color:#ff5f57}
 .recdot{width:10px;height:10px;border-radius:50%;background:#ff5f57;will-change:transform,opacity}
@@ -343,6 +346,8 @@ SCENES.forEach((sc,i)=>{
     ? `<div class="bg darkbg"></div><div class="blob blobA"></div><div class="blob blobB"></div>`
     : `<div class="bg lightbg"></div><div class="blob blobA"></div><div class="blob blobB"></div><div class="grid"></div>`;
   el.innerHTML=`${bg}<div class="content">${sc.b()}</div>`;
+  // premium one-time light sweep across each panel (overlay; never moves text)
+  el.querySelectorAll('.window').forEach(w=>{ const s=document.createElement('div'); s.className='sheen'; w.appendChild(s); });
   sc._el=el; root.appendChild(el);
 });
 
@@ -369,17 +374,16 @@ function seek(t){
     const lt = t - sc.s;            // local time from scene start
     const te = t - sc.e;            // time past scene's nominal end (exit phase)
 
-    // entrance: springy pop (overshoot) on motion, expo fade-in
+    // entrance: clean slide-up + settle. Once settled, NOTHING moves.
     const ein  = easeOutExpo(clamp(lt/TIN));
-    const eback = easeOutBack(clamp(lt/TIN));
     // exit: accelerating push up + fast fade so it clears quickly
     const xmove = easeInCubic(clamp(te/TOUT));
     const xfade = easeOutExpo(clamp(te/(TOUT*0.7)));
 
-    const enterY = (1-eback)*70;     // rises from below with a little overshoot
-    const exitY  = -xmove*88;        // pushes up and away
+    const enterY = (1-ein)*58;
+    const exitY  = -xmove*88;
     const y = enterY + exitY;
-    const scale = (0.965 + 0.035*eback) * (1 - 0.06*xmove);
+    const scale = (0.976 + 0.024*ein) * (1 - 0.06*xmove);
     const op = ein * (1 - xfade);
 
     el.style.opacity = op.toFixed(3);
@@ -388,11 +392,15 @@ function seek(t){
     const content=el.querySelector('.content');
     content.style.transform = `translate3d(0,${y.toFixed(2)}px,0) scale(${scale.toFixed(4)})`;
 
-    // panel gentle float — graphics breathe, but the CAPTION (outside .kb) stays still
+    // panel holds perfectly still — base orientation scale only (text NEVER drifts)
     const kb=el.querySelector('.kb');
-    if(kb){ const base=parseFloat(kb.dataset.base||'1');
-      const fy=Math.sin(t*0.9+i*1.3)*3.4, fr=Math.sin(t*0.6+i)*0.18;
-      kb.style.transform=`translateY(${fy.toFixed(2)}px) rotate(${fr.toFixed(3)}deg) scale(${base})`; }
+    if(kb){ const base=parseFloat(kb.dataset.base||'1'); kb.style.transform=`scale(${base})`; }
+
+    // one-time light sweep across the panel on entrance (overlay only, not text)
+    const sheen=el.querySelector('.sheen');
+    if(sheen){ const sw=clamp((lt-0.12)/0.66);
+      sheen.style.transform=`skewX(-14deg) translateX(${(-80+sw*300).toFixed(1)}%)`;
+      sheen.style.opacity=(sw>0&&sw<1? Math.sin(sw*Math.PI)*0.85 : 0).toFixed(3); }
 
     // caption fade stagger (opacity only — text never moves)
     el.querySelectorAll('[data-anim]').forEach(node=>{
@@ -401,15 +409,16 @@ function seek(t){
       node.style.opacity = easeOutExpo(clamp((lt-d)/0.5)).toFixed(3);
     });
 
-    // ambient: decorative blobs drift slowly (graphics, not text)
+    // ambient background motion — behind the panel, never touches text
     el.querySelectorAll('.blob').forEach((bl,j)=>{ const dir=j?-1:1, ph=t*0.16+j*1.9;
-      bl.style.transform=`translate(${(Math.sin(ph)*26*dir).toFixed(1)}px,${(Math.cos(ph*0.8)*20).toFixed(1)}px) scale(${(1+0.06*Math.sin(ph)).toFixed(3)})`; });
+      bl.style.transform=`translate(${(Math.sin(ph)*30*dir).toFixed(1)}px,${(Math.cos(ph*0.8)*24).toFixed(1)}px) scale(${(1+0.07*Math.sin(ph)).toFixed(3)})`; });
+    const grid=el.querySelector('.grid'); if(grid){ grid.style.backgroundPosition=`${(t*7).toFixed(1)}px ${(t*4.5).toFixed(1)}px`; }
 
-    // UI items cascade in on entrance (springy stagger), locked during hold
+    // UI items cascade in on entrance (smooth stagger), then locked still during hold
     el.querySelectorAll('.statchip,.qrow,.dcard,.xpcard,.step,.meta>div,.coach').forEach((it,k)=>{
-      const a=easeOutBack(clamp((lt-0.16-k*0.05)/0.5));
-      it.style.opacity=clamp(a).toFixed(3);
-      it.style.transform=`translateY(${((1-a)*22).toFixed(2)}px)`;
+      const a=easeOutExpo(clamp((lt-0.14-k*0.045)/0.5));
+      it.style.opacity=a.toFixed(3);
+      it.style.transform=`translateY(${((1-a)*18).toFixed(2)}px)`;
     });
 
     // number count-ups (ramp during entrance, then exact target)
@@ -446,8 +455,9 @@ function seek(t){
     if(flow){ const steps=el.querySelectorAll('.step'); const act=held?Math.floor((lt-0.85)*1.05)%steps.length:-1;
       steps.forEach((s,k)=>s.classList.toggle('live',k===act)); }
 
-    // primary CTAs pulse subtly
-    el.querySelectorAll('.btn.primary').forEach(b=>{ const p=0.5+0.5*Math.sin(t*2.4); b.style.transform=`scale(${(1+0.018*p).toFixed(3)})`; });
+    // primary CTAs pulse via glow only — NO transform, so button text stays put
+    el.querySelectorAll('.btn.primary').forEach(b=>{ const p=0.5+0.5*Math.sin(t*2.2);
+      b.style.boxShadow=`0 ${(12+7*p).toFixed(1)}px ${(26+12*p).toFixed(1)}px -8px rgba(31,109,255,${(0.6+0.3*p).toFixed(2)})`; });
 
     // DASHBOARD — streak flame flicker
     const flame=el.querySelector('.flame');
