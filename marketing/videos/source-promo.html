@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Dialfyne Promo</title>
+<style>
+@font-face{font-family:Inter;src:url(fonts/inter-latin-400-normal.woff2) format('woff2');font-weight:400;font-display:block}
+@font-face{font-family:Inter;src:url(fonts/inter-latin-500-normal.woff2) format('woff2');font-weight:500;font-display:block}
+@font-face{font-family:Inter;src:url(fonts/inter-latin-600-normal.woff2) format('woff2');font-weight:600;font-display:block}
+@font-face{font-family:Inter;src:url(fonts/inter-latin-700-normal.woff2) format('woff2');font-weight:700;font-display:block}
+@font-face{font-family:Inter;src:url(fonts/inter-latin-800-normal.woff2) format('woff2');font-weight:800;font-display:block}
+@font-face{font-family:Inter;src:url(fonts/inter-latin-900-normal.woff2) format('woff2');font-weight:900;font-display:block}
+
+:root{
+  --blue:#1f6dff; --blue2:#2b8bff; --blue-deep:#0b3aa8;
+  --ink:#0f1b2d; --ink2:#1b2942; --muted:#6b7a90; --muted2:#94a3b8;
+  --line:#e9eef6; --bg1:#f5f8fd; --bg2:#e9f0fb;
+  --green-bg:#e7f7ee; --green:#16a45a;
+  --card:#ffffff;
+}
+*{box-sizing:border-box;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+html,body{margin:0;padding:0;background:#05080f;font-family:Inter,system-ui,sans-serif;overflow:hidden}
+#stage{position:relative;overflow:hidden;background:#05080f}
+
+/* ---- scene shell ---- */
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;will-change:opacity,transform}
+.scene .bg{position:absolute;inset:0;z-index:0}
+.lightbg{background:radial-gradient(1200px 700px at 18% -10%, #ffffff 0%, var(--bg1) 42%, var(--bg2) 100%)}
+.darkbg{background:radial-gradient(1100px 800px at 50% 12%, #11357e 0%, #0a1f4d 45%, #050b1c 100%)}
+.blob{position:absolute;border-radius:50%;opacity:.5}
+.blobA{width:60%;aspect-ratio:1;background:radial-gradient(circle,#2b8bff 0%,transparent 60%);left:-14%;top:-22%}
+.blobB{width:54%;aspect-ratio:1;background:radial-gradient(circle,#22d3ee 0%,transparent 60%);right:-16%;bottom:-24%;opacity:.32}
+.grid{position:absolute;inset:0;background-image:linear-gradient(#0f1b2d0a 1px,transparent 1px),linear-gradient(90deg,#0f1b2d0a 1px,transparent 1px);background-size:54px 54px;mask-image:radial-gradient(80% 70% at 50% 40%,#000 30%,transparent 100%)}
+
+.content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;height:100%;justify-content:center;gap:var(--gap)}
+
+/* ---- caption ---- */
+.cap{text-align:center;max-width:var(--capw);padding:0 40px}
+.eyebrow{font-weight:800;letter-spacing:.22em;font-size:var(--fEyebrow);color:var(--blue);display:inline-flex;align-items:center;gap:14px;margin-bottom:18px}
+.eyebrow:before{content:"";width:34px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--blue2))}
+h1.head{font-weight:800;font-size:var(--fHead);line-height:1.04;letter-spacing:-.02em;color:var(--ink);margin:0}
+.sub{margin-top:18px;font-weight:500;font-size:var(--fSub);line-height:1.4;color:var(--muted)}
+
+/* ---- generic UI atoms ---- */
+.panelwrap{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;transform-origin:center;will-change:transform,opacity}
+.window{width:1180px;background:#fbfdff;border:1px solid var(--line);border-radius:28px;box-shadow:0 40px 90px -30px rgba(13,38,76,.45),0 8px 24px -8px rgba(13,38,76,.18);overflow:hidden}
+.win-os{height:46px;display:flex;align-items:center;gap:9px;padding:0 20px;background:linear-gradient(#ffffff,#f3f7fd);border-bottom:1px solid var(--line)}
+.dot{width:12px;height:12px;border-radius:50%}.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+.win-url{margin-left:14px;font-size:15px;color:var(--muted2);font-weight:600}
+.win-body{padding:26px 30px 30px}
+
+.logo{display:flex;align-items:center;gap:12px}
+.logomark{width:42px;height:42px;border-radius:12px;background:linear-gradient(150deg,var(--blue2),var(--blue));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px -6px rgba(31,109,255,.7)}
+.logomark svg{width:22px;height:22px}
+.logo .lt b{font-weight:800;color:var(--ink);font-size:19px;line-height:1}
+.logo .lt span{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-top:3px}
+
+.btn{border:none;border-radius:12px;font-family:inherit;font-weight:700;font-size:16px;display:inline-flex;align-items:center;gap:9px;padding:13px 20px;cursor:default}
+.btn.primary{background:linear-gradient(180deg,var(--blue2),var(--blue));color:#fff;box-shadow:0 12px 24px -10px rgba(31,109,255,.8)}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink2)}
+.btn.blue-soft{background:#eaf2ff;color:var(--blue);font-weight:700}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:600;color:var(--ink2)}
+.pill{display:inline-flex;align-items:center;padding:4px 11px;border-radius:999px;font-size:12.5px;font-weight:800}
+.pill.new{background:var(--green-bg);color:var(--green)}
+.pill.count{background:#eef3fb;color:var(--muted);font-weight:700}
+
+.section-label{font-size:13px;font-weight:800;letter-spacing:.18em;color:var(--blue);display:flex;align-items:center;gap:10px}
+.section-label:before{content:"";width:26px;height:2px;background:var(--blue)}
+
+/* cockpit header */
+.cockpit{display:flex;justify-content:space-between;align-items:flex-start}
+.cockpit h2{margin:6px 0 0;font-size:34px;font-weight:800;color:var(--ink);letter-spacing:-.02em}
+.cockpit p{margin:8px 0 0;color:var(--muted);font-size:16px;font-weight:500}
+.statrow{display:flex;gap:14px}
+.statchip{min-width:118px;padding:14px 18px;border:1px solid var(--line);border-radius:16px;background:#fff;text-align:right}
+.statchip small{display:block;font-size:11px;letter-spacing:.12em;color:var(--muted2);font-weight:700}
+.statchip b{font-size:26px;color:var(--ink);font-weight:800}
+
+.softbar{margin-top:22px;display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border:1px solid var(--line);border-radius:18px;background:#fff}
+.softbar .left{display:flex;align-items:center;gap:14px}
+.icobox{width:48px;height:48px;border-radius:12px;background:#f1f5fb;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+
+.tabbar{margin-top:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;background:#eef3fb;border-radius:16px;padding:7px}
+.tab{display:flex;align-items:center;justify-content:center;gap:9px;padding:13px;border-radius:11px;font-weight:700;color:var(--muted);font-size:16px}
+.tab.active{background:#fff;color:var(--ink);box-shadow:0 6px 16px -8px rgba(13,38,76,.25)}
+
+/* queue */
+.qcard{margin-top:18px;border:1px solid var(--line);border-radius:18px;background:#fff;padding:22px}
+.qhead{display:flex;justify-content:space-between;align-items:flex-start}
+.qhead h3{margin:0;font-size:22px;font-weight:800;color:var(--ink)}
+.qhead .muted{color:var(--muted);font-size:14px;margin-top:4px;font-weight:600}
+.qrow{display:flex;align-items:center;justify-content:space-between;padding:14px 6px;border-top:1px solid var(--line)}
+.qrow .who{display:flex;align-items:center;gap:14px}
+.qrow .num{color:var(--muted2);font-weight:700;width:18px;text-align:center}
+.qrow .nm b{font-weight:700;color:var(--ink);font-size:16px}
+.qrow .nm small{display:block;color:var(--muted);font-size:13.5px;font-weight:600;margin-top:2px}
+
+/* coach panel */
+.coach{border:1px solid var(--line);border-radius:18px;background:#fff;padding:22px;width:330px}
+.coach .h{display:flex;gap:12px;align-items:center}
+.coach .h .mk{width:42px;height:42px;border-radius:12px;background:linear-gradient(150deg,var(--blue2),var(--blue));display:flex;align-items:center;justify-content:center}
+.coach .h b{font-size:17px;color:var(--ink);font-weight:800}
+.coach .h small{display:block;color:var(--muted);font-size:13px;font-weight:600}
+.coach .body{margin-top:18px;color:var(--muted);font-size:15px;line-height:1.5;font-weight:500}
+
+/* practice room */
+.practice{border:1px solid var(--line);border-radius:18px;background:#fff;padding:26px}
+.practice .top{display:flex;justify-content:space-between;align-items:center;gap:18px}
+.practice .top h3{margin:0;font-size:24px;font-weight:800;color:var(--ink)}
+.practice .top p{margin:6px 0 0;color:var(--muted);font-size:15px;font-weight:500}
+.select{flex:1;max-width:430px;display:flex;align-items:center;justify-content:space-between;border:2px solid var(--blue);border-radius:14px;padding:15px 18px;font-weight:700;color:var(--ink);font-size:16px;background:#fff}
+.meta{margin-top:24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;border-top:1px solid var(--line);padding-top:22px}
+.meta small{font-size:11px;letter-spacing:.14em;color:var(--muted2);font-weight:800}
+.meta b{display:block;font-size:18px;color:var(--ink);font-weight:800;margin-top:8px}
+.meta span{display:block;font-size:14px;color:var(--muted);font-weight:600;margin-top:3px}
+.simbox{margin-top:22px;border:2px dashed #d6e0ee;border-radius:16px;height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--muted)}
+.wave{display:flex;align-items:flex-end;gap:5px;height:46px}
+.wave i{width:6px;border-radius:4px;background:linear-gradient(var(--blue2),var(--blue));display:block}
+
+/* campaign */
+.campaign{border:1px solid var(--line);border-radius:18px;background:#fff;padding:24px}
+.campaign .row{display:flex;justify-content:space-between;align-items:center}
+.campaign h3{margin:0;font-size:20px;font-weight:800;color:var(--ink)}
+.campaign small{color:var(--muted);font-weight:600;font-size:14px;display:block;margin-top:6px}
+.progress{margin-top:18px;height:12px;border-radius:8px;background:#eef3fb;overflow:hidden}
+.progress i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#22d3ee,var(--blue))}
+
+/* meeting intel */
+.notetaker{border:1px solid var(--line);border-radius:18px;background:#fff;padding:30px}
+.notetaker h3{margin:0;font-size:22px;font-weight:800;color:var(--ink)}
+.notetaker .lead{color:var(--muted);font-size:15px;margin-top:8px;font-weight:500}
+.field{margin-top:18px;display:flex;align-items:center;gap:12px}
+.input{flex:1;border:1px solid var(--line);border-radius:13px;padding:16px 18px;color:var(--muted2);font-size:16px;font-weight:600;background:#fff;display:flex;align-items:center;gap:10px}
+.flow{margin-top:24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.step{flex:1;min-width:120px;border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+.step .ic{width:38px;height:38px;border-radius:10px;background:#eaf2ff;color:var(--blue);display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.step b{font-size:15px;color:var(--ink);font-weight:700}
+.arrow{color:#c4d2e6;font-weight:800;font-size:20px}
+
+/* dashboard */
+.dash{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.dcard{border:1px solid var(--line);border-radius:18px;background:#fff;padding:20px}
+.dcard .ic{width:40px;height:40px;border-radius:11px;background:#eaf2ff;color:var(--blue);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.dcard small{font-size:13.5px;color:var(--muted);font-weight:600}
+.dcard b{display:block;font-size:34px;color:var(--ink);font-weight:800;margin-top:6px;letter-spacing:-.02em}
+.xpbar{margin-top:18px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px}
+.xpcard{border:1px solid var(--line);border-radius:16px;background:#fff;padding:18px 20px;display:flex;align-items:center;gap:14px}
+.xpcard .ic{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.xpcard small{font-size:11px;letter-spacing:.12em;color:var(--muted2);font-weight:800}
+.xpcard b{display:block;font-size:22px;color:var(--ink);font-weight:800;margin-top:3px}
+.track{margin-top:6px;height:8px;width:160px;border-radius:6px;background:#eef3fb;overflow:hidden}
+.track i{display:block;height:100%;background:linear-gradient(90deg,var(--blue2),var(--blue))}
+
+/* intro / outro */
+.brandbig{display:flex;flex-direction:column;align-items:center;gap:30px;position:relative;z-index:2}
+.brandbig img{width:var(--logoW);filter:drop-shadow(0 18px 40px rgba(20,80,200,.5))}
+.kicker{color:#bcd2ff;font-weight:600;font-size:var(--fSub);letter-spacing:.01em}
+.outro-words{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap}
+.outro-words .w{font-weight:900;font-size:var(--fHead);letter-spacing:-.02em;color:#fff}
+.outro-words .sep{width:10px;height:10px;border-radius:50%;background:var(--blue2);box-shadow:0 0 24px var(--blue2)}
+.url{margin-top:26px;color:#7fa9ff;font-weight:700;font-size:var(--fSub);letter-spacing:.02em}
+
+/* progress bar */
+#pbar{position:absolute;left:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--blue2),#22d3ee);z-index:50;width:0}
+.watermark{position:absolute;z-index:40;display:flex;align-items:center;gap:9px;opacity:.0}
+.watermark .lm{width:30px;height:30px;border-radius:9px;background:linear-gradient(150deg,var(--blue2),var(--blue));display:flex;align-items:center;justify-content:center}
+.watermark .lm svg{width:16px;height:16px}
+.watermark b{font-size:18px;font-weight:800;color:var(--ink)}
+
+/* orientation tuning */
+body[data-o="land"]{--capw:1280px;--fEyebrow:16px;--fHead:54px;--fSub:21px;--gap:42px;--logoW:520px}
+body[data-o="vert"]{--capw:960px;--fEyebrow:18px;--fHead:62px;--fSub:26px;--gap:60px;--logoW:620px}
+</style>
+</head>
+<body data-o="land">
+<div id="stage">
+  <div class="watermark" id="wm" style="left:46px;top:40px"><span class="lm">SPK</span><b>Dialfyne</b></div>
+  <div id="scenes"></div>
+  <div id="pbar"></div>
+</div>
+
+<script>
+const SPARK='<svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5l1.9 5.2 5.6.4-4.3 3.6 1.4 5.4L12 19.5 7.4 17.5l1.4-5.4-4.3-3.6 5.6-.4z" fill="#fff"/></svg>';
+const ICO=(p)=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const phone='<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.6a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.5-1.2a2 2 0 0 1 2.1-.5c.8.3 1.7.6 2.6.7a2 2 0 0 1 1.7 2z"/>';
+const head='<path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 16a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 16a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/>';
+
+// ---------- scene markup builders ----------
+function cap(eyebrow,head,sub){return `<div class="cap">
+  <div class="eyebrow" data-anim data-d="0.05">${eyebrow}</div>
+  <h1 class="head" data-anim data-d="0.16">${head}</h1>
+  <div class="sub" data-anim data-d="0.30">${sub}</div></div>`;}
+
+function logoLockup(){return `<div class="logo"><div class="logomark">${SPARK}</div><div class="lt"><b>Dialfyne Dialer</b><span>Dialfyne Demo</span></div></div>`;}
+
+const sceneDial = ()=>`
+${cap('DIAL','Work your highest-intent list.','Auto-dial, live coaching, and one-tap dispositions — your line stays clean.')}
+<div class="panelwrap" data-anim data-d="0.12"><div class="window kb">
+ <div class="win-os"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><div class="win-url">app.dialfyne.com/dial</div></div>
+ <div class="win-body">
+   <div class="cockpit">
+     <div><div class="section-label">REP COCKPIT</div><h2>Dialfyne Demo</h2><p>Work the highest intent list, keep your line clean, log outcomes fast.</p></div>
+     <div class="statrow"><div class="statchip"><small>DIALS</small><b>48</b></div><div class="statchip"><small>CONNECTS</small><b>7</b></div><div class="statchip"><small>BOOKED</small><b>3</b></div></div>
+   </div>
+   <div style="margin-top:18px;display:flex;gap:18px;align-items:flex-start">
+     <div style="flex:1">
+       <div class="qcard" style="margin-top:0">
+         <div class="qhead"><div><h3>Call queue</h3><div class="muted">17 queued · you dialed 0 this session</div></div>
+           <div style="display:flex;gap:10px"><button class="btn ghost">⚡ Auto-dial</button><button class="btn ghost" style="color:#ff5f57">End</button></div></div>
+         <div class="qrow"><div class="who"><span class="num">1</span><div class="nm"><b>Jeramie Heflin</b> <span class="pill new" style="margin-left:6px">New</span><small>+1 210 526 1802</small></div></div><div style="display:flex;gap:10px"><button class="btn blue-soft">Dial</button><span class="pill count">QUEUED</span></div></div>
+         <div class="qrow"><div class="who"><span class="num">2</span><div class="nm"><b>Nav Sangha</b> <span class="pill new" style="margin-left:6px">New</span><small>+1 416 524 0413</small></div></div><div style="display:flex;gap:10px"><button class="btn blue-soft">Dial</button><span class="pill count">QUEUED</span></div></div>
+         <div class="qrow"><div class="who"><span class="num">3</span><div class="nm"><b>Elsa Rodriguez-Messer</b> <span class="pill new" style="margin-left:6px">New</span><small>+1 937 310 1226</small></div></div><div style="display:flex;gap:10px"><button class="btn blue-soft">Dial</button><span class="pill count">QUEUED</span></div></div>
+         <div class="qrow"><div class="who"><span class="num">4</span><div class="nm"><b>Brian McFarlane</b> <span class="pill new" style="margin-left:6px">New</span><small>+1 438 825 0315</small></div></div><div style="display:flex;gap:10px"><button class="btn blue-soft">Dial</button><span class="pill count">QUEUED</span></div></div>
+       </div>
+     </div>
+     <div class="coach"><div class="h"><div class="mk">${SPARK}</div><div><b>Live coach</b><small>Ready when you dial</small></div></div>
+       <div class="body">Scripts and one-tap objection rebuttals appear here the moment you start a call.</div>
+       <div style="margin-top:18px"><div class="chip" style="width:100%;justify-content:flex-start;color:var(--blue);border-color:#cfe0ff;background:#f3f8ff">“We're on a contract” → acknowledge, then ask what's working.</div></div>
+     </div>
+   </div>
+ </div>
+</div></div>`;
+
+const sceneRoleplay = ()=>`
+${cap('ROLEPLAY','Rehearse the real call.','Live AI buyer simulations in your own dialer — scored every single time.')}
+<div class="panelwrap" data-anim data-d="0.12"><div class="window kb" style="width:1040px">
+ <div class="win-os"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><div class="win-url">app.dialfyne.com/roleplay</div></div>
+ <div class="win-body"><div class="practice">
+   <div class="top"><div><h3>Practice room</h3><p>Start a live buyer simulation using your dialer identity.</p></div>
+     <div class="select">Instrumentl Mock Discovery — Priya Nair v2 <span style="color:var(--blue)">▾</span></div>
+     <button class="btn primary">▶ Start</button></div>
+   <div class="meta">
+     <div><small>BUYER</small><b>Priya Nair</b><span>Executive Director</span></div>
+     <div><small>COMPANY</small><b>Coastal Habitat Alliance</b><span>Calling from Instrumentl</span></div>
+     <div><small>MODE</small><b>Voice roleplay</b><span>hard difficulty</span></div>
+   </div>
+   <div class="simbox"><div class="wave" id="rpwave"></div><div style="font-weight:600">Live buyer simulation — speak naturally</div></div>
+ </div></div>
+</div></div>`;
+
+const sceneCampaign = ()=>`
+${cap('TEAM CAMPAIGNS','Dial the same list, never collide.','Shared queues your team works together — claims are locked so reps never double-call.')}
+<div class="panelwrap" data-anim data-d="0.12"><div class="window kb" style="width:1000px">
+ <div class="win-os"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><div class="win-url">app.dialfyne.com/campaigns</div></div>
+ <div class="win-body">
+  <div class="tabbar"><div class="tab active">📚 Team campaigns</div><div class="tab">☑ My list</div><div class="tab">🏋 Roleplay</div></div>
+  <div class="campaign" style="margin-top:18px">
+    <div class="row"><div style="display:flex;gap:14px;align-items:center"><div class="logomark" style="border-radius:12px">${ICO('<circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2\"/><circle cx=\"17\" cy=\"7\" r=\"3\"/>')}</div><div><div style="font-size:18px;font-weight:800;color:var(--ink)">Team campaigns</div><small>Shared lists your team dials together. Claims are locked so reps never collide.</small></div></div><span class="pill count">1 active</span></div>
+    <div style="margin-top:20px;border:1px solid var(--line);border-radius:14px;padding:18px">
+      <div class="row"><div><h3>Ongoing Dialer Campaign</h3><small>14 left · 1 of 15 done · 14 follow-ups scheduled</small></div><button class="btn primary">Join and dial ›</button></div>
+      <div class="progress"><i id="campfill" style="width:8%"></i></div>
+    </div>
+  </div>
+ </div>
+</div></div>`;
+
+const sceneMeeting = ()=>`
+${cap('MEETING INTELLIGENCE','Send a notetaker. Get the follow-up.','It records, transcribes, scores, and drafts your follow-up — auto-posted to your CRM.')}
+<div class="panelwrap" data-anim data-d="0.12"><div class="window kb" style="width:980px">
+ <div class="win-os"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><div class="win-url">app.dialfyne.com/meetings</div></div>
+ <div class="win-body"><div class="notetaker">
+   <div class="section-label">MEETING INTELLIGENCE</div>
+   <h3 style="margin-top:10px">Record &amp; Analyze</h3>
+   <p class="lead">Paste a Zoom, Google Meet, or Microsoft Teams link. The bot joins and records. 1 credit per meeting.</p>
+   <div class="field"><div class="input">🔗 https://zoom.us/j/…  or  https://meet.google.com/…</div></div>
+   <div class="field"><div class="input">✉ Prospect email (optional, for CRM)</div><button class="btn primary">Send notetaker</button></div>
+   <div class="flow">
+     <div class="step"><div class="ic">${ICO('<circle cx=\"12\" cy=\"12\" r=\"3\"/><circle cx=\"12\" cy=\"12\" r=\"9\"/>')}</div><b>Records</b></div>
+     <div class="arrow">→</div>
+     <div class="step"><div class="ic">${ICO('<path d=\"M4 5h16M4 12h16M4 19h10\"/>')}</div><b>Transcribes</b></div>
+     <div class="arrow">→</div>
+     <div class="step"><div class="ic">${ICO('<path d=\"M12 2l2.4 6.9L21 9.3l-5 4.7 1.5 6.9L12 17l-5.5 3.9L8 14 3 9.3l6.6-.4z\"/>')}</div><b>Scores</b></div>
+     <div class="arrow">→</div>
+     <div class="step"><div class="ic">${ICO('<path d=\"M4 4h16v12H7l-3 3z\"/>')}</div><b>Drafts follow-up</b></div>
+   </div>
+ </div></div>
+</div></div>`;
+
+const sceneDash = ()=>`
+${cap('YOUR DASHBOARD','Momentum and coaching, at a glance.','XP, call scores, callbacks, and the plays that need your attention — all in one read.')}
+<div class="panelwrap" data-anim data-d="0.12"><div class="window kb">
+ <div class="win-os"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><div class="win-url">app.dialfyne.com/stats</div></div>
+ <div class="win-body">
+   <div style="display:flex;justify-content:space-between;align-items:center"><div><div style="display:flex;gap:10px;margin-bottom:8px"><span class="chip">⚡ Personal performance</span><span class="chip">🏆 Rookie</span></div><h2 style="margin:0;font-size:30px;font-weight:800;color:var(--ink)">Your dashboard</h2></div>
+     <div style="text-align:right"><small style="color:var(--muted);font-weight:700">Level progress · 6%</small><div class="track" style="width:220px;margin-top:8px;margin-left:auto"><i style="width:6%"></i></div><small style="color:var(--muted2);display:block;margin-top:6px">31 XP · 469 to Operator</small></div>
+   </div>
+   <div class="xpbar"><div class="xpcard"><div class="ic" style="background:#fff4e0">🔥</div><div><small>STREAK</small><b>1 day</b></div></div>
+     <div class="xpcard"><div class="ic" style="background:#eaf2ff">🎖</div><div><small>THIS WEEK</small><b>31 XP</b></div></div>
+     <div class="xpcard"><div class="ic" style="background:#f0eaff">🏆</div><div><small>LIFETIME</small><b>31 XP</b></div></div></div>
+   <div class="dash" style="margin-top:16px">
+     <div class="dcard"><div class="ic">${ICO(phone)}</div><small>Calls dialed</small><b>48</b></div>
+     <div class="dcard"><div class="ic">${ICO('<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"4\"/>')}</div><small>Conversation rate</small><b>15%</b></div>
+     <div class="dcard"><div class="ic">${ICO('<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>')}</div><small>Talk time</small><b>8m</b></div>
+     <div class="dcard"><div class="ic">${ICO('<path d=\"M12 2l2.4 6.9L21 9.3l-5 4.7 1.5 6.9L12 17l-5.5 3.9L8 14 3 9.3l6.6-.4z\"/>')}</div><small>Avg call score</small><b>2.6<span style="font-size:18px;color:var(--muted2)">/10</span></b></div>
+   </div>
+ </div>
+</div></div>`;
+
+const sceneIntro = ()=>`
+<div class="brandbig">
+  <img data-anim data-d="0.10" src="brand/dialfyne-horizontal.png" alt="Dialfyne"/>
+  <div class="kicker" data-anim data-d="0.34">The outbound workspace where reps dial, rehearse, and close.</div>
+</div>`;
+
+const sceneOutro = ()=>`
+<div class="brandbig">
+  <div class="outro-words" data-anim data-d="0.08"><span class="w">Dial.</span><span class="sep"></span><span class="w">Roleplay.</span><span class="sep"></span><span class="w">Close.</span></div>
+  <img data-anim data-d="0.30" src="brand/dialfyne-horizontal.png" alt="Dialfyne" style="width:calc(var(--logoW)*.78)"/>
+  <div class="url" data-anim data-d="0.5">dialfyne.com</div>
+</div>`;
+
+// ---------- timeline (non-overlapping; transitions handled per-scene) ----------
+const SCENES=[
+ {b:sceneIntro,    s:0.0,  e:3.0,  theme:'dark',  wm:false},
+ {b:sceneDial,     s:3.0,  e:9.0,  theme:'light', wm:true},
+ {b:sceneRoleplay, s:9.0,  e:14.6, theme:'light', wm:true},
+ {b:sceneCampaign, s:14.6, e:19.2, theme:'light', wm:true},
+ {b:sceneMeeting,  s:19.2, e:24.8, theme:'light', wm:true},
+ {b:sceneDash,     s:24.8, e:30.8, theme:'light', wm:true},
+ {b:sceneOutro,    s:30.8, e:34.4, theme:'dark',  wm:false},
+];
+const TOTAL=34.4;
+window.__DURATION=TOTAL;
+
+const root=document.getElementById('scenes');
+SCENES.forEach((sc,i)=>{
+  const el=document.createElement('div');
+  el.className='scene';
+  const bg = sc.theme==='dark'
+    ? `<div class="bg darkbg"></div><div class="blob blobA"></div><div class="blob blobB"></div>`
+    : `<div class="bg lightbg"></div><div class="blob blobA"></div><div class="blob blobB"></div><div class="grid"></div>`;
+  el.innerHTML=`${bg}<div class="content">${sc.b()}</div>`;
+  sc._el=el; root.appendChild(el);
+});
+
+// easing
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const easeOutExpo=t=>t>=1?1:1-Math.pow(2,-10*t);
+const easeInCubic=t=>t*t*t;
+const easeOut=t=>1-Math.pow(1-t,3);
+
+const TIN=0.55, TOUT=0.46;   // entrance / exit transition lengths
+
+function seek(t){
+  let activeWm=false, bestOp=-1;
+  SCENES.forEach((sc,i)=>{
+    const el=sc._el;
+    const winStart=sc.s, winEnd=sc.e+TOUT;
+    if(t<winStart-0.001 || t>winEnd+0.001){ el.style.opacity=0; el.style.visibility='hidden'; return; }
+    el.style.visibility='visible';
+    el.style.zIndex = 5 + i;
+
+    const lt = t - sc.s;            // local time from scene start
+    const te = t - sc.e;            // time past scene's nominal end (exit phase)
+
+    // entrance: slide up + settle, fade in (finishes within TIN, then locked)
+    const ein = easeOutExpo(clamp(lt/TIN));
+    // exit: accelerating push up + scale down, but a FAST fade so it clears quickly
+    const xmove = easeInCubic(clamp(te/TOUT));
+    const xfade = easeOutExpo(clamp(te/(TOUT*0.7)));
+
+    const enterY = (1-ein)*64;      // rises from below
+    const exitY  = -xmove*84;       // pushes up and away
+    const y = enterY + exitY;       // only one active outside the static hold
+    const scale = (0.985 + 0.015*ein) * (1 - 0.06*xmove);
+    const op = ein * (1 - xfade);
+
+    el.style.opacity = op.toFixed(3);
+    if(op>bestOp){ bestOp=op; activeWm=sc.wm; }
+
+    const content=el.querySelector('.content');
+    content.style.transform = `translate3d(0,${y.toFixed(2)}px,0) scale(${scale.toFixed(4)})`;
+
+    // panel: static base scale only (orientation fit) — no perpetual motion
+    const kb=el.querySelector('.kb');
+    if(kb){ const base=parseFloat(kb.dataset.base||'1'); kb.style.transform=`scale(${base})`; }
+
+    // gentle per-element fade stagger (opacity only — never moves text)
+    el.querySelectorAll('[data-anim]').forEach(node=>{
+      const d=parseFloat(node.dataset.d||'0');
+      node.style.transform='none';
+      node.style.opacity = easeOutExpo(clamp((lt-d)/0.5)).toFixed(3);
+    });
+
+    // live waveform (roleplay) — intentional motion, not text
+    const wave=el.querySelector('#rpwave');
+    if(wave){ if(wave.childElementCount===0){for(let k=0;k<26;k++){wave.appendChild(document.createElement('i'));}}
+      [...wave.children].forEach((bar,k)=>{ const ph=lt*5 + k*0.6; const h=10+Math.abs(Math.sin(ph))*34*(0.5+0.5*Math.sin(k*1.3)); bar.style.height=h.toFixed(1)+'px'; }); }
+    // campaign progress fills once, then holds
+    const cf=el.querySelector('#campfill'); if(cf){ cf.style.width=(8+easeOut(clamp((lt-0.4)/1.4))*84).toFixed(1)+'%'; }
+  });
+
+  const wm=document.getElementById('wm');
+  wm.style.opacity = activeWm?0.92:0;
+  document.querySelector('.watermark .lm').innerHTML=SPARK;
+  document.getElementById('pbar').style.width=(clamp(t/TOTAL)*100).toFixed(2)+'%';
+}
+window.seek=seek;
+
+function setOrientation(o){
+  const st=document.getElementById('stage'); document.body.dataset.o=o;
+  if(o==='vert'){ st.style.width='1080px'; st.style.height='1920px'; }
+  else { st.style.width='1920px'; st.style.height='1080px'; }
+  // compute per-window base scale so panels fit the stage width
+  const targetMax = o==='vert' ? 1012 : 1240;
+  document.querySelectorAll('.window').forEach(w=>{
+    const nat=w.offsetWidth||1180;
+    let base = targetMax/nat;
+    base = o==='land' ? Math.min(1.0, base) : Math.min(1.06, base);
+    w.dataset.base=base.toFixed(4);
+  });
+  // reposition watermark for vertical
+  const wm=document.getElementById('wm');
+  if(o==='vert'){ wm.style.left='54px'; wm.style.top='70px'; } else { wm.style.left='52px'; wm.style.top='44px'; }
+}
+window.setOrientation=setOrientation;
+seek(0);
+</script>
+</body>
+</html>
