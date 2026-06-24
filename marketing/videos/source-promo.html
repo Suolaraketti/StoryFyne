@@ -167,6 +167,19 @@ h1.head{font-weight:800;font-size:var(--fHead);line-height:1.04;letter-spacing:-
 .watermark .lm svg{width:16px;height:16px}
 .watermark b{font-size:18px;font-weight:800;color:var(--ink)}
 
+/* live elements (JS-driven, deterministic) */
+.simbox{position:relative}
+.recbar{position:absolute;top:14px;left:18px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;letter-spacing:.08em;color:#ff5f57}
+.recdot{width:10px;height:10px;border-radius:50%;background:#ff5f57;will-change:transform,opacity}
+.step{will-change:transform,box-shadow}
+.step.live{border-color:#bcd0ff;box-shadow:0 14px 30px -12px rgba(31,109,255,.6);background:#f5f9ff}
+.step.live .ic{background:linear-gradient(150deg,var(--blue2),var(--blue));color:#fff}
+.qrow.live{background:linear-gradient(90deg,#eef5ff,#ffffff);border-radius:12px}
+.qrow.live .btn.blue-soft{background:linear-gradient(180deg,var(--blue2),var(--blue));color:#fff;box-shadow:0 12px 22px -10px rgba(31,109,255,.85)}
+.qrow.live .num{color:var(--blue)}
+.flame{will-change:transform}
+.btn.primary.pulse{box-shadow:0 14px 30px -8px rgba(31,109,255,.95)}
+
 /* orientation tuning */
 body[data-o="land"]{--capw:1280px;--fEyebrow:16px;--fHead:54px;--fSub:21px;--gap:42px;--logoW:520px}
 body[data-o="vert"]{--capw:960px;--fEyebrow:18px;--fHead:62px;--fSub:26px;--gap:60px;--logoW:620px}
@@ -200,7 +213,7 @@ ${cap('DIAL','Work your highest-intent list.','Auto-dial, live coaching, and one
  <div class="win-body">
    <div class="cockpit">
      <div><div class="section-label">REP COCKPIT</div><h2>Dialfyne Demo</h2><p>Work the highest intent list, keep your line clean, log outcomes fast.</p></div>
-     <div class="statrow"><div class="statchip"><small>DIALS</small><b>48</b></div><div class="statchip"><small>CONNECTS</small><b>7</b></div><div class="statchip"><small>BOOKED</small><b>3</b></div></div>
+     <div class="statrow"><div class="statchip"><small>DIALS</small><b data-count="48">0</b></div><div class="statchip"><small>CONNECTS</small><b data-count="7">0</b></div><div class="statchip"><small>BOOKED</small><b data-count="3">0</b></div></div>
    </div>
    <div style="margin-top:18px;display:flex;gap:18px;align-items:flex-start">
      <div style="flex:1">
@@ -234,7 +247,7 @@ ${cap('ROLEPLAY','Rehearse the real call.','Live AI buyer simulations in your ow
      <div><small>COMPANY</small><b>Coastal Habitat Alliance</b><span>Calling from Instrumentl</span></div>
      <div><small>MODE</small><b>Voice roleplay</b><span>hard difficulty</span></div>
    </div>
-   <div class="simbox"><div class="wave" id="rpwave"></div><div style="font-weight:600">Live buyer simulation — speak naturally</div></div>
+   <div class="simbox"><div class="recbar"><span class="recdot" id="recdot"></span> REC <span id="rptimer" style="font-variant-numeric:tabular-nums">00:00</span></div><div class="wave" id="rpwave"></div><div style="font-weight:600">Live buyer simulation — speak naturally</div></div>
  </div></div>
 </div></div>`;
 
@@ -248,7 +261,7 @@ ${cap('TEAM CAMPAIGNS','Dial the same list, never collide.','Shared queues your 
     <div class="row"><div style="display:flex;gap:14px;align-items:center"><div class="logomark" style="border-radius:12px">${ICO('<circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2\"/><circle cx=\"17\" cy=\"7\" r=\"3\"/>')}</div><div><div style="font-size:18px;font-weight:800;color:var(--ink)">Team campaigns</div><small>Shared lists your team dials together. Claims are locked so reps never collide.</small></div></div><span class="pill count">1 active</span></div>
     <div style="margin-top:20px;border:1px solid var(--line);border-radius:14px;padding:18px">
       <div class="row"><div><h3>Ongoing Dialer Campaign</h3><small>14 left · 1 of 15 done · 14 follow-ups scheduled</small></div><button class="btn primary">Join and dial ›</button></div>
-      <div class="progress"><i id="campfill" style="width:8%"></i></div>
+      <div class="progress"><i id="campfill" class="shimmer" style="width:8%"></i></div>
     </div>
   </div>
  </div>
@@ -282,16 +295,16 @@ ${cap('YOUR DASHBOARD','Momentum and coaching, at a glance.','XP, call scores, c
  <div class="win-os"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div><div class="win-url">app.dialfyne.com/stats</div></div>
  <div class="win-body">
    <div style="display:flex;justify-content:space-between;align-items:center"><div><div style="display:flex;gap:10px;margin-bottom:8px"><span class="chip">⚡ Personal performance</span><span class="chip">🏆 Rookie</span></div><h2 style="margin:0;font-size:30px;font-weight:800;color:var(--ink)">Your dashboard</h2></div>
-     <div style="text-align:right"><small style="color:var(--muted);font-weight:700">Level progress · 6%</small><div class="track" style="width:220px;margin-top:8px;margin-left:auto"><i style="width:6%"></i></div><small style="color:var(--muted2);display:block;margin-top:6px">31 XP · 469 to Operator</small></div>
+     <div style="text-align:right"><small style="color:var(--muted);font-weight:700">Level progress · 6%</small><div class="track" style="width:220px;margin-top:8px;margin-left:auto"><i data-fill="6" style="width:0%"></i></div><small style="color:var(--muted2);display:block;margin-top:6px">31 XP · 469 to Operator</small></div>
    </div>
-   <div class="xpbar"><div class="xpcard"><div class="ic" style="background:#fff4e0">🔥</div><div><small>STREAK</small><b>1 day</b></div></div>
-     <div class="xpcard"><div class="ic" style="background:#eaf2ff">🎖</div><div><small>THIS WEEK</small><b>31 XP</b></div></div>
-     <div class="xpcard"><div class="ic" style="background:#f0eaff">🏆</div><div><small>LIFETIME</small><b>31 XP</b></div></div></div>
+   <div class="xpbar"><div class="xpcard"><div class="ic flame" style="background:#fff4e0">🔥</div><div><small>STREAK</small><b>1 day</b></div></div>
+     <div class="xpcard"><div class="ic" style="background:#eaf2ff">🎖</div><div><small>THIS WEEK</small><b><span data-count="31">0</span> XP</b></div></div>
+     <div class="xpcard"><div class="ic" style="background:#f0eaff">🏆</div><div><small>LIFETIME</small><b><span data-count="31">0</span> XP</b></div></div></div>
    <div class="dash" style="margin-top:16px">
-     <div class="dcard"><div class="ic">${ICO(phone)}</div><small>Calls dialed</small><b>48</b></div>
-     <div class="dcard"><div class="ic">${ICO('<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"4\"/>')}</div><small>Conversation rate</small><b>15%</b></div>
-     <div class="dcard"><div class="ic">${ICO('<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>')}</div><small>Talk time</small><b>8m</b></div>
-     <div class="dcard"><div class="ic">${ICO('<path d=\"M12 2l2.4 6.9L21 9.3l-5 4.7 1.5 6.9L12 17l-5.5 3.9L8 14 3 9.3l6.6-.4z\"/>')}</div><small>Avg call score</small><b>2.6<span style="font-size:18px;color:var(--muted2)">/10</span></b></div>
+     <div class="dcard"><div class="ic">${ICO(phone)}</div><small>Calls dialed</small><b data-count="48">0</b></div>
+     <div class="dcard"><div class="ic">${ICO('<circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"4\"/>')}</div><small>Conversation rate</small><b><span data-count="15">0</span>%</b></div>
+     <div class="dcard"><div class="ic">${ICO('<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>')}</div><small>Talk time</small><b><span data-count="8">0</span>m</b></div>
+     <div class="dcard"><div class="ic">${ICO('<path d=\"M12 2l2.4 6.9L21 9.3l-5 4.7 1.5 6.9L12 17l-5.5 3.9L8 14 3 9.3l6.6-.4z\"/>')}</div><small>Avg call score</small><b><span data-count="2.6" data-dec="1">0.0</span><span style="font-size:18px;color:var(--muted2)">/10</span></b></div>
    </div>
  </div>
 </div></div>`;
@@ -341,6 +354,9 @@ const easeOut=t=>1-Math.pow(1-t,3);
 
 const TIN=0.55, TOUT=0.46;   // entrance / exit transition lengths
 
+const easeOutBack=t=>{const c1=1.70158,c3=c1+1;return t>=1?1:1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2);};
+const pad2=n=>String(n).padStart(2,'0');
+
 function seek(t){
   let activeWm=false, bestOp=-1;
   SCENES.forEach((sc,i)=>{
@@ -353,16 +369,17 @@ function seek(t){
     const lt = t - sc.s;            // local time from scene start
     const te = t - sc.e;            // time past scene's nominal end (exit phase)
 
-    // entrance: slide up + settle, fade in (finishes within TIN, then locked)
-    const ein = easeOutExpo(clamp(lt/TIN));
-    // exit: accelerating push up + scale down, but a FAST fade so it clears quickly
+    // entrance: springy pop (overshoot) on motion, expo fade-in
+    const ein  = easeOutExpo(clamp(lt/TIN));
+    const eback = easeOutBack(clamp(lt/TIN));
+    // exit: accelerating push up + fast fade so it clears quickly
     const xmove = easeInCubic(clamp(te/TOUT));
     const xfade = easeOutExpo(clamp(te/(TOUT*0.7)));
 
-    const enterY = (1-ein)*64;      // rises from below
-    const exitY  = -xmove*84;       // pushes up and away
-    const y = enterY + exitY;       // only one active outside the static hold
-    const scale = (0.985 + 0.015*ein) * (1 - 0.06*xmove);
+    const enterY = (1-eback)*70;     // rises from below with a little overshoot
+    const exitY  = -xmove*88;        // pushes up and away
+    const y = enterY + exitY;
+    const scale = (0.965 + 0.035*eback) * (1 - 0.06*xmove);
     const op = ein * (1 - xfade);
 
     el.style.opacity = op.toFixed(3);
@@ -371,23 +388,70 @@ function seek(t){
     const content=el.querySelector('.content');
     content.style.transform = `translate3d(0,${y.toFixed(2)}px,0) scale(${scale.toFixed(4)})`;
 
-    // panel: static base scale only (orientation fit) — no perpetual motion
+    // panel gentle float — graphics breathe, but the CAPTION (outside .kb) stays still
     const kb=el.querySelector('.kb');
-    if(kb){ const base=parseFloat(kb.dataset.base||'1'); kb.style.transform=`scale(${base})`; }
+    if(kb){ const base=parseFloat(kb.dataset.base||'1');
+      const fy=Math.sin(t*0.9+i*1.3)*3.4, fr=Math.sin(t*0.6+i)*0.18;
+      kb.style.transform=`translateY(${fy.toFixed(2)}px) rotate(${fr.toFixed(3)}deg) scale(${base})`; }
 
-    // gentle per-element fade stagger (opacity only — never moves text)
+    // caption fade stagger (opacity only — text never moves)
     el.querySelectorAll('[data-anim]').forEach(node=>{
       const d=parseFloat(node.dataset.d||'0');
       node.style.transform='none';
       node.style.opacity = easeOutExpo(clamp((lt-d)/0.5)).toFixed(3);
     });
 
-    // live waveform (roleplay) — intentional motion, not text
+    // ambient: decorative blobs drift slowly (graphics, not text)
+    el.querySelectorAll('.blob').forEach((bl,j)=>{ const dir=j?-1:1, ph=t*0.16+j*1.9;
+      bl.style.transform=`translate(${(Math.sin(ph)*26*dir).toFixed(1)}px,${(Math.cos(ph*0.8)*20).toFixed(1)}px) scale(${(1+0.06*Math.sin(ph)).toFixed(3)})`; });
+
+    // UI items cascade in on entrance (springy stagger), locked during hold
+    el.querySelectorAll('.statchip,.qrow,.dcard,.xpcard,.step,.meta>div,.coach').forEach((it,k)=>{
+      const a=easeOutBack(clamp((lt-0.16-k*0.05)/0.5));
+      it.style.opacity=clamp(a).toFixed(3);
+      it.style.transform=`translateY(${((1-a)*22).toFixed(2)}px)`;
+    });
+
+    // number count-ups (ramp during entrance, then exact target)
+    el.querySelectorAll('[data-count]').forEach(node=>{
+      const target=parseFloat(node.dataset.count), dec=node.dataset.dec?+node.dataset.dec:0;
+      const a=easeOut(clamp((lt-0.25)/1.1)), v=target*a;
+      node.textContent = dec? v.toFixed(dec) : Math.round(v);
+    });
+    // bar fills
+    el.querySelectorAll('[data-fill]').forEach(node=>{
+      const target=parseFloat(node.dataset.fill), a=easeOut(clamp((lt-0.3)/1.2));
+      node.style.width=(target*a).toFixed(1)+'%';
+    });
+
+    const held = lt>0.85;  // living loops start once the scene has settled
+
+    // DIAL — auto-dialer highlight travels down the queue
+    const qcard=el.querySelector('.qcard');
+    if(qcard){ const rows=el.querySelectorAll('.qrow'); const act=held?Math.floor(lt*0.85)%rows.length:-1;
+      rows.forEach((r,k)=>r.classList.toggle('live',k===act)); }
+
+    // ROLEPLAY — live waveform + REC pulse + ticking call timer
     const wave=el.querySelector('#rpwave');
     if(wave){ if(wave.childElementCount===0){for(let k=0;k<26;k++){wave.appendChild(document.createElement('i'));}}
-      [...wave.children].forEach((bar,k)=>{ const ph=lt*5 + k*0.6; const h=10+Math.abs(Math.sin(ph))*34*(0.5+0.5*Math.sin(k*1.3)); bar.style.height=h.toFixed(1)+'px'; }); }
-    // campaign progress fills once, then holds
+      [...wave.children].forEach((bar,k)=>{ const ph=lt*5+k*0.6; const h=10+Math.abs(Math.sin(ph))*34*(0.5+0.5*Math.sin(k*1.3)); bar.style.height=h.toFixed(1)+'px'; });
+      const dot=el.querySelector('#recdot'); if(dot){ const pulse=0.5+0.5*Math.sin(lt*6); dot.style.opacity=(0.45+0.55*pulse).toFixed(2); dot.style.transform=`scale(${(0.85+0.3*pulse).toFixed(2)})`; }
+      const tm=el.querySelector('#rptimer'); if(tm){ const s=Math.floor(142+lt); tm.textContent=pad2(Math.floor(s/60))+':'+pad2(s%60); } }
+
+    // CAMPAIGN — progress fills once, button pulses
     const cf=el.querySelector('#campfill'); if(cf){ cf.style.width=(8+easeOut(clamp((lt-0.4)/1.4))*84).toFixed(1)+'%'; }
+
+    // MEETING — pipeline glow cycles Records → Transcribes → Scores → Drafts
+    const flow=el.querySelector('.flow');
+    if(flow){ const steps=el.querySelectorAll('.step'); const act=held?Math.floor((lt-0.85)*1.05)%steps.length:-1;
+      steps.forEach((s,k)=>s.classList.toggle('live',k===act)); }
+
+    // primary CTAs pulse subtly
+    el.querySelectorAll('.btn.primary').forEach(b=>{ const p=0.5+0.5*Math.sin(t*2.4); b.style.transform=`scale(${(1+0.018*p).toFixed(3)})`; });
+
+    // DASHBOARD — streak flame flicker
+    const flame=el.querySelector('.flame');
+    if(flame){ const f=Math.sin(t*7)*0.5+Math.sin(t*11+1)*0.5; flame.style.transform=`scale(${(1+0.06*f).toFixed(3)}) rotate(${(f*3).toFixed(2)}deg)`; }
   });
 
   const wm=document.getElementById('wm');
